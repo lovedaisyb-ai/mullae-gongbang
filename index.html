@@ -596,10 +596,11 @@ const shelfSlots=[]; for(let i=0;i<8;i++) shelfSlots.push(new THREE.Vector3(-2.7
 let savedPots=[], saveIndex=0;
 
 /* ---------- glaze buckets under the shelf ---------- */
-const GLAZES=[['청자유','#8fb5a3'],['백자유','#efece4'],['천목유','#3f2a20'],['분청 귀얄','#cbb595'],['재유','#9b8e66'],['진사유','#8a2c27'],['유백유','#ece6d6'],['녹유','#4f7a3a'],['철유','#6b3b22'],['청화','#2f4f8f'],['황유','#c9a13d'],['흑유','#1f1b1a']];
+const GLAZES=[['청자유','#8fb5a3'],['백자유','#efece4'],['천목유','#3f2a20'],['분청 귀얄','#cbb595'],['재유','#9b8e66'],['진사유','#8a2c27'],['유백유','#ece6d6'],['녹유','#4f7a3a'],['철유','#6b3b22'],['청화','#2f4f8f'],['황유','#c9a13d'],['흑유','#1f1b1a'],['석회유','#e3ddcd'],['장석유','#f1ede3'],['오리베','#3e6a45'],['코발트','#26437c'],['분장토','#d8cfbf'],['유자유','#cfa54b']];
 const bucketMat=new THREE.MeshStandardMaterial({color:'#ecebe6',roughness:.55});
 function makeBucket(name,col,x,z,ry){
-  const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=ry; scene.add(g);
+  // twice the original size (about 60cm across, 76cm tall), no name label
+  const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=ry; g.scale.setScalar(2); scene.add(g);
   const add=(geo,mat,x,y,z)=>{const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=m.receiveShadow=true; g.add(m); return m;};
   const gm=new THREE.MeshStandardMaterial({color:col,roughness:.22});
   add(new THREE.CylinderGeometry(.15,.13,.34,28),bucketMat,0,.17,0);
@@ -612,13 +613,14 @@ function makeBucket(name,col,x,z,ry){
     add(new THREE.CylinderGeometry(.007,.006,len,6),gm,Math.sin(a)*rr,y,Math.cos(a)*rr);
     add(new THREE.SphereGeometry(.009,8,6),gm,Math.sin(a)*rr,y-len/2,Math.cos(a)*rr);
   }
-  const label=new THREE.Mesh(new THREE.CylinderGeometry(.1455,.1435,.1,20,1,true,-.62,1.24),new THREE.MeshStandardMaterial({roughness:.8,map:textTex([name],{w:256,h:96,bg:'#f8f6f0',fg:'#2a2826',titleFont:'42px "Gowun Dodum", sans-serif',font:'',pad:26,lh:44,gap:0})}));
-  label.position.y=.2; g.add(label);
+  collide(x-.31,x+.31,z-.31,z+.31);
 }
 // six under the back shelf, six more under the shared shelf by the door
-GLAZES.forEach(([n,c],i)=> i<6 ? makeBucket(n,c,-2.5+i,SHELF_Z+.02,rnd(-.15,.15)) : makeBucket(n,c,-2.5+(i-6),RZ-.22,Math.PI+rnd(-.15,.15)));
+// big buckets no longer fit under the lowest shelves, so they stand in a row just in front of each shelf
+// 18 buckets: nine along the back shelving, nine in front of the shared shelf
+GLAZES.forEach(([n,c],i)=> i<9 ? makeBucket(n,c,-2.48+i*.62,-RZ+.66,rnd(-.15,.15)) : makeBucket(n,c,-2.48+(i-9)*.62,RZ-.66,Math.PI+rnd(-.15,.15)));
 // dipping tongs leaning on the last bucket
-{ const t=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.42,6),M.steel); t.position.set(2.72,.2,SHELF_Z+.12); t.rotation.z=.35; t.castShadow=true; scene.add(t); }
+{ const t=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.42,6),M.steel); t.position.set(2.82,.36,-RZ+.72); t.scale.y=1.8; t.rotation.z=.35; t.castShadow=true; scene.add(t); }
 
 /* ---------- tool pegboard above the wedging table ---------- */
 const peg=new THREE.Group(); peg.position.set(RX-.015,1.75,2.35); peg.rotation.y=-Math.PI/2; scene.add(peg);
