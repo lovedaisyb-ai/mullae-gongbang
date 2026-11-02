@@ -369,6 +369,39 @@ const glassMat=new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,
   B(.3,.055,W+.36,X+.15,cy-Hh/2-.14,z);
   B(.04,.14,W+.2,X+.02,cy-Hh/2-.24,z);
 });
+// sheer chiffon curtains on both windows, tied back to the sides so the garden still shows
+{
+  const chiffon=new THREE.MeshStandardMaterial({color:'#fbf8f2',roughness:.9,transparent:true,opacity:.5,side:THREE.DoubleSide,depthWrite:false});
+  const tieM=new THREE.MeshStandardMaterial({color:'#e9dfcc',roughness:.8});
+  const rodM=new THREE.MeshStandardMaterial({color:'#8a6a48',roughness:.5,metalness:.2});
+  const W=1.7, top=2.64, bottom=.97, tieY=1.5, X=-RX+.2;
+  // one gathered panel: wide and softly pleated at the rod, pinched at the tie-back, flaring again below
+  function panel(zc,side){ // side -1: left edge of the window, +1: right edge (z direction)
+    const segU=24, segV=40, geo=new THREE.PlaneGeometry(1,1,segU,segV), P=geo.attributes.position;
+    const outer=zc+side*(W/2+.06), H=top-bottom;
+    for(let i=0;i<P.count;i++){
+      const u=P.getX(i)+.5, v=.5-P.getY(i);                      // u 0..1 across (0 = outer edge), v 0..1 down
+      const y=top-v*H, t=Math.abs(y-tieY)/(y>tieY?top-tieY:tieY-bottom);
+      const width=y>tieY ? .1+.42*Math.pow(t,1.3) : .1+.2*Math.pow(t,1.1); // pinched at the tie
+      const z=outer-side*u*width;
+      const fold=Math.sin(u*Math.PI*9+(y>tieY?0:.6))*(.012+.022*width/.5);
+      const x=X+fold+.02*Math.sin(v*Math.PI)*(1-u);
+      P.setXYZ(i,x,y,z);
+    }
+    geo.computeVertexNormals();
+    const m=new THREE.Mesh(geo,chiffon); m.renderOrder=2; scene.add(m);
+    // fabric tie-back at the pinch
+    const tie=new THREE.Mesh(new THREE.TorusGeometry(.06,.012,8,20),tieM); tie.position.set(X+.01,tieY,outer-side*.05); tie.rotation.y=Math.PI/2; tie.scale.set(1,.5,.6); scene.add(tie);
+    const hook=new THREE.Mesh(new THREE.SphereGeometry(.014,10,8),rodM); hook.position.set(-RX+.13,tieY,outer-side*.02); scene.add(hook);
+  }
+  [-1.8,1.4].forEach(zc=>{
+    // curtain rod with round finials
+    const rod=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,W+.5,12),rodM); rod.rotation.x=Math.PI/2; rod.position.set(X,top+.02,zc); scene.add(rod);
+    [-1,1].forEach(s=>{ const f=new THREE.Mesh(new THREE.SphereGeometry(.025,12,10),rodM); f.position.set(X,top+.02,zc+s*(W/2+.25)); scene.add(f);
+      const br=new THREE.Mesh(new THREE.BoxGeometry(.2,.02,.02),rodM); br.position.set(-RX+.1,top+.02,zc+s*(W/2+.12)); scene.add(br); });
+    panel(zc,-1); panel(zc,1);
+  });
+}
 // a little plant on the first sill
 { const pot=new THREE.Mesh(new THREE.CylinderGeometry(.07,.055,.12,20),new THREE.MeshStandardMaterial({color:'#b5643f',roughness:.85})); pot.position.set(-RX+.17,.97+.06,-2.3); pot.castShadow=true; scene.add(pot);
   const leaf=new THREE.MeshStandardMaterial({color:'#4d8a46',roughness:.7});
