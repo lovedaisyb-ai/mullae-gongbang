@@ -82,7 +82,10 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 #loading{position:fixed;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:18px;color:var(--muted);}
 
 #who{margin:4px 0 0;font-size:12px;color:var(--celadon);}
-#myWorkBtn{margin-top:8px;padding:6px 12px;font-size:12px;background:var(--celadon-deep);border:1px solid var(--celadon);border-radius:999px;}
+#myWorkBtn{padding:6px 12px;font-size:12px;background:var(--celadon-deep);border:1px solid var(--celadon);border-radius:999px;}
+#brand .brandBtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+#musicBtn{padding:6px 12px;font-size:12px;background:transparent;border:1px solid var(--line);border-radius:999px;}
+#musicBtn[aria-pressed=true]{border-color:var(--celadon);color:var(--celadon);}
 #workPanel{left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));padding:12px;display:grid;gap:10px;width:min(360px,calc(100vw - 32px));box-sizing:border-box;}
 #wpMain{display:flex;align-items:center;gap:8px;}
 #wpInfo{flex:1;min-width:0;text-align:center;font-size:14px;font-variant-numeric:tabular-nums;}
@@ -110,7 +113,8 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
   #brand p{font-size:11px;margin-top:1px;}
   #brand #sub{display:none;}
   #who{margin-top:1px;}
-  #myWorkBtn{margin-top:5px;padding:4px 10px;font-size:11px;}
+  #myWorkBtn,#musicBtn{padding:4px 10px;font-size:11px;}
+  #brand .brandBtns{margin-top:5px;gap:4px;}
   #chat input{width:120px;}
   #help{display:none;}
   body.throwing #brand{display:none;}
@@ -134,7 +138,7 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 <div id="loading">공방 문을 여는 중…</div>
 <canvas id="c" tabindex="0" aria-label="도자기 공방 3D 공간"></canvas>
 
-<div class="hud panel" id="brand"><h1>물레 공방</h1><p id="sub">물레실 · 산책 중</p><p id="who">공방 연결 중…</p><button id="myWorkBtn" type="button" hidden>내 작품 보기</button></div>
+<div class="hud panel" id="brand"><h1>물레 공방</h1><p id="sub">물레실 · 산책 중</p><p id="who">공방 연결 중…</p><div class="brandBtns"><button id="myWorkBtn" type="button" hidden>내 작품 보기</button><button id="musicBtn" type="button" aria-pressed="false">♪ 음악 켜기</button></div></div>
 
 <div class="hud panel" id="help">
   <div><b>클릭</b>한 곳으로 걷기 · 드래그로 시점</div>
@@ -1333,7 +1337,7 @@ $('resetBtn').addEventListener('click',()=>{ if(!active) return; active.clay=new
 let audioCtx=null;
 function fanfare(){
   try{
-    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); const ac=audioCtx; if(ac.state==='suspended') ac.resume();
+    const ac=audio();
     const out=ac.createGain(); out.gain.value=.22; out.connect(ac.destination);
     // a little brass "ta-da-da-daaa": short pickups then a held major chord
     const note=(f,t0,dur,vol=1)=>{ [1,2,3].forEach((h,k)=>{ const o=ac.createOscillator(), g=ac.createGain(), lp=ac.createBiquadFilter();
@@ -1346,6 +1350,55 @@ function fanfare(){
     [523.25,659.25,783.99,1046.5].forEach(f=>note(f,1.32,1.1,.7));
   }catch(e){}
 }
+/* ---------- background music: a soft, bouncy marimba loop (no vocals), made with Web Audio ---------- */
+// Starts on the first tap/click (browsers block sound before that); the ♪ button turns it on and off.
+const bgm={on:false,master:null,next:0,step:0,timer:null};
+function audio(){ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+function marimba(ac,dest,m,t,vol,len=.45){
+  const f=mtof(m);
+  [[1,1,'sine'],[4,.25,'sine'],[2,.12,'triangle']].forEach(([h,a,type],k)=>{
+    const o=ac.createOscillator(), g=ac.createGain(); o.type=type; o.frequency.value=f*h;
+    const v=vol*a, d=k?len*.25:len;
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+.006); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g); g.connect(dest); o.start(t); o.stop(t+d+.05); });
+}
+function softTick(ac,dest,t,vol){
+  const len=.04, buf=ac.createBuffer(1,Math.ceil(ac.sampleRate*len),ac.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
+  const s=ac.createBufferSource(), hp=ac.createBiquadFilter(), g=ac.createGain(); s.buffer=buf; hp.type='highpass'; hp.frequency.value=6000; g.gain.value=vol;
+  s.connect(hp); hp.connect(g); g.connect(dest); s.start(t);
+}
+// 4 bars of eighth notes (C - Am - F - G), melody / bass / off-beat chord plucks
+const MEL=[72,null,76,79, 76,null,74,72,  69,72,null,76, 74,72,69,null,  65,69,72,null, 74,72,69,72,  74,null,71,74, 79,77,74,71];
+const ROOT=[48,45,41,43], CH=[[60,64,67],[57,60,64],[53,57,60],[55,59,62]];
+const STEP=.25; // eighth note at 120 bpm
+function bgmSchedule(){
+  const ac=audioCtx; if(!bgm.on||!ac) return;
+  while(bgm.next<ac.currentTime+.4){
+    const t=bgm.next, s=bgm.step%32, bar=(s/8)|0, b=s%8;
+    if(MEL[s]!=null) marimba(ac,bgm.master,MEL[s],t,.5,.5);
+    if(b===0||b===3||b===4||b===6) marimba(ac,bgm.master,ROOT[bar]+(b===6?7:0),t,.55,.35);
+    if(b===2||b===6) CH[bar].forEach(n=>marimba(ac,bgm.master,n,t,.12,.22));
+    softTick(ac,bgm.master,t,b%2?.06:.03);
+    bgm.next+=STEP; bgm.step++;
+  }
+}
+function setMusic(on){
+  bgm.on=on; try{ localStorage.setItem('mullae-music',on?'on':'off'); }catch(e){}
+  $('musicBtn').textContent=on?'♪ 음악 끄기':'♪ 음악 켜기'; $('musicBtn').setAttribute('aria-pressed',on);
+  if(on){ const ac=audio();
+    if(!bgm.master){ bgm.master=ac.createGain(); const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3200; bgm.master.connect(lp); lp.connect(ac.destination); }
+    bgm.master.gain.cancelScheduledValues(ac.currentTime); bgm.master.gain.setValueAtTime(.0001,ac.currentTime); bgm.master.gain.linearRampToValueAtTime(.075,ac.currentTime+1.2); // quiet, fades in
+    bgm.next=ac.currentTime+.1; bgm.step=0; clearInterval(bgm.timer); bgm.timer=setInterval(bgmSchedule,100); bgmSchedule();
+  } else { clearInterval(bgm.timer); if(bgm.master&&audioCtx){ bgm.master.gain.cancelScheduledValues(audioCtx.currentTime); bgm.master.gain.setTargetAtTime(0,audioCtx.currentTime,.15); } }
+}
+let musicPref='on'; try{ musicPref=localStorage.getItem('mullae-music')||'on'; }catch(e){}
+$('musicBtn').addEventListener('click',e=>{ e.stopPropagation(); setMusic(!bgm.on); });
+// first interaction anywhere starts the music (unless the viewer turned it off before)
+const firstTouch=()=>{ removeEventListener('pointerdown',firstTouch,true); removeEventListener('keydown',firstTouch,true); if(musicPref!=='off'&&!bgm.on) setMusic(true); };
+addEventListener('pointerdown',firstTouch,true); addEventListener('keydown',firstTouch,true);
+document.addEventListener('visibilitychange',()=>{ if(!audioCtx) return; if(document.hidden) audioCtx.suspend(); else if(bgm.on) audioCtx.resume(); });
 $('saveBtn').addEventListener('click',()=>{
   if(!active) return; const c=active.clay;
   if(c.open<.95){ warn('구멍을 뚫고 벽을 세워야 선반에 올릴 수 있어요'); return; }
