@@ -960,11 +960,10 @@ const AV={
   skin:new THREE.MeshStandardMaterial({color:'#f7d4b6',roughness:.75}),
   hair:new THREE.MeshStandardMaterial({color:'#6e4a33',roughness:.95}), // matte, so lamp highlights don't read as bumps
   shirt:new THREE.MeshStandardMaterial({color:'#f3ead8',roughness:.9}),
-  // ivory cotton apron: plain cloth with a faint woven texture
-  apron:new THREE.MeshStandardMaterial({roughness:.9,side:THREE.DoubleSide,map:(()=>{ const t=canvasTex(128,128,(g,w,h)=>{ g.fillStyle='#f3ecdc'; g.fillRect(0,0,w,h);
-    for(let y=0;y<h;y+=2){ g.fillStyle=`rgba(190,175,150,${.05+Math.random()*.05})`; g.fillRect(0,y,w,1); }
-    for(let x=0;x<w;x+=2){ g.fillStyle=`rgba(255,255,255,${.04+Math.random()*.05})`; g.fillRect(x,0,1,h); } },[4,4]); t.anisotropy=8; return t; })()}),
-  apronDark:new THREE.MeshStandardMaterial({color:'#ddd0b6',roughness:.85}), // straps, ties and pocket: a shade deeper than the ivory cloth
+  apron:new THREE.MeshStandardMaterial({roughness:.85,side:THREE.DoubleSide,map:(()=>{ const t=canvasTex(128,128,(g,w,h)=>{ g.fillStyle='#e8eee8'; g.fillRect(0,0,w,h); g.fillStyle='rgba(79,127,112,.42)'; g.fillRect(0,0,w/2,h); g.fillRect(0,0,w,h/2);
+    // soften the check edges so it doesn't shimmer at a distance
+    const c2=document.createElement('canvas'); c2.width=w; c2.height=h; const g2=c2.getContext('2d'); g2.drawImage(g.canvas,0,0); g.filter='blur(3px)'; [-w,0,w].forEach(dx=>[-h,0,h].forEach(dy=>g.drawImage(c2,dx,dy))); g.filter='none'; },[4,4]); t.anisotropy=8; return t; })()}),
+  apronDark:new THREE.MeshStandardMaterial({color:'#4f7f70',roughness:.85}),
   pants:new THREE.MeshStandardMaterial({color:'#59607a',roughness:.9}),
   shoe:new THREE.MeshStandardMaterial({color:'#8d5b3b',roughness:.7}),
   eye:new THREE.MeshStandardMaterial({color:'#2a201b',roughness:.25}),
@@ -1827,7 +1826,7 @@ function setTag(s,text){
 }
 const myBubble=makeTag('bubble'); myBubble.visible=false; scene.add(myBubble);
 const PALETTE=['#c98a5e','#7a8fc4','#c4a24a','#a27ab8','#6aa38b','#d27a86'];
-function tint(r,color){ /* everyone wears the same ivory apron; people are told apart by their name tags */ }
+function tint(r,color){ r.apronMats.forEach(m=>{ m.color.set(color); m.color.lerp(new THREE.Color('#ffffff'),.3); }); }
 function makeRemote(p){
   const root=avatar.clone(true); root.visible=true; root.position.set(0,0,3); scene.add(root);
   const r={root,apronMats:[],eyes:[],phase:0,t:null,sayN:null,bubbleUntil:0};
