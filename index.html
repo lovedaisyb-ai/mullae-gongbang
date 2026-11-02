@@ -748,24 +748,24 @@ P(new THREE.CylinderGeometry(.03,.03,.11,14),sprayMat,.78,-.352,.075); P(new THR
       p.setXYZ(i,sp(v.x,e)*hx*n,sp(v.y,e*1.2)*hy*n,sp(v.z,e*.7)*hz); }
     g.computeVertexNormals(); return g;
   }
-  const clayGrey=new THREE.MeshStandardMaterial({color:'#6e6861',roughness:.85});
-  const wrap=new THREE.MeshStandardMaterial({color:'#f4f4f2',roughness:.15,metalness:.05,transparent:true,opacity:.24,depthWrite:false});
-  const BX=.078,BY=.062,BZ=.17;
+  const clayGrey=new THREE.MeshStandardMaterial({color:'#2e2a26',roughness:.85}); // colours here are linear, so this reads as a mid grey-brown
+  const wrap=new THREE.MeshStandardMaterial({color:'#d9d9d5',roughness:.3,metalness:0,transparent:true,opacity:.14,depthWrite:false});
+  const BX=.11,BY=.087,BZ=.24; // larger blocks
   function bag(x,y,z,ry){
     const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.set(rnd(-.03,.03),ry,rnd(-.04,.04)); scene.add(g);
     const c=new THREE.Mesh(blockGeo(BX,BY,BZ,.45,0),clayGrey); c.castShadow=c.receiveShadow=true; g.add(c);
     const w=new THREE.Mesh(blockGeo(BX+.006,BY+.006,BZ+.012,.42,.07),wrap); w.renderOrder=3; g.add(w);
     // bunched plastic at both ends
-    [-1,1].forEach(s=>{ const f=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),wrap); f.scale.set(BX*.9,BY*.8,.03); f.position.z=s*(BZ+.02); f.renderOrder=3; g.add(f); });
+    [-1,1].forEach(s=>{ const f=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),wrap); f.scale.set(BX*.9,BY*.8,.03); f.position.z=s*(BZ+.025); f.renderOrder=3; g.add(f); });
   }
   // under the pegboard, between the wedging table and the wall; long side along the wall
-  const X0=5.34, Z0=2.12, layers=[[4,2],[4,2],[2,2]];
+  const X0=5.18, Z0=1.0, layers=[[4,2],[4,2],[2,2]];
   layers.forEach(([nx,nz],L)=>{
-    const off=(4-nx)/2*.165;
+    const off=(4-nx)/2*.232;
     for(let i=0;i<nx;i++) for(let j=0;j<nz;j++)
-      bag(X0+off+i*.165+rnd(-.008,.008), BY+.002+L*(BY*2-.004), Z0+j*.37+rnd(-.015,.015), rnd(-.05,.05));
+      bag(X0+off+i*.232+rnd(-.01,.01), BY+.002+L*(BY*2-.006), Z0+j*.52+rnd(-.02,.02), rnd(-.05,.05));
   });
-  collide(5.24,5.98,1.9,2.72);
+  collide(5.05,5.99,.72,1.8);
 }
 
 /* ---------- spare aprons on the back wall ---------- */
