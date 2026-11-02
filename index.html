@@ -749,14 +749,16 @@ P(new THREE.CylinderGeometry(.03,.03,.11,14),sprayMat,.78,-.352,.075); P(new THR
     g.computeVertexNormals(); return g;
   }
   const clayGrey=new THREE.MeshStandardMaterial({color:'#2e2a26',roughness:.85}); // colours here are linear, so this reads as a mid grey-brown
-  const wrap=new THREE.MeshStandardMaterial({color:'#d9d9d5',roughness:.3,metalness:0,transparent:true,opacity:.14,depthWrite:false});
+  const wrap=new THREE.MeshStandardMaterial({color:'#eef2f4',roughness:.12,metalness:.1,transparent:true,opacity:.32,depthWrite:false,side:THREE.DoubleSide});
   const BX=.11,BY=.087,BZ=.24; // larger blocks
   function bag(x,y,z,ry){
     const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.set(rnd(-.03,.03),ry,rnd(-.04,.04)); scene.add(g);
     const c=new THREE.Mesh(blockGeo(BX,BY,BZ,.45,0),clayGrey); c.castShadow=c.receiveShadow=true; g.add(c);
-    const w=new THREE.Mesh(blockGeo(BX+.006,BY+.006,BZ+.012,.42,.07),wrap); w.renderOrder=3; g.add(w);
+    const w=new THREE.Mesh(blockGeo(BX+.009,BY+.009,BZ+.016,.42,.14),wrap); w.renderOrder=3; g.add(w);
     // bunched plastic at both ends
-    [-1,1].forEach(s=>{ const f=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),wrap); f.scale.set(BX*.9,BY*.8,.03); f.position.z=s*(BZ+.025); f.renderOrder=3; g.add(f); });
+    // gathered, twisted plastic at both ends
+    [-1,1].forEach(s=>{ const f=new THREE.Mesh(new THREE.ConeGeometry(BX*.75,.07,10,1,true),wrap); f.rotation.x=s*Math.PI/2; f.position.z=s*(BZ+.04); f.renderOrder=3; g.add(f);
+      const t=new THREE.Mesh(new THREE.SphereGeometry(.018,8,6),wrap); t.scale.set(1.4,.8,1.2); t.position.z=s*(BZ+.08); t.renderOrder=3; g.add(t); });
   }
   // under the pegboard, between the wedging table and the wall; long side along the wall
   const X0=5.18, Z0=1.0, layers=[[4,2],[4,2],[2,2]];
@@ -785,10 +787,52 @@ function apronShape(){
 
 
 // kiln
-const kiln=box(1.0,1.0,.9,M.kiln,4.9,.55,-3.6); box(1.06,.08,.96,M.frame,4.9,1.09,-3.6);
-box(.04,.18,.5,M.steel,4.38,.7,-3.6); collide(4.35,5.45,-4.1,-3.1);
-const kilnLabel=new THREE.Mesh(new THREE.PlaneGeometry(.6,.14),new THREE.MeshBasicMaterial({map:textTex(['전기가마 · 1250°C'],{w:300,h:70,bg:'#7c7f80',fg:'#1e2120',titleFont:'28px "Gowun Dodum", sans-serif',font:'',pad:14,lh:30,gap:0})}));
-kilnLabel.rotation.y=-Math.PI/2; kilnLabel.position.set(4.39,.95,-3.6); scene.add(kilnLabel);
+// kiln: small octagonal electric kiln (cream body, light-blue lid and base, control panel on the front).
+// Same footprint as before (about 1m across, 1.1m tall), front facing the room (-x).
+{
+  const KX=4.9, KZ=-3.6, A=.5, R=A/Math.cos(Math.PI/8);           // apothem 0.5 -> 1m across the flats
+  const g=new THREE.Group(); g.position.set(KX,0,KZ); scene.add(g);
+  const cream=new THREE.MeshStandardMaterial({color:'#e6e1d2',roughness:.55});
+  const blue=new THREE.MeshStandardMaterial({color:'#2f7690',roughness:.45});
+  const dark=new THREE.MeshStandardMaterial({color:'#2a2c2e',roughness:.6});
+  const steelK=new THREE.MeshStandardMaterial({color:'#c9cdd0',roughness:.25,metalness:.85});
+  const topTex=canvasTex(512,512,(c,w,h)=>{ c.fillStyle='#5d9db3'; c.fillRect(0,0,w,h); c.fillStyle='rgba(30,50,60,.55)';
+    for(let arm=0;arm<24;arm++) for(let k=0;k<12;k++){ const r=60+k*14, a=arm/24*Math.PI*2+k*.09; c.beginPath(); c.arc(w/2+Math.cos(a)*r,h/2+Math.sin(a)*r,2.6,0,7); c.fill(); }
+    c.fillStyle='#1c1f21'; c.beginPath(); c.arc(w/2,h/2,26,0,7); c.fill(); });
+  const topMat=new THREE.MeshStandardMaterial({map:topTex,roughness:.45});
+  const oct=(r1,r2,hgt,mats,y)=>{ const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,hgt,8),mats); m.rotation.y=Math.PI/8; m.position.y=y; m.castShadow=m.receiveShadow=true; g.add(m); return m; };
+  oct(R*1.01,R*1.03,.05,blue,.025);                                  // base rim
+  oct(R,R,.64,cream,.05+.32);                                         // body
+  oct(R*.97,R*.97,.02,dark,.7);                                       // dark seal under the lid
+  oct(R*1.04,R*1.04,.36,[blue,topMat,blue],.71+.18);                  // lid
+  const add=(geo,mat,x,y,z,ry)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); if(ry!==undefined) m.rotation.y=ry; m.castShadow=true; g.add(m); return m; };
+  // control panel on the front face
+  const panelTex=canvasTex(256,400,(c,w,h)=>{
+    c.fillStyle='#ece5c8'; c.fillRect(0,0,w,h); c.strokeStyle='#b9b08e'; c.lineWidth=4; c.strokeRect(2,2,w-4,h-4);
+    c.fillStyle='#2a0d0d'; c.fillRect(22,22,w-44,46); c.fillStyle='#ff3b30'; c.font='bold 34px monospace'; c.textAlign='center'; c.fillText('1250',w/2,58);
+    c.strokeStyle='#5a3a2a'; c.lineWidth=3; c.beginPath(); c.moveTo(30,140); c.lineTo(80,120); c.lineTo(120,96); c.lineTo(170,96); c.lineTo(226,150); c.stroke();
+    [[40,110],[100,92],[190,92],[226,120]].forEach(([x,y])=>{ c.fillStyle='#e24a2c'; c.beginPath(); c.arc(x,y,9,0,7); c.fill(); });
+    c.fillStyle='#d23b2b'; for(let i=0;i<5;i++) c.fillRect(24+i*44,168,36,10);
+    for(let r=0;r<4;r++) for(let k=0;k<3;k++){ c.fillStyle='#f0b822'; c.beginPath(); c.arc(130+k*38,212+r*38,15,0,7); c.fill(); }
+    for(let r=0;r<3;r++){ c.fillStyle='#e9c75a'; c.fillRect(30,198+r*44,44,30); }
+    c.fillStyle='#e05a9a'; c.beginPath(); c.arc(206,350,20,0,7); c.fill();
+    c.fillStyle='#2f8a3a'; c.font='bold 22px sans-serif'; c.textAlign='left'; c.fillText('Nidec',30,372);
+  });
+  add(new THREE.PlaneGeometry(.17,.27),new THREE.MeshStandardMaterial({map:panelTex,roughness:.5}),-A-.003,.47,0,-Math.PI/2);
+  add(new THREE.BoxGeometry(.012,.07,.05),new THREE.MeshStandardMaterial({color:'#f2f2ee',roughness:.4}),-A-.006,.25,.07);
+  // "Petit" label and handle on the lid front
+  const lbl=textTex(['Petit'],{w:200,h:60,bg:'#e9eef0',fg:'#4a8aa0',titleFont:'40px "Gowun Batang", serif',font:'',pad:12,lh:44,gap:0});
+  add(new THREE.PlaneGeometry(.13,.04),new THREE.MeshStandardMaterial({map:lbl,roughness:.6}),-A*1.04-.003,.96,0,-Math.PI/2);
+  add(new THREE.CylinderGeometry(.007,.007,.16,10),steelK,-A*1.04-.035,.85,0).rotation.x=Math.PI/2;   // handle bar
+  [-1,1].forEach(s=>add(new THREE.CylinderGeometry(.006,.006,.035,8),steelK,-A*1.04-.018,.85,s*.08).rotation.z=Math.PI/2);
+  // latches on the two front corner faces
+  [-1,1].forEach(s=>{ const a=Math.PI+s*Math.PI/4, nx=Math.cos(a), nz=Math.sin(a);
+    const L=add(new THREE.BoxGeometry(.012,.12,.05),steelK,nx*(A+.008),.68,nz*(A+.008)); L.rotation.y=-a;
+    const H=add(new THREE.BoxGeometry(.016,.03,.06),steelK,nx*(A+.012),.62,nz*(A+.012)); H.rotation.y=-a; });
+  // little bolts down the front edges
+  for(let k=0;k<8;k++){ const a=Math.PI+(k-3.5)*Math.PI/4; if(Math.cos(a)>-.3) continue; [.1,.66].forEach(y=>add(new THREE.SphereGeometry(.006,8,6),steelK,Math.cos(a)*R*1.002,y,Math.sin(a)*R*1.002)); }
+}
+collide(4.35,5.45,-4.1,-3.1);
 
 // wedging table
 box(1.4,.06,.8,M.plaster,4.4,.86,2.4); box(1.42,.08,.82,M.woodDark,4.4,.8,2.4);
