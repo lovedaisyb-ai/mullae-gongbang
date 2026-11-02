@@ -1064,7 +1064,7 @@ let yaw=0, pitch=.3, camDist=2.8;
 let mode='walk', active=null, tool='center';
 let pressing=false, ptr={x:0,y:0}, lastPtrY=0, pullAcc=0, pushAcc=0, dragging=null;
 const isTouch=matchMedia('(pointer:coarse)').matches;
-$('joy').hidden=!isTouch;
+$('joy').hidden=true; // phones move by tapping the floor; the joystick is never shown
 
 addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT') return;
@@ -1222,7 +1222,7 @@ function finishStand(){
   hideHands();
   const S=active.seat; resetPose();
   mode='walk'; avatar.visible=true; avatar.position.set(S.x,0,S.z+.28); avatar.rotation.y=0; yaw=0;
-  $('joy').hidden=!isTouch; $('chat').hidden=!room; $('help').style.visibility='';
+  $('chat').hidden=!room; $('help').style.visibility='';
   $('sub').textContent='물레실 · 산책 중'; active=null;
 }
 
