@@ -761,13 +761,13 @@ P(new THREE.CylinderGeometry(.03,.03,.11,14),sprayMat,.78,-.352,.075); P(new THR
       const t=new THREE.Mesh(new THREE.SphereGeometry(.018,8,6),wrap); t.scale.set(1.4,.8,1.2); t.position.z=s*(BZ+.08); t.renderOrder=3; g.add(t); });
   }
   // under the pegboard, between the wedging table and the wall; long side along the wall
-  const X0=5.18, Z0=1.0, layers=[[4,2],[4,2],[2,2]];
+  const X0=5.18, Z0=-.08, layers=[[4,2],[4,2],[2,2]];
   layers.forEach(([nx,nz],L)=>{
     const off=(4-nx)/2*.232;
     for(let i=0;i<nx;i++) for(let j=0;j<nz;j++)
       bag(X0+off+i*.232+rnd(-.01,.01), BY+.002+L*(BY*2-.006), Z0+j*.52+rnd(-.02,.02), rnd(-.05,.05));
   });
-  collide(5.05,5.99,.72,1.8);
+  collide(5.05,5.99,-.36,.72);
 }
 
 /* ---------- spare aprons on the back wall ---------- */
@@ -837,7 +837,7 @@ collide(4.35,5.45,-4.1,-3.1);
 // utility sink (where the wedging table used to stand): white ceramic basin with a washboard,
 // chrome gooseneck tap, stainless frame with a towel bar and a slatted lower shelf. Faces the room (-x).
 {
-  const g=new THREE.Group(); g.position.set(4.4,0,2.4); g.rotation.y=-Math.PI/2; scene.add(g);
+  const g=new THREE.Group(); g.position.set(5.7,0,1.85); g.rotation.y=-Math.PI/2; scene.add(g); // against the right wall, under the pegboard
   const cer=new THREE.MeshStandardMaterial({color:'#f2f2ef',roughness:.15});
   const chrome=new THREE.MeshStandardMaterial({color:'#c8ccd0',roughness:.3,metalness:.35});
   const drk=new THREE.MeshStandardMaterial({color:'#3a3a3a',roughness:.5});
@@ -871,7 +871,7 @@ collide(4.35,5.45,-4.1,-3.1);
   [0,1,2].forEach(k=>add(new THREE.BoxGeometry(.34,.035,.24),towelM,-.12,.26+k*.036,0));                   // folded towels below
   add(new THREE.SphereGeometry(.035,10,8),new THREE.MeshStandardMaterial({color:'#b9a27a',roughness:1}),.12,.27,.02).scale.set(1.2,.6,.9); // scrub brush
 }
-collide(4.08,4.72,1.92,2.88);
+collide(5.4,6,1.38,2.32);
 // the plaster wedging table now stands along the right wall, next to the pug mill
 box(.8,.06,1.4,M.plaster,5.55,.86,3.1); box(.82,.08,1.42,M.woodDark,5.55,.8,3.1);
 [[-.33,-.62],[.33,-.62],[-.33,.62],[.33,.62]].forEach(([dx,dz])=>box(.07,.78,.07,M.woodDark,5.55+dx,.39,3.1+dz));
