@@ -529,6 +529,68 @@ collide(3.58,4.36,-4.35,-4.1);
   speaker(3.3,-RZ+.32,-.18);   // right of the shelving
 }
 
+/* ---------- terracotta potted plants beside the speakers ---------- */
+{
+  const terra=new THREE.MeshStandardMaterial({color:'#c99a72',roughness:.95});
+  const terraDk=new THREE.MeshStandardMaterial({color:'#b5845e',roughness:.95});
+  const soil=new THREE.MeshStandardMaterial({color:'#3b2c22',roughness:1});
+  const pebble=new THREE.MeshStandardMaterial({color:'#e9e6df',roughness:.7});
+  const bark=new THREE.MeshStandardMaterial({color:'#6b5544',roughness:.9});
+  const tagM=new THREE.MeshStandardMaterial({color:'#1f1f1f',roughness:.6});
+  const leafGeo=new THREE.SphereGeometry(1,8,6);
+  const q=new THREE.Quaternion(), e=new THREE.Euler(), sc=new THREE.Vector3(), m4=new THREE.Matrix4(), p3=new THREE.Vector3();
+  function pot(g,r,h){
+    const add=(geo,mat,y)=>{ const m=new THREE.Mesh(geo,mat); m.position.y=y; m.castShadow=m.receiveShadow=true; g.add(m); return m; };
+    add(new THREE.CylinderGeometry(r,r*.82,h,28,1,true),terra,h/2).material.side=THREE.DoubleSide;
+    add(new THREE.CylinderGeometry(r*.82,r*.82,.01,28),terra,.005);
+    add(new THREE.TorusGeometry(r*1.0,.012,8,32),terraDk,h-.006).rotation.x=Math.PI/2;
+    add(new THREE.CylinderGeometry(r*.97,r*.97,.01,28),soil,h-.03);
+    for(let i=0;i<9;i++){ const a=rnd(0,6.28), d=rnd(.03,r*.8), pb=new THREE.Mesh(new THREE.SphereGeometry(rnd(.012,.02),8,6),pebble); pb.scale.y=.6; pb.position.set(Math.cos(a)*d,h-.022,Math.sin(a)*d); g.add(pb); }
+    // little black name tag stuck in the soil
+    const tg=new THREE.Mesh(new THREE.BoxGeometry(.045,.035,.004),tagM); tg.position.set(r*.45,h+.02,r*.35); tg.rotation.set(-.15,.4,0); g.add(tg);
+    const st=new THREE.Mesh(new THREE.CylinderGeometry(.002,.002,.05,4),tagM); st.position.set(r*.45,h-.005,r*.35); g.add(st);
+  }
+  function stem(g,a,b,r){ const d=b.clone().sub(a), m=new THREE.Mesh(new THREE.CylinderGeometry(r*.7,r,d.length(),8),bark); m.position.copy(a).addScaledVector(d,.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()); m.castShadow=true; g.add(m); }
+  function leaves(g,n,color,size,place){
+    const mat=new THREE.MeshStandardMaterial({color,roughness:.6}), im=new THREE.InstancedMesh(leafGeo,mat,n); im.castShadow=true;
+    const c=new THREE.Color(color);
+    for(let i=0;i<n;i++){ place(p3,i); e.set(rnd(-1.2,1.2),rnd(0,6.28),rnd(-1.2,1.2)); q.setFromEuler(e); sc.set(size[0]*rnd(.8,1.2),size[1],size[2]*rnd(.8,1.2));
+      m4.compose(p3,q,sc); im.setMatrixAt(i,m4); im.setColorAt(i,c.clone().offsetHSL(rnd(-.02,.02),0,rnd(-.06,.05))); }
+    g.add(im); return im;
+  }
+  const ball=(cx,cy,cz,rx,ry,rz)=>v=>{ let x,y,z; do{ x=rnd(-1,1); y=rnd(-1,1); z=rnd(-1,1); }while(x*x+y*y+z*z>1); return v.set(cx+x*rx,cy+y*ry,cz+z*rz); };
+  function plant(x,z,kind){
+    const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=rnd(0,6.28); scene.add(g);
+    const r=kind==='coffee'?.16:kind==='kumquat'?.14:.15, h=kind==='kumquat'?.26:.3, top=h-.03;
+    pot(g,r,h);
+    const V=(a,b,c)=>new THREE.Vector3(a,b,c);
+    if(kind==='olive'){        // thin trunk, airy silver-green crown
+      stem(g,V(0,top,0),V(.02,top+.75,0),.012); stem(g,V(.01,top+.45,0),V(.15,top+.7,.04),.006); stem(g,V(.015,top+.55,0),V(-.12,top+.8,-.03),.006);
+      const b=ball(.01,top+.8,0,.24,.22,.2); leaves(g,220,'#8ea38a',[.007,.003,.024],v=>b(v));
+    } else if(kind==='kumquat'){ // short trunk, dense round crown with little orange fruits
+      stem(g,V(0,top,0),V(0,top+.28,0),.014);
+      const b=ball(0,top+.42,0,.2,.18,.2); leaves(g,260,'#3f6b3a',[.014,.004,.028],v=>b(v));
+      for(let i=0;i<10;i++){ const f=new THREE.Mesh(new THREE.SphereGeometry(.016,10,8),new THREE.MeshStandardMaterial({color:'#e8962b',roughness:.4})); b(f.position); f.position.multiplyScalar(1); g.add(f); }
+    } else if(kind==='willow'){ // narrow leaves arching out of several stems
+      for(let s=0;s<6;s++){ const a=s/6*6.28, tip=V(Math.cos(a)*.18,top+rnd(.45,.7),Math.sin(a)*.18); stem(g,V(0,top,0),tip,.005);
+        leaves(g,26,'#5d8d50',[.006,.003,.05],(v,i)=>v.set(0,top,0).lerp(tip,.25+i/26*.75).add(V(rnd(-.03,.03),rnd(-.02,.02),rnd(-.03,.03)))); }
+    } else if(kind==='coffee'){  // a few stems of big glossy leaves
+      for(let s=0;s<4;s++){ const a=s/4*6.28+.4, tip=V(Math.cos(a)*.14,top+rnd(.4,.6),Math.sin(a)*.14); stem(g,V(0,top,0),tip,.007);
+        const im=leaves(g,9,'#2e5a32',[.045,.005,.09],(v,i)=>v.set(0,top,0).lerp(tip,.35+i/9*.65).add(V(rnd(-.06,.06),rnd(-.02,.02),rnd(-.06,.06)))); im.material.roughness=.35; }
+    } else {                     // eucalyptus: tall stem with paired round leaves
+      stem(g,V(0,top,0),V(.03,top+1.0,.02),.01); stem(g,V(.01,top+.5,0),V(.18,top+.85,.05),.006); stem(g,V(.02,top+.65,.01),V(-.14,top+.95,-.04),.006);
+      const pts=[[V(0,top+.25,0),V(.03,top+1.0,.02)],[V(.01,top+.5,0),V(.18,top+.85,.05)],[V(.02,top+.65,.01),V(-.14,top+.95,-.04)]];
+      pts.forEach(([a,b])=>leaves(g,34,'#7aa86a',[.02,.003,.026],(v,i)=>v.copy(a).lerp(b,i/34).add(V(rnd(-.04,.04),rnd(-.01,.01),rnd(-.04,.04)))));
+    }
+    collide(x-r-.03,x+r+.03,z-r-.03,z+r+.03);
+  }
+  plant(-3.66,-4.22,'olive');     // left speaker: tall olive in the corner by the table
+  plant(-2.98,-4.12,'kumquat');   // and a kumquat on its other side
+  plant(2.98,-4.12,'willow');     // right speaker: narrow-leaf plant
+  plant(3.64,-3.84,'coffee');     // coffee plant in front of the bricks
+  plant(4.02,-3.76,'eucalyptus'); // tall eucalyptus by the kiln
+}
+
 // local fallback slots (used only when the shared shelf is unavailable): the shared shelf by the door
 const shelfSlots=[]; for(let i=0;i<8;i++) shelfSlots.push(new THREE.Vector3(-2.75+i*.61,1.07,RZ-.18));
 let savedPots=[], saveIndex=0;
