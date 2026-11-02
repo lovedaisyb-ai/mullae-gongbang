@@ -737,6 +737,37 @@ P(new THREE.CylinderGeometry(.03,.03,.11,14),sprayMat,.78,-.352,.075); P(new THR
   [-1,1].forEach(s=>P(new THREE.CylinderGeometry(.009,.009,.06,10),M.woodDark,.72+s*.15,-.02,.05,[0,0,Math.PI/2]));
 }
 
+/* ---------- a stack of 20 plastic-wrapped 10kg clay blocks under the pegboard ---------- */
+{
+  // soft rounded block: a sphere pushed out toward a box (superellipsoid)
+  function blockGeo(hx,hy,hz,e,jit){
+    const g=new THREE.SphereGeometry(1,22,14), p=g.attributes.position, v=new THREE.Vector3();
+    const sp=(a,k)=>Math.sign(a)*Math.pow(Math.abs(a),k);
+    for(let i=0;i<p.count;i++){ v.fromBufferAttribute(p,i);
+      const n=jit?1+(Math.random()-.5)*jit:1;
+      p.setXYZ(i,sp(v.x,e)*hx*n,sp(v.y,e*1.2)*hy*n,sp(v.z,e*.7)*hz); }
+    g.computeVertexNormals(); return g;
+  }
+  const clayGrey=new THREE.MeshStandardMaterial({color:'#6e6861',roughness:.85});
+  const wrap=new THREE.MeshStandardMaterial({color:'#f4f4f2',roughness:.15,metalness:.05,transparent:true,opacity:.24,depthWrite:false});
+  const BX=.078,BY=.062,BZ=.17;
+  function bag(x,y,z,ry){
+    const g=new THREE.Group(); g.position.set(x,y,z); g.rotation.set(rnd(-.03,.03),ry,rnd(-.04,.04)); scene.add(g);
+    const c=new THREE.Mesh(blockGeo(BX,BY,BZ,.45,0),clayGrey); c.castShadow=c.receiveShadow=true; g.add(c);
+    const w=new THREE.Mesh(blockGeo(BX+.006,BY+.006,BZ+.012,.42,.07),wrap); w.renderOrder=3; g.add(w);
+    // bunched plastic at both ends
+    [-1,1].forEach(s=>{ const f=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),wrap); f.scale.set(BX*.9,BY*.8,.03); f.position.z=s*(BZ+.02); f.renderOrder=3; g.add(f); });
+  }
+  // under the pegboard, between the wedging table and the wall; long side along the wall
+  const X0=5.34, Z0=2.12, layers=[[4,2],[4,2],[2,2]];
+  layers.forEach(([nx,nz],L)=>{
+    const off=(4-nx)/2*.165;
+    for(let i=0;i<nx;i++) for(let j=0;j<nz;j++)
+      bag(X0+off+i*.165+rnd(-.008,.008), BY+.002+L*(BY*2-.004), Z0+j*.37+rnd(-.015,.015), rnd(-.05,.05));
+  });
+  collide(5.24,5.98,1.9,2.72);
+}
+
 /* ---------- spare aprons on the back wall ---------- */
 function apronShape(){
   const s=new THREE.Shape(); s.moveTo(-.11,.35); s.lineTo(.11,.35); s.lineTo(.13,.15); s.quadraticCurveTo(.24,.12,.25,.05);
