@@ -483,8 +483,52 @@ railShelf(1.4,2.95,1.12,mix(1.55,.27));
 railShelf(-1.5,.75,.82,mix(2.25,.27));
 railShelf(-1.5,.75,.56,[...mix(1.7,.23),['tiles',.4]]);
 // soft kiln bricks stacked on the floor by the kiln
-for(let i=0;i<9;i++){ const col=i%3, row=(i/3)|0; box(.23,.065,.115,M.plaster,3.35+col*.24,.0325+row*.066,-4.25+((row%2)?.06:0)); }
-collide(3.2,4.0,-4.35,-4.1);
+for(let i=0;i<9;i++){ const col=i%3, row=(i/3)|0; box(.23,.065,.115,M.plaster,3.72+col*.24,.0325+row*.066,-4.25+((row%2)?.06:0)); }
+collide(3.58,4.36,-4.35,-4.1);
+/* ---------- a pair of walnut bookshelf speakers on black stands, either side of the back-wall shelving ---------- */
+{
+  const walnutTex=canvasTex(256,256,(g,w,h)=>{
+    g.fillStyle='#7a4a2a'; g.fillRect(0,0,w,h);
+    for(let i=0;i<60;i++){ const x=rnd(0,w), a=rnd(.08,.22), wob=rnd(3,12), ph=rnd(0,6);
+      g.strokeStyle=Math.random()<.55?`rgba(60,32,15,${a})`:`rgba(170,110,65,${a})`; g.lineWidth=rnd(1,4);
+      g.beginPath(); for(let y=0;y<=h;y+=12){ const xx=x+Math.sin(y/50+ph)*wob; y?g.lineTo(xx,y):g.moveTo(xx,y); } g.stroke(); }
+  });
+  const walnut=new THREE.MeshStandardMaterial({map:walnutTex,roughness:.45});
+  const metal=new THREE.MeshStandardMaterial({color:'#b9bcbf',roughness:.3,metalness:.8});
+  const cone=new THREE.MeshStandardMaterial({color:'#d4d7da',roughness:.25,metalness:.75,side:THREE.DoubleSide});
+  const rubber=new THREE.MeshStandardMaterial({color:'#1d1d1f',roughness:.8});
+  const gold=new THREE.MeshStandardMaterial({color:'#b8792f',roughness:.35,metalness:.7});
+  const black=new THREE.MeshStandardMaterial({color:'#1f1f22',roughness:.5,metalness:.3});
+  function speaker(x,z,toe){
+    const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=toe; scene.add(g);
+    const add=(geo,mat,px,py,pz,rx)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(px,py,pz); if(rx) m.rotation.x=rx; m.castShadow=m.receiveShadow=true; g.add(m); return m; };
+    // stand: base plate, column, top plate
+    add(new THREE.BoxGeometry(.3,.02,.3),black,0,.01,0);
+    add(new THREE.BoxGeometry(.06,.6,.06),black,0,.32,0);
+    add(new THREE.BoxGeometry(.2,.02,.22),black,0,.63,0);
+    // cabinet
+    const W=.19,H=.32,D=.25,Y=.64+H/2, F=D/2+.001;
+    add(new THREE.BoxGeometry(W,H,D),walnut,0,Y,0);
+    // tweeter: silver plate, black ring, gold dome
+    const ty=Y+H*.3;
+    add(new THREE.CylinderGeometry(.045,.045,.006,32),metal,0,ty,F,Math.PI/2);
+    add(new THREE.CylinderGeometry(.026,.026,.008,24),rubber,0,ty,F+.002,Math.PI/2);
+    add(new THREE.SphereGeometry(.016,20,12,0,Math.PI*2,0,Math.PI/2),gold,0,ty,F+.004,Math.PI/2);
+    // woofer: silver trim ring with screws, black rubber surround, silver cone, dust cap
+    const wy=Y-H*.13;
+    add(new THREE.CylinderGeometry(.084,.084,.006,40),metal,0,wy,F,Math.PI/2);
+    add(new THREE.TorusGeometry(.064,.01,10,40),rubber,0,wy,F+.004);
+    add(new THREE.ConeGeometry(.058,.028,40,1,true),cone,0,wy,F-.009,-Math.PI/2);
+    add(new THREE.SphereGeometry(.016,16,10,0,Math.PI*2,0,Math.PI/2),rubber,0,wy,F-.004,Math.PI/2);
+    for(let k=0;k<6;k++){ const a=k/6*Math.PI*2+Math.PI/6; add(new THREE.CylinderGeometry(.004,.004,.004,8),rubber,Math.cos(a)*.076,wy+Math.sin(a)*.076,F+.004,Math.PI/2); }
+    // corner screw holes on the baffle
+    [[-1,1],[1,1],[-1,-1],[1,-1]].forEach(([sx,sy])=>add(new THREE.CylinderGeometry(.006,.006,.003,10),rubber,sx*(W/2-.018),Y+sy*(H/2-.018),F,Math.PI/2));
+    collide(x-.17,x+.17,z-.17,z+.17);
+  }
+  speaker(-3.3,-RZ+.32,.18);   // left of the shelving, toed in toward the room's centre
+  speaker(3.3,-RZ+.32,-.18);   // right of the shelving
+}
+
 // local fallback slots (used only when the shared shelf is unavailable): the shared shelf by the door
 const shelfSlots=[]; for(let i=0;i<8;i++) shelfSlots.push(new THREE.Vector3(-2.75+i*.61,1.07,RZ-.18));
 let savedPots=[], saveIndex=0;
