@@ -881,7 +881,7 @@ const lump2=lump.clone(); lump2.position.set(5.6,.94,3.25); lump2.scale.set(1.1,
 
 // pug mill (clay mixer) in the front-right corner: yellow base on casters, white barrel, hopper and motor box
 {
-  const g=new THREE.Group(); g.position.set(4.7,0,4.13); g.rotation.y=Math.PI; scene.add(g); // front faces the room (-z)
+  const g=new THREE.Group(); g.position.set(5.26,0,4.13); g.rotation.y=Math.PI; scene.add(g); // front faces the room (-z), pushed into the corner
   const yel=new THREE.MeshStandardMaterial({color:'#d4a516',roughness:.5});
   const wht=new THREE.MeshStandardMaterial({color:'#e9e5da',roughness:.4});
   const stl=new THREE.MeshStandardMaterial({color:'#b9bcbf',roughness:.3,metalness:.8});
@@ -914,7 +914,7 @@ const lump2=lump.clone(); lump2.position.set(5.6,.94,3.25); lump2.scale.set(1.1,
   const lab=textTex(['SY-2000'],{w:240,h:50,bg:'#c9302c',fg:'#ffffff',titleFont:'bold 34px sans-serif',font:'',pad:8,lh:40,gap:0});
   add(new THREE.PlaneGeometry(.22,.045),new THREE.MeshStandardMaterial({map:lab,roughness:.5}),.47,T+.37,.222);
 }
-collide(3.98,5.42,3.84,4.48);
+collide(4.54,5.99,3.84,4.48);
 
 // sketch board (right wall, under the clock): a cork board with separate paper sheets pinned on it.
 // Each sheet is its own small square texture (safe on every phone GPU) drawn with thick lines,
