@@ -651,7 +651,8 @@ function makeBucket(name,col,x,z,ry){
 // six under the back shelf, six more under the shared shelf by the door
 // big buckets no longer fit under the lowest shelves, so they stand in a row just in front of each shelf
 // 18 buckets: nine along the back shelving, nine in front of the shared shelf
-GLAZES.forEach(([n,c],i)=> i<9 ? makeBucket(n,c,-2.48+i*.62,-RZ+.66,rnd(-.15,.15)) : makeBucket(n,c,-2.48+(i-9)*.62,RZ-.66,Math.PI+rnd(-.15,.15)));
+// nine buckets along the back shelving (none in front of the shared shelf)
+GLAZES.slice(0,9).forEach(([n,c],i)=>makeBucket(n,c,-2.48+i*.62,-RZ+.66,rnd(-.15,.15)));
 // dipping tongs leaning on the last bucket
 { const t=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.42,6),M.steel); t.position.set(2.82,.36,-RZ+.72); t.scale.y=1.8; t.rotation.z=.35; t.castShadow=true; scene.add(t); }
 
@@ -698,6 +699,37 @@ P(new THREE.CylinderGeometry(.04,.034,.1,16),M.bisque,.1,-.357,.075);
 [0,1,2].forEach(k=>P(new THREE.CylinderGeometry(.1,.1,.02,28),M.plaster,.42,-.397+k*.021,.075));
 const sprayMat=new THREE.MeshStandardMaterial({color:'#9fc3d6',roughness:.2,transparent:true,opacity:.8});
 P(new THREE.CylinderGeometry(.03,.03,.11,14),sprayMat,.78,-.352,.075); P(new THREE.BoxGeometry(.03,.04,.05),M.frame,.78,-.277,.085);
+
+// more tools on the pegboard: two pairs of glaze dipping tongs, a hake brush, a sponge on a stick,
+// wooden knives, a hole cutter, a wooden paddle and a rolling pin
+{
+  const orange=new THREE.MeshStandardMaterial({color:'#e07a2e',roughness:.5});
+  const bristle=new THREE.MeshStandardMaterial({color:'#d8c7a8',roughness:.9});
+  function tongs(x,y0){
+    hook(x,y0+.012);
+    P(new THREE.TorusGeometry(.012,.003,6,14),M.steel,x,y0-.004,.03);
+    [-1,1].forEach(s=>{
+      P(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V3(x,y0-.012,.03),V3(x+s*.012,y0-.06,.03),V3(x+s*.03,y0-.2,.03),V3(x+s*.035,y0-.29,.03),V3(x+s*.022,y0-.31,.03)]),24,.0035,6),M.steel,0,0,0);
+      P(new THREE.CylinderGeometry(.008,.008,.07,10),orange,x+s*.016,y0-.1,.03,[0,0,-s*.12]);
+    });
+  }
+  tongs(-.47,-.04); tongs(-.34,-.04);
+  // hake brush
+  hook(-.18,-.03); P(new THREE.BoxGeometry(.05,.11,.012),M.wood,-.18,-.1,.025); P(new THREE.BoxGeometry(.062,.065,.009),bristle,-.18,-.187,.025);
+  // sponge on a stick
+  hook(-.06,-.03); P(new THREE.CylinderGeometry(.005,.005,.24,8),M.wood,-.06,-.16,.03);
+  P(new THREE.SphereGeometry(.03,12,10),sponge,-.06,-.29,.03,null,[1,.8,.8]);
+  // wooden knives
+  [.06,.13].forEach((x,i)=>{ hook(x,-.03); P(new THREE.BoxGeometry(.024,.17,.006),i?M.woodDark:M.wood,x,-.12,.03,[0,0,i?.04:-.04]); });
+  // hole cutter
+  hook(.24,-.03); P(new THREE.CylinderGeometry(.01,.011,.07,10),M.woodDark,.24,-.08,.03); P(new THREE.CylinderGeometry(.008,.008,.08,10,1,true),M.steel,.24,-.155,.03);
+  // wooden paddle
+  hook(.36,-.03); P(new THREE.BoxGeometry(.016,.08,.012),M.wood,.36,-.075,.03); P(new THREE.BoxGeometry(.06,.13,.01),M.wood,.36,-.18,.03);
+  // rolling pin resting on two hooks
+  hook(.58,-.04); hook(.86,-.04);
+  P(new THREE.CylinderGeometry(.02,.02,.24,16),M.wood,.72,-.02,.05,[0,0,Math.PI/2]);
+  [-1,1].forEach(s=>P(new THREE.CylinderGeometry(.009,.009,.06,10),M.woodDark,.72+s*.15,-.02,.05,[0,0,Math.PI/2]));
+}
 
 /* ---------- spare aprons on the back wall ---------- */
 function apronShape(){
