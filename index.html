@@ -1142,9 +1142,28 @@ $('finger').addEventListener('input',e=>{ fingerMM=+e.target.value; $('fingerOut
 $('sitBtn').addEventListener('click',trySit);
 $('standBtn').addEventListener('click',()=>stand());
 $('resetBtn').addEventListener('click',()=>{ if(!active) return; active.clay=newClay(); rebuild(active); setTool('center'); toast('새 흙 1kg을 올렸어요'); });
+let audioCtx=null;
+function fanfare(){
+  try{
+    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); const ac=audioCtx; if(ac.state==='suspended') ac.resume();
+    const out=ac.createGain(); out.gain.value=.22; out.connect(ac.destination);
+    // a little brass "ta-da-da-daaa": short pickups then a held major chord
+    const note=(f,t0,dur,vol=1)=>{ [1,2,3].forEach((h,k)=>{ const o=ac.createOscillator(), g=ac.createGain(), lp=ac.createBiquadFilter();
+        o.type=k?'sine':'sawtooth'; o.frequency.value=f*h; lp.type='lowpass'; lp.frequency.value=2200;
+        const v=vol*(k?.18/h:.5), t=ac.currentTime+t0;
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+.03); g.gain.setValueAtTime(v,t+dur-.08); g.gain.exponentialRampToValueAtTime(.0001,t+dur+.25);
+        o.connect(lp); lp.connect(g); g.connect(out); o.start(t); o.stop(t+dur+.3); }); };
+    note(523.25,0,.14); note(523.25,.16,.14); note(523.25,.32,.14); note(659.25,.48,.42);
+    note(587.33,.92,.18,.9); note(659.25,1.12,.18,.9);
+    [523.25,659.25,783.99,1046.5].forEach(f=>note(f,1.32,1.1,.7));
+  }catch(e){}
+}
 $('saveBtn').addEventListener('click',()=>{
   if(!active) return; const c=active.clay;
   if(c.open<.95){ warn('구멍을 뚫고 벽을 세워야 선반에 올릴 수 있어요'); return; }
+  // celebrate: show the finished pot on a ware board with confetti and a fanfare
+  fanfare();
+  openViewer({geometry:active.mesh.geometry.clone(),material:M.clay},'내 작품',true);
   if(sharedDb&&myId){ saveShared(c); }
   else {
     const m=new THREE.Mesh(active.mesh.geometry.clone(),M.clay); m.castShadow=m.receiveShadow=true; m.userData.t=Date.now();
@@ -1791,7 +1810,8 @@ const viewer={open:false};
 let vRenderer=null, vScene=null, vCam=null, vPot=null, vYaw=0, vTilt=.3, vDist=1, vTarget=.1, vAuto=true;
 const vPtrs=new Map(); let vPinch=0;
 function resizeViewer(){ if(!vRenderer) return; const c=$('vc'), w=c.clientWidth||innerWidth, h=c.clientHeight||innerHeight; vRenderer.setSize(w,h,false); vCam.aspect=w/h; vCam.updateProjectionMatrix(); }
-function openViewer(mesh,title){
+let party=null;   // celebration state while the viewer shows a just-finished pot
+function openViewer(mesh,title,celebrate){
   if(!vRenderer){
     vRenderer=new THREE.WebGLRenderer({canvas:$('vc'),antialias:true}); vRenderer.setPixelRatio(Math.min(devicePixelRatio,2));
     vRenderer.outputEncoding=THREE.sRGBEncoding; vRenderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -1800,20 +1820,42 @@ function openViewer(mesh,title){
     const d=new THREE.DirectionalLight('#fff0d6',1.25); d.position.set(1.5,2.5,2); vScene.add(d);
     const d2=new THREE.DirectionalLight('#ffd7a8',.45); d2.position.set(-2,1,-1.5); vScene.add(d2);
     const disc=new THREE.Mesh(new THREE.CylinderGeometry(1,1,.02,48),new THREE.MeshStandardMaterial({color:'#3a3f3d',roughness:.8})); disc.name='disc'; vScene.add(disc);
+    // a long wooden ware board, the plank finished pots are carried to the shelf on
+    const plankTex=canvasTex(256,64,(g,w,h)=>{ g.fillStyle='#b48a5e'; g.fillRect(0,0,w,h); for(let i=0;i<40;i++){ g.strokeStyle=Math.random()<.5?'rgba(120,80,45,.25)':'rgba(220,180,130,.2)'; g.lineWidth=Math.random()*2+.5; const y=Math.random()*h; g.beginPath(); g.moveTo(0,y); g.bezierCurveTo(w*.3,y+Math.random()*6-3,w*.7,y+Math.random()*6-3,w,y); g.stroke(); } });
+    const board=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshStandardMaterial({map:plankTex,roughness:.75})); board.name='board'; board.visible=false; vScene.add(board);
+    // confetti: one instanced mesh of little paper squares
+    const conf=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}),160); conf.name='confetti'; conf.visible=false; conf.frustumCulled=false;
+    const cols=['#e85d4a','#f2b33d','#4fae8a','#4a7fd1','#c86fc9','#f5f0e6'].map(c=>new THREE.Color(c));
+    for(let i=0;i<160;i++) conf.setColorAt(i,cols[i%cols.length]);
+    vScene.add(conf);
     vCam=new THREE.PerspectiveCamera(35,1,.01,50);
   }
   if(vPot) vScene.remove(vPot);
   if(!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
   const bb=mesh.geometry.boundingBox, h=bb.max.y, r=Math.max(bb.max.x,bb.max.z,-bb.min.x,-bb.min.z);
   vPot=new THREE.Mesh(mesh.geometry,mesh.material); vScene.add(vPot);
-  const disc=vScene.getObjectByName('disc'); disc.scale.set(r*1.4,1,r*1.4); disc.position.y=-.011;
+  const disc=vScene.getObjectByName('disc'), board=vScene.getObjectByName('board'), conf=vScene.getObjectByName('confetti');
+  disc.scale.set(r*1.4,1,r*1.4); disc.position.y=-.011; disc.visible=!celebrate;
+  board.visible=!!celebrate; board.scale.set(r*4.2,.018,r*1.9); board.position.y=-.009;
+  conf.visible=!!celebrate; party=null;
+  if(celebrate){ const S=Math.max(h,r*2); party={t:0,S,p:[]};
+    for(let i=0;i<160;i++) party.p.push({x:(Math.random()-.5)*S*2.4,y:S*(1.4+Math.random()*1.6),z:(Math.random()-.5)*S*1.4,vy:-S*(.35+Math.random()*.35),rx:Math.random()*6,ry:Math.random()*6,sp:2+Math.random()*5,sz:S*(.025+Math.random()*.02),sw:Math.random()*6}); }
   vDist=Math.max(h,r*2)*2.8; vTarget=h*.45; vYaw=0; vTilt=.3; vAuto=true;
-  $('vInfo').textContent=`${title} · 높이 ${(h*100).toFixed(1)}cm · 지름 ${(r*200).toFixed(1)}cm`;
+  $('vInfo').textContent=celebrate?`완성했어요! · 높이 ${(h*100).toFixed(1)}cm · 지름 ${(r*200).toFixed(1)}cm`:`${title} · 높이 ${(h*100).toFixed(1)}cm · 지름 ${(r*200).toFixed(1)}cm`;
+  $('vHint').textContent=celebrate?'나무판에 올려 선반으로 옮겨요 · 닫으면 계속 빚을 수 있어요':'드래그해서 돌려 보기 · 두 손가락이나 휠로 확대';
   $('viewer').hidden=false; viewer.open=true; resizeViewer();
+  // on a tall phone screen the sides are the tight edge: step back so the whole pot (and board) fits
+  if(vCam.aspect<1) vDist*=Math.min(2.2,.85/vCam.aspect);
 }
-function closeViewer(){ $('viewer').hidden=true; viewer.open=false; vPtrs.clear(); }
+function closeViewer(){ $('viewer').hidden=true; viewer.open=false; vPtrs.clear(); party=null; }
+const _cm=new THREE.Matrix4(), _cq=new THREE.Quaternion(), _ce=new THREE.Euler(), _cs=new THREE.Vector3(), _cp=new THREE.Vector3();
 function renderViewer(dt){
   if(vAuto) vYaw+=dt*.5;
+  if(party){ party.t+=dt; const conf=vScene.getObjectByName('confetti');
+    party.p.forEach((c,i)=>{ c.y+=c.vy*dt; if(c.y<0){ c.y=0; c.vy=0; } c.rx+=c.sp*dt*(c.y>0?1:0); c.ry+=c.sp*.7*dt*(c.y>0?1:0);
+      _cp.set(c.x+Math.sin(party.t*2+c.sw)*party.S*.05*(c.y>0?1:0),c.y,c.z); _ce.set(c.rx,c.ry,0); _cq.setFromEuler(_ce); _cs.set(c.sz,c.sz*1.4,1);
+      _cm.compose(_cp,_cq,_cs); conf.setMatrixAt(i,_cm); });
+    conf.instanceMatrix.needsUpdate=true; }
   vPot.rotation.y=vYaw;
   vCam.position.set(0,vTarget+Math.sin(vTilt)*vDist,Math.cos(vTilt)*vDist); vCam.lookAt(0,vTarget,0);
   vRenderer.render(vScene,vCam);
