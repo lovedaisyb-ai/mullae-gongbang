@@ -913,8 +913,6 @@ const cap=part(new THREE.SphereGeometry(.312,32,20,0,Math.PI*2,0,Math.PI*.46),AV
 [-.13,-.04,.05,.13].forEach((x,i)=>part(new THREE.SphereGeometry(.07,12,10),AV.hair,x,.15-Math.abs(x)*.2,.24-Math.abs(x)*.25,avHead,[1.1,.55,.6]));
 part(new THREE.SphereGeometry(.105,16,12),AV.hair,0,.27,-.13,avHead);
 const band=part(new THREE.TorusGeometry(.29,.028,10,40),AV.scarf,0,.1,-.02,avHead,[1,1,.97]); band.rotation.x=Math.PI/2-.38;
-part(new THREE.SphereGeometry(.045,10,8),AV.scarf,.06,.13,-.3,avHead,[1,.6,.6]);
-part(new THREE.SphereGeometry(.045,10,8),AV.scarf,-.03,.08,-.31,avHead,[.9,.6,.6]);
 avatar.position.set(.4,0,1.5); avatar.rotation.y=0;
 rig.name='rig'; legL.name='legL'; legR.name='legR'; armL.name='armL'; armR.name='armR'; avHead.name='head';
 
