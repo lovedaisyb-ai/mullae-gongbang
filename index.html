@@ -705,15 +705,21 @@ P(new THREE.CylinderGeometry(.03,.03,.11,14),sprayMat,.78,-.352,.075); P(new THR
 {
   const orange=new THREE.MeshStandardMaterial({color:'#e07a2e',roughness:.5});
   const bristle=new THREE.MeshStandardMaterial({color:'#d8c7a8',roughness:.9});
-  function tongs(x,y0){
-    hook(x,y0+.012);
-    P(new THREE.TorusGeometry(.012,.003,6,14),M.steel,x,y0-.004,.03);
+  // glaze dipping tongs (scissor type): thin steel arms with hooked tips above the pivot,
+  // red rubber-coated U-shaped handles below it. Hung by the pivot, in three sizes.
+  const red=new THREE.MeshStandardMaterial({color:'#b5101a',roughness:.35});
+  function tongs(x,y,H){
+    const k=H/.95, T=pts=>new THREE.CatmullRomCurve3(pts.map(([px,py])=>V3(x+px*k,y+py*k,.034)));
+    hook(x,y);
     [-1,1].forEach(s=>{
-      P(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V3(x,y0-.012,.03),V3(x+s*.012,y0-.06,.03),V3(x+s*.03,y0-.2,.03),V3(x+s*.035,y0-.29,.03),V3(x+s*.022,y0-.31,.03)]),24,.0035,6),M.steel,0,0,0);
-      P(new THREE.CylinderGeometry(.008,.008,.07,10),orange,x+s*.016,y0-.1,.03,[0,0,-s*.12]);
+      const m=([px,py])=>[s*px,py];
+      P(new THREE.TubeGeometry(T([[0,0],[.05,.07],[.1,.14],[.14,.36],[.19,.5],[.2,.55],[.17,.56],[.13,.52]].map(m)),36,Math.max(.0018,.007*k),6),M.steel,0,0,0);
+      P(new THREE.TubeGeometry(T([[.02,-.025],[.06,-.1],[.08,-.2],[.1,-.31],[.15,-.37],[.21,-.33],[.23,-.22],[.21,-.09]].map(m)),36,Math.max(.005,.024*k),10),red,0,0,0);
     });
+    P(new THREE.CylinderGeometry(.022*k+.004,.022*k+.004,.006,6),M.steel,x,y,.036,[Math.PI/2]);
+    P(new THREE.CylinderGeometry(.008,.008,.014,10),M.steel,x,y,.042,[Math.PI/2]);
   }
-  tongs(-.47,-.04); tongs(-.34,-.04);
+  tongs(-.53,-.15,.26); tongs(-.395,-.14,.21); tongs(-.275,-.13,.16);
   // hake brush
   hook(-.18,-.03); P(new THREE.BoxGeometry(.05,.11,.012),M.wood,-.18,-.1,.025); P(new THREE.BoxGeometry(.062,.065,.009),bristle,-.18,-.187,.025);
   // sponge on a stick
