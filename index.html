@@ -1425,7 +1425,7 @@ vintagePendant(scene,4.4,2.4,.95,true);
 [[-1.6,3.5],[1.6,3.5]].forEach(([x,z])=>{ vintagePendant(scene,x,z,.85,true); const l=new THREE.PointLight('#ffc27a',.5,3.2,2); l.position.set(x,RH-1.0,z); scene.add(l); });
 
 /* ---------- wall clock (live time) ---------- */
-const wallClock=new THREE.Group(); wallClock.position.set(RX-.03,2.66,-.4); wallClock.rotation.y=-Math.PI/2; scene.add(wallClock);
+const wallClock=new THREE.Group(); wallClock.position.set(3.95,1.6,-RZ+.03); scene.add(wallClock);   // back wall, to the right of the day calendar
 { const faceTex=canvasTex(512,512,(g,w,h)=>{
     g.fillStyle='#f3ead6'; g.beginPath(); g.arc(256,256,256,0,7); g.fill(); g.strokeStyle='#2b2420';
     for(let i=0;i<60;i++){ const a=i/60*Math.PI*2, r1=i%5?226:206, r2=242; g.lineWidth=i%5?3:8; g.beginPath(); g.moveTo(256+Math.sin(a)*r1,256-Math.cos(a)*r1); g.lineTo(256+Math.sin(a)*r2,256-Math.cos(a)*r2); g.stroke(); }
