@@ -900,10 +900,14 @@ function bakeSinkEnv(){ sinkGroup.visible=false; sinkCubeCam.update(renderer,sce
     const black=new THREE.MeshStandardMaterial({color:'#0e0e0e',roughness:.4});
     const labelTex=canvasTex(512,256,(g,w,h)=>{ g.fillStyle='#f4f2ec'; g.fillRect(0,0,w,h);
       const x0=w*.31, ww=w*.38;   // the visible front of the wrap
-      g.fillStyle='#222'; g.font='600 34px "Gowun Batang", serif'; g.textBaseline='top'; g.fillText('물레 공방',x0,h*.1);
-      g.font='15px system-ui,sans-serif'; g.fillText('Clay Studio Hand Wash',x0,h*.32);
-      g.fillStyle='#3a3a3a'; g.fillRect(x0,h*.42,ww,18); g.fillStyle='#f4f2ec'; g.font='12px system-ui,sans-serif'; g.fillText('흙 묻은 손을 부드럽게 · 500 mL',x0+4,h*.42+3);
-      g.fillStyle='rgba(30,30,30,.6)'; for(let k=0;k<6;k++) g.fillRect(x0,h*.56+k*14,ww*(k%3===2?.6:.95),3); });
+      g.fillStyle='#1d1d1d'; g.textBaseline='top';
+      g.font='32px Georgia, "Times New Roman", serif'; g.fillText('Mullae.',x0,h*.08);
+      g.font='bold 13px Helvetica, Arial, sans-serif'; g.fillText('Studio Clay-Rinse Hand Wash',x0,h*.3);
+      g.font='12px Helvetica, Arial, sans-serif'; g.fillText('Nettoyant pour les Mains',x0,h*.37);
+      g.fillStyle='#2b2b2b'; g.fillRect(x0,h*.46,ww,17); g.fillStyle='#f4f2ec'; g.font='bold 11px Helvetica, Arial, sans-serif'; g.fillText('Fig Leaf · Cedar · Sea Salt',x0+4,h*.46+3);
+      g.fillStyle='#333'; g.font='9.5px Helvetica, Arial, sans-serif';
+      ['A gentle cleanser for hands after a long','day at the wheel. Lifts clay and slip','without drying the skin.'].forEach((t,k)=>g.fillText(t,x0,h*.58+k*12));
+      g.fillText('500 mL / 16.9 fl oz',x0,h*.86); });
     const label=new THREE.MeshStandardMaterial({map:labelTex,roughness:.85});
     const prof=[[0,0],[R0-.003,0],[R0,.005],[R0,HB*.74],[R0*.97,HB*.8],[R0*.82,HB*.87],[R0*.55,HB*.92],[.012,HB*.95],[.012,HB]].map(v=>new THREE.Vector2(v[0],v[1]));
     const bodyGeo=new THREE.LatheGeometry(prof,36);
