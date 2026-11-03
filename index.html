@@ -1185,7 +1185,7 @@ wheels.forEach(ensureClay);
 /* ---------- avatar (chibi potter) ---------- */
 const AV={
   skin:new THREE.MeshStandardMaterial({color:'#f7d4b6',roughness:.75}),
-  hair:new THREE.MeshStandardMaterial({color:'#6e4a33',roughness:.95}),
+  hair:new THREE.MeshStandardMaterial({color:'#6e4a33',roughness:.65}),
   shirt:new THREE.MeshStandardMaterial({color:'#f3ead8',roughness:.9}),
   apron:new THREE.MeshStandardMaterial({roughness:.85,side:THREE.DoubleSide,map:(()=>{ const t=canvasTex(128,128,(g,w,h)=>{ g.fillStyle='#e8eee8'; g.fillRect(0,0,w,h); g.fillStyle='rgba(79,127,112,.42)'; g.fillRect(0,0,w/2,h); g.fillRect(0,0,w,h/2);
     // soften the check edges so it doesn't shimmer at a distance
@@ -1242,7 +1242,7 @@ part(new THREE.SphereGeometry(.022,10,8),AV.skin,0,-.045,.285,avHead);
 const smile=part(new THREE.TorusGeometry(.03,.007,6,14,Math.PI),AV.eye,0,-.095,.268,avHead); smile.rotation.z=Math.PI;
 const smudge=part(new THREE.CircleGeometry(.022,12),AV.smudge,-.2,.03,.2,avHead); smudge.rotation.y=-.8; smudge.castShadow=false;
 // hair cap, bangs, bun and headscarf
-const cap=part(new THREE.SphereGeometry(.314,32,20,0,Math.PI*2,0,Math.PI*.5),AV.hair,0,.008,-.012,avHead,[1,.95,.97]); cap.rotation.x=-.12;
+const cap=part(new THREE.SphereGeometry(.312,32,20,0,Math.PI*2,0,Math.PI*.46),AV.hair,0,.005,-.012,avHead,[1,.95,.97]); cap.rotation.x=-.32; // original hair: bangs show as separate puffs under the band
 [-.13,-.04,.05,.13].forEach((x,i)=>part(new THREE.SphereGeometry(.07,12,10),AV.hair,x,.15-Math.abs(x)*.2,.24-Math.abs(x)*.25,avHead,[1.1,.55,.6]));
 part(new THREE.SphereGeometry(.105,16,12),AV.hair,0,.27,-.13,avHead);
 const band=part(new THREE.TorusGeometry(.29,.028,10,40),AV.scarf,0,.1,-.02,avHead,[1,1,.97]); band.rotation.x=Math.PI/2-.38;
