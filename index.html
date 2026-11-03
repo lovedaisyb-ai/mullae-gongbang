@@ -2529,7 +2529,7 @@ $('goWorkBtn').addEventListener('click',goToMyWork);
 
 /* ---------- large viewer for a single pot ---------- */
 const viewer={open:false};
-let vRenderer=null, vScene=null, vCam=null, vPot=null, vYaw=0, vTilt=.3, vDist=1, vTarget=.1, vAuto=true;
+let vRenderer=null, vScene=null, vCam=null, vPot=null, vYaw=0, vTilt=.3, vDist=1, vTarget=.1, vAuto=true, vMaxDist=4, vTiltMin=-.15, vTiltMax=1.2;
 const vPtrs=new Map(); let vPinch=0;
 function resizeViewer(){ if(!vRenderer) return; const c=$('vc'), w=c.clientWidth||innerWidth, h=c.clientHeight||innerHeight; vRenderer.setSize(w,h,false); vCam.aspect=w/h; vCam.updateProjectionMatrix(); }
 let party=null;   // celebration state while the viewer shows a just-finished pot
@@ -2578,7 +2578,7 @@ function makeCarry(plankTex){
     { const n=blob(V(-.045,.0165,-.03),[.0068,.0018,.0082],nail); n.rotation.y=-.66; }
     // wrist and forearm toward the viewer, rolled-up sleeve
     seg(V(.03,-T-.006,.018),V(.075,-.075,.16),.026,.029,skin); seg(V(.075,-.075,.16),V(.15,-.2,.42),.029,.034,skin,false);
-    seg(V(.12,-.15,.31),V(.2,-.3,.62),.044,.05,cuff,false); seg(V(.15,-.2,.42),V(.28,-.45,.95),.05,.058,sleeve,false);
+    seg(V(.12,-.15,.31),V(.2,-.3,.62),.044,.05,cuff,false); seg(V(.15,-.2,.42),V(.5,-.9,1.9),.05,.075,sleeve,false);
     return g; };
   mkHand(1); mkHand(-1);
   root.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
@@ -2631,6 +2631,7 @@ function openViewer(mesh,title,celebrate){
   $('viewer').hidden=false; viewer.open=true; resizeViewer();
   // on a tall phone screen the sides are the tight edge: step back so the whole pot (and board) fits
   if(vCam.aspect<1) vDist*=celebrate?Math.min(2.8,1.12/vCam.aspect):Math.min(2.2,.85/vCam.aspect);
+  vMaxDist=celebrate?vDist*1.12:4; vTiltMin=celebrate?.22:-.15; vTiltMax=celebrate?.62:1.2;
 }
 function closeViewer(){ $('viewer').hidden=true; viewer.open=false; vPtrs.clear(); party=null; }
 const _cm=new THREE.Matrix4(), _cq=new THREE.Quaternion(), _ce=new THREE.Euler(), _cs=new THREE.Vector3(), _cp=new THREE.Vector3();
@@ -2656,13 +2657,13 @@ $('wpView').addEventListener('click',()=>{ if(selected) openViewer(selected.mesh
     const cur={x:e.clientX,y:e.clientY};
     if(vPtrs.size>=2){
       vPtrs.set(e.pointerId,cur); const [a,b]=[...vPtrs.values()], dd=Math.hypot(a.x-b.x,a.y-b.y);
-      if(vPinch) vDist=Math.min(4,Math.max(.12,vDist*vPinch/dd)); vPinch=dd; return;
+      if(vPinch) vDist=Math.min(vMaxDist,Math.max(.12,vDist*vPinch/dd)); vPinch=dd; return;
     }
-    vYaw+=(cur.x-prev.x)*.01; vTilt=Math.min(1.2,Math.max(-.15,vTilt+(cur.y-prev.y)*.006)); vPtrs.set(e.pointerId,cur);
+    vYaw+=(cur.x-prev.x)*.01; vTilt=Math.min(vTiltMax,Math.max(vTiltMin,vTilt+(cur.y-prev.y)*.006)); vPtrs.set(e.pointerId,cur);
   });
   const up=e=>{ vPtrs.delete(e.pointerId); vPinch=0; };
   vc.addEventListener('pointerup',up); vc.addEventListener('pointercancel',up);
-  vc.addEventListener('wheel',e=>{ e.preventDefault(); vDist=Math.min(4,Math.max(.12,vDist*(1+e.deltaY*.001))); },{passive:false});
+  vc.addEventListener('wheel',e=>{ e.preventDefault(); vDist=Math.min(vMaxDist,Math.max(.12,vDist*(1+e.deltaY*.001))); },{passive:false});
 }
 
 /* ---------- together: room presence ---------- */
