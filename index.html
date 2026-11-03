@@ -796,6 +796,8 @@ collide(3.58,4.36,-4.35,-4.1);
   plant(2.98,-4.12,'willow');     // right speaker: narrow-leaf plant
   plant(3.64,-3.84,'coffee');     // coffee plant in front of the bricks
   plant(4.02,-3.76,'eucalyptus'); // tall eucalyptus by the kiln
+  plant(-RX+.34,2.92,'olive');     // by the entrance door, on its right as you face it
+  collide(-RX,-RX+.55,2.7,3.14);
 }
 
 // local fallback slots (used only when the shared shelf is unavailable): the shared shelf by the door
@@ -1440,7 +1442,7 @@ collide(RX-.45,RX,-2.95,-1.45);
   const geoOf=k=>geoCache[k]||(geoCache[k]=potGeo(SHAPES[k]||EXTRA[k],.006));
   const HT={bowl:.07,cup:.1,vase:.23,moon:.28,jar:.16,plate:.03,planter:.1,tumbler:.12,tallvase:.3,pot:.1,bottle:.21};
   const WD={bowl:.088,cup:.044,vase:.074,moon:.13,jar:.08,plate:.13,planter:.066,tumbler:.034,tallvase:.052,pot:.072,bottle:.055};
-  shelfUnit(-RX+.21,-.2,Math.PI/2,1.0,[.3,.8,1.3,1.8,2.3],(mk,pot,g)=>{
+  const ws=shelfUnit(-RX+.21,-.2,Math.PI/2,1.0,[.3,.8,1.3,1.8,2.3],(mk,pot,g)=>{
     const put=(k,mat,x,y,z,s)=>{ const m=new THREE.Mesh(geoOf(k),mat); m.position.set(x,y,z); m.scale.setScalar(s); m.rotation.y=rnd(0,6.28); m.castShadow=s>.9; m.receiveShadow=true; g.add(m); return m; };
     const pick=a=>a[Math.floor(Math.random()*a.length)];
     [.3,.8,1.3,1.8,2.3].forEach((y,row)=>{
@@ -1463,6 +1465,7 @@ collide(RX-.45,RX,-2.95,-1.45);
       });
     });
   });
+  ws.traverse(o=>{ if(o.isMesh) o.castShadow=false; });   // no shadows from this shelf or its pots
 }
 collide(-RX,-RX+.45,-.8,.4);
 
@@ -1475,7 +1478,9 @@ collide(-RX,-RX+.45,-.8,.4);
   // chunky legs, apron rails and a low stretcher
   [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>box(.09,TH-.05,.09,woods[3],TX+sx*(TW/2-.08),(TH-.05)/2,TZ+sz*(TD/2-.08)));
   [-1,1].forEach(s=>{ box(TW-.2,.09,.04,woods[1],TX,TH-.1,TZ+s*(TD/2-.08)); box(.04,.09,TD-.2,woods[1],TX+s*(TW/2-.08),TH-.1,TZ); });
-  box(TW-.2,.05,.05,woods[4],TX,.18,TZ);
+  // H-stretcher: a rail between each pair of end legs, joined by a long centre rail (nothing floating)
+  [-1,1].forEach(sx=>box(.05,.06,TD-.16,woods[4],TX+sx*(TW/2-.08),.18,TZ));
+  box(TW-.16,.05,.05,woods[4],TX,.18,TZ);
   collide(TX-TW/2,TX+TW/2,TZ-TD/2,TZ+TD/2);
   // eight pieces of baekja, arranged loosely
   const baekja=new THREE.MeshStandardMaterial({color:'#f5f5f0',roughness:.14,metalness:.02,side:THREE.DoubleSide});
@@ -2748,6 +2753,15 @@ function frame(){
   if(viewer.open) renderViewer(dt); else renderer.render(scene,camera);
   requestAnimationFrame(frame);
 }
+// shadow audit: the sun comes in from outside the window wall, so nothing fixed to that wall (door, shelf
+// between the windows, curtains, sill plants) can throw a sun shadow into the room. Wall-flat things
+// (signs, papers, boards, pictures) don't cast either.
+{ const bb=new THREE.Box3();
+  scene.traverse(o=>{ if(!o.isMesh||o.isSkinnedMesh) return;
+    bb.setFromObject(o);
+    if(bb.max.x< -RX+.7) o.castShadow=false;                                   // on the window wall
+    const sz=bb.getSize(new THREE.Vector3()); if(Math.min(sz.x,sz.z)<.02&&sz.y>.05&&(bb.min.z>RZ-.1||bb.max.z<-RZ+.1||bb.min.x>RX-.1)) o.castShadow=false; // flat on a wall
+  }); }
 requestAnimationFrame(frame);
 })();
 </script>
