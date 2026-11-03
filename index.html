@@ -2742,7 +2742,7 @@ $('chat').addEventListener('submit',e=>{
 /* ---------- together outside claude.ai: Supabase (Realtime presence + broadcast, a shelf table, anonymous sign-in) ----------
    On claude.ai the page uses its built-in room/db/user. Anywhere else (GitHub Pages) it falls back to
    Supabase when SUPABASE_CONFIG is filled in, offering the same small interface. */
-const SUPABASE_CONFIG=null;   // ← {url:'https://xxxx.supabase.co', key:'anon public key'} 를 넣으면 여러 사람이 같이 들어올 수 있어요
+const SUPABASE_CONFIG={url:'https://nizshtupokkapibpgnkj.supabase.co',key:'sb_publishable__-nxHAI7Qsw9R1zsyE6MKQ_OKQhKzoO'};   // ← {url:'https://xxxx.supabase.co', key:'anon public key'} 를 넣으면 여러 사람이 같이 들어올 수 있어요
 function loadScript(src){ return new Promise((ok,no)=>{ const sc=document.createElement('script'); sc.src=src; sc.onload=ok; sc.onerror=no; document.head.appendChild(sc); }); }
 function askName(){
   return new Promise(res=>{
@@ -2754,7 +2754,7 @@ function askName(){
   });
 }
 async function supabaseCaps(){
-  await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js');
+  await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js');
   const sb=window.supabase.createClient(SUPABASE_CONFIG.url,SUPABASE_CONFIG.key);
   let {data:{session}}=await sb.auth.getSession();
   if(!session){ const r=await sb.auth.signInAnonymously(); if(r.error) throw r.error; session=r.data.session; }
@@ -2794,7 +2794,7 @@ async function supabaseCaps(){
   if(!cl||typeof cl.use!=='function'){
     if(!SUPABASE_CONFIG){ $('who').textContent='혼자 작업 중'; return; }
     $('who').textContent='공방 연결 중…';
-    try{ caps=await supabaseCaps(); }catch(e){ console.warn(e); $('who').textContent='혼자 작업 중'; return; }
+    try{ caps=await supabaseCaps(); }catch(e){ console.warn('공방 연결 실패',e); $('who').textContent='연결하지 못해 혼자 작업 중'; return; }
   }
   const use=async k=>caps?caps[k]:cl.use(k);
   try{ userCap=await use('user'); if(userCap) myId=await userCap.id(); }catch(e){ userCap=null; }
