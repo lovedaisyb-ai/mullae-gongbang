@@ -653,7 +653,7 @@ const GLAZES=[['청자유','#8fb5a3'],['백자유','#efece4'],['천목유','#3f2
 const bucketMat=new THREE.MeshStandardMaterial({color:'#ecebe6',roughness:.55});
 function makeBucket(name,col,x,z,ry){
   // twice the original size (about 60cm across, 76cm tall), no name label
-  const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=ry; g.scale.setScalar(2); scene.add(g);
+  const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=ry; g.scale.setScalar(1.75); scene.add(g);
   const add=(geo,mat,x,y,z)=>{const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=m.receiveShadow=true; g.add(m); return m;};
   const gm=new THREE.MeshStandardMaterial({color:col,roughness:.22});
   add(new THREE.CylinderGeometry(.15,.13,.34,28),bucketMat,0,.17,0);
@@ -672,9 +672,9 @@ function makeBucket(name,col,x,z,ry){
 // big buckets no longer fit under the lowest shelves, so they stand in a row just in front of each shelf
 // 18 buckets: nine along the back shelving, nine in front of the shared shelf
 // nine buckets along the back shelving (none in front of the shared shelf)
-GLAZES.slice(0,9).forEach(([n,c],i)=>makeBucket(n,c,-2.48+i*.62,-RZ+.66,rnd(-.15,.15)));
+GLAZES.slice(0,6).forEach(([n,c],i)=>makeBucket(n,c,-2.0+i*.8,-RZ+.62,rnd(-.15,.15)));
 // dipping tongs leaning on the last bucket
-{ const t=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.42,6),M.steel); t.position.set(2.82,.36,-RZ+.72); t.scale.y=1.8; t.rotation.z=.35; t.castShadow=true; scene.add(t); }
+{ const t=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.42,6),M.steel); t.position.set(2.3,.34,-RZ+.68); t.scale.y=1.8; t.rotation.z=.35; t.castShadow=true; scene.add(t); }
 
 /* ---------- tool pegboard above the wedging table ---------- */
 const peg=new THREE.Group(); peg.position.set(RX-.015,1.75,2.35); peg.rotation.y=-Math.PI/2; scene.add(peg);
