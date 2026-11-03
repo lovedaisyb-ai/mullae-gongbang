@@ -425,7 +425,7 @@ const glassMat=new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,
 // arched double wooden door with a stone surround on the left wall (to the left of the garden window),
 // two tall arched glass panes with black iron scrolls, and the same garden view outside
 {
-  const zc=3.45, DW=1.2, DH=1.72, AR=DW/2;           // door width, straight height, arch radius
+  const zc=3.88, DW=1.1, DH=1.72, AR=DW/2;           // door width, straight height, arch radius
   const dg=new THREE.Group(); dg.position.set(-RX,0,zc); dg.rotation.y=Math.PI/2; scene.add(dg);   // local +z = into the room, local +x = toward -z
   const doorWood=new THREE.MeshStandardMaterial({roughness:.55,map:canvasTex(256,512,(g,w,h)=>{
     g.fillStyle='#9c5c27'; g.fillRect(0,0,w,h);
@@ -442,16 +442,13 @@ const glassMat=new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,
   const ext=(sh,dep)=>new THREE.ExtrudeGeometry(sh,{depth:dep,bevelEnabled:true,bevelThickness:.006,bevelSize:.006,bevelSegments:2,curveSegments:32});
   const mk=(geo,mat,x,y,z)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; dg.add(m); return m; };
 
-  // stone surround: an outer arch with the door opening cut out, standing a little proud of the wall
-  { const SW=.2, outer=archShape(DW+SW*2,DH,AR+SW); outer.holes.push(archShape(DW,DH,AR)); mk(ext(outer,.07),stone,0,0,0);
-    // joints between the arch stones
-    const jm=new THREE.MeshStandardMaterial({color:'#6f6357',roughness:1});
-    for(let k=1;k<8;k++){ const a=k/8*Math.PI, j=mk(new THREE.BoxGeometry(SW,.008,.004),jm,Math.cos(a)*(AR+SW/2),DH+Math.sin(a)*(AR+SW/2),.077); j.rotation.z=a; }
-    [.55,1.15].forEach(y=>[-1,1].forEach(sd=>mk(new THREE.BoxGeometry(SW,.008,.004),jm,sd*(DW/2+SW/2),y,.077))); }
+  // slim dark-wood casing hugging the arch (no stone surround)
+  { const cs=archShape(DW+.1,DH,AR+.05); cs.holes.push(archShape(DW,DH,AR)); mk(ext(cs,.03),darkWood,0,0,0); }
 
   // the garden outside, seen through the glass (same view as the windows)
   { const vt=viewTex.clone(); vt.needsUpdate=true; vt.repeat.set(.32,.62); vt.offset.set(.6,.3);
-    const out=mk(new THREE.PlaneGeometry(DW,DH+AR),new THREE.MeshBasicMaterial({map:vt,toneMapped:false}),0,(DH+AR)/2,.004); out.castShadow=false; }
+    vt.repeat.set(.32/DW,.62/(DH+AR)); vt.offset.set(.6+.16,.3);   // ShapeGeometry UVs are in metres (x centred on 0)
+    const out=mk(new THREE.ShapeGeometry(archShape(DW,DH,AR),24),new THREE.MeshBasicMaterial({map:vt,toneMapped:false}),0,0,.004); out.castShadow=false; }
 
   // two door leaves; each has a tall arched glass pane near its outer edge and a raised panel below
   const LW=DW/2;
@@ -484,9 +481,59 @@ const glassMat=new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,
   mk(new THREE.BoxGeometry(.04,.2,.012),iron,-.04,1.05,.075);
   mk(new THREE.CylinderGeometry(.009,.009,.06,10),iron,-.04,1.1,.095).rotation.z=Math.PI/2;
   mk(new THREE.BoxGeometry(.008,.02,.004),new THREE.MeshBasicMaterial({color:'#000'}),-.04,1.0,.083);
-  // stone threshold
-  mk(new THREE.BoxGeometry(DW+.4,.03,.22),stone,0,.015,.08);
-  collide(-RX,-RX+.25,zc-.85,zc+.85);
+  // wooden threshold
+  mk(new THREE.BoxGeometry(DW+.12,.025,.16),darkWood,0,.0125,.06);
+  collide(-RX,-RX+.2,zc-.62,zc+.62);
+}
+// coat rack beside the door: walnut board with four chrome hooks tipped with cream balls, and a butter
+// coloured coat with brown polka dots hanging from one of them
+{
+  const rg=new THREE.Group(); rg.position.set(-RX,1.68,2.86); rg.rotation.y=Math.PI/2; scene.add(rg);   // local +z = into the room
+  const walnut=new THREE.MeshStandardMaterial({roughness:.6,map:canvasTex(256,64,(g,w,h)=>{ g.fillStyle='#7a5134'; g.fillRect(0,0,w,h);
+    for(let i=0;i<40;i++){ const y=rnd(0,h); g.strokeStyle=Math.random()<.5?'rgba(50,28,14,.3)':'rgba(170,120,80,.25)'; g.lineWidth=rnd(.5,2); g.beginPath(); g.moveTo(0,y); g.bezierCurveTo(w*.3,y+rnd(-5,5),w*.7,y+rnd(-5,5),w,y+rnd(-3,3)); g.stroke(); } })});
+  const chrome=new THREE.MeshStandardMaterial({color:'#d5d9dc',roughness:.22,metalness:.6});
+  const cream=new THREE.MeshStandardMaterial({color:'#efe3bf',roughness:.35});
+  const add=(geo,mat,x,y,z,par=rg)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=m.receiveShadow=true; par.add(m); return m; };
+  const L=.56;
+  add(new THREE.BoxGeometry(L,.07,.022),walnut,0,0,.011);
+  [-.27,.27].forEach(x=>add(new THREE.CylinderGeometry(.006,.006,.004,10),chrome,x*.92,0,.023).rotation.x=Math.PI/2);   // screws
+  const hx=[-.21,-.07,.07,.21];
+  hx.forEach(x=>{
+    add(new THREE.CylinderGeometry(.013,.015,.008,16),chrome,x,0,.026).rotation.x=Math.PI/2;                         // base rose
+    const up=new THREE.CatmullRomCurve3([[0,0,.028],[0,.004,.05],[0,.03,.068],[0,.062,.07]].map(v=>new THREE.Vector3(x+v[0],v[1],v[2])));
+    add(new THREE.TubeGeometry(up,16,.0042,8,false),chrome,0,0,0);
+    add(new THREE.SphereGeometry(.016,16,12),cream,x,.074,.071);                                                         // cream ball tip
+    const lo=new THREE.CatmullRomCurve3([[0,-.002,.03],[0,-.03,.04],[0,-.04,.058],[0,-.028,.07]].map(v=>new THREE.Vector3(x+v[0],v[1],v[2])));
+    add(new THREE.TubeGeometry(lo,14,.0038,8,false),chrome,0,0,0);
+  });
+  // the coat, hung by its collar loop on the second hook from the right
+  const cg=new THREE.Group(); cg.position.set(.07,-.03,.035); rg.add(cg);
+  const dots=canvasTex(512,512,(g,w,h)=>{ g.fillStyle='#f2dd98'; g.fillRect(0,0,w,h);
+    for(let i=0;i<3000;i++){ g.fillStyle=Math.random()<.5?'rgba(255,255,255,.06)':'rgba(120,90,40,.05)'; g.fillRect(rnd(0,w),rnd(0,h),2,2); }
+    g.fillStyle='#7b4a26'; for(let y=20,row=0;y<h;y+=64,row++) for(let x=(row%2?52:20);x<w;x+=64){ g.beginPath(); g.arc(x,y,11,0,7); g.fill(); } },[2,1.3]);
+  const coatM=new THREE.MeshStandardMaterial({map:dots,roughness:.9,side:THREE.DoubleSide});
+  const LEN=.92, body=new THREE.CylinderGeometry(1,1,1,40,30,true), P=body.attributes.position;
+  for(let i=0;i<P.count;i++){ const ang=Math.atan2(P.getZ(i),P.getX(i)), t=.5-P.getY(i);   // t: 0 at the collar, 1 at the hem
+    const w=t<.16? .045+.15*Math.pow(t/.16,.6) : .195+.04*(t-.16);   // narrow neck, sloping shoulders, slight A-line
+    const dd=w*.42+.012*Math.sin(ang*6+t*3)*t;
+    const fold=1+.05*Math.sin(ang*7)*t;
+    P.setXYZ(i,Math.cos(ang)*w*fold,-t*LEN,Math.sin(ang)*dd+dd); }
+  body.computeVertexNormals(); add(body,coatM,0,0,0,cg);
+  // sleeves hanging down the sides, a turned-down collar, front opening line and buttons
+  const trim=new THREE.MeshStandardMaterial({color:'#e3c777',roughness:.9,side:THREE.DoubleSide});
+  [-1,1].forEach(sd=>{ const sl=new THREE.CatmullRomCurve3([[sd*.19,-.15,.075],[sd*.225,-.3,.1],[sd*.225,-.48,.11],[sd*.205,-.64,.115]].map(v=>new THREE.Vector3(...v)));
+    add(new THREE.TubeGeometry(sl,20,.047,16,false),coatM,0,0,0,cg);
+    add(new THREE.CylinderGeometry(.05,.05,.045,16,1,true),trim,sd*.205,-.655,.115,cg);                       // cuffs
+    // lapels folding open from the collar to the first button
+    const lp=add(new THREE.BoxGeometry(.075,.2,.008),trim,sd*.045,-.15,.108,cg); lp.rotation.set(-.12,0,sd*.38);
+    // pocket flaps
+    add(new THREE.BoxGeometry(.1,.035,.01),trim,sd*.1,-.55,.118,cg).rotation.x=-.06; });
+  const collar=add(new THREE.TorusGeometry(.075,.022,10,24,Math.PI*1.3),new THREE.MeshStandardMaterial({color:'#ecd58e',roughness:.9}),0,-.06,.05,cg); collar.rotation.set(-1.2,0,Math.PI*1.15); collar.scale.set(1,.7,1);
+  add(new THREE.BoxGeometry(.006,LEN*.8,.004),new THREE.MeshStandardMaterial({color:'#b89a52',roughness:1}),0,-.12-LEN*.4,.11,cg).rotation.x=-.05;
+  const btn=new THREE.MeshStandardMaterial({color:'#5a361c',roughness:.4});
+  [.27,.4,.53,.66].forEach(y=>add(new THREE.CylinderGeometry(.013,.013,.007,14),btn,.025,-y,.108+y*.03,cg).rotation.x=Math.PI/2-.05);
+  add(new THREE.TorusGeometry(.012,.003,6,14),new THREE.MeshStandardMaterial({color:'#7b4a26'}),0,.012,.002,cg);   // hanging loop over the hook
+  collide(-RX,-RX+.3,2.55,3.15);
 }
 // a little plant on the first sill
 { const pot=new THREE.Mesh(new THREE.CylinderGeometry(.07,.055,.12,20),new THREE.MeshStandardMaterial({color:'#b5643f',roughness:.85})); pot.position.set(-RX+.17,.97+.06,-2.3); pot.castShadow=true; scene.add(pot);
