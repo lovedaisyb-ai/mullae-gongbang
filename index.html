@@ -1352,7 +1352,21 @@ function fanfare(){
 /* ---------- background music: a soft, bouncy marimba loop (no vocals), made with Web Audio ---------- */
 // Starts on the first tap/click (browsers block sound before that); the ♪ button turns it on and off.
 const bgm={on:false,master:null,next:0,step:0,timer:null};
-function audio(){ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
+// iPhone needs three things for Web Audio: the context created/resumed inside a real tap (touchend/click),
+// a tiny buffer played right away to unlock it, and a "playback" audio session so the silent switch doesn't mute it.
+let silentEl=null;
+function silentWav(){ const n=800,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,t)=>{ for(let i=0;i<t.length;i++) v.setUint8(o+i,t.charCodeAt(i)); };
+  w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,8000,true); v.setUint32(28,16000,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
+  return URL.createObjectURL(new Blob([b],{type:'audio/wav'})); }
+function audio(){
+  try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
+  if(!audioCtx){ audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    try{ const b=audioCtx.createBuffer(1,1,22050), src=audioCtx.createBufferSource(); src.buffer=b; src.connect(audioCtx.destination); src.start(0); }catch(e){} }
+  if(audioCtx.state!=='running') audioCtx.resume().catch(()=>{});
+  // older iPhones: a looping silent <audio> element switches the phone to media playback (plays even in silent mode)
+  try{ if(!silentEl){ silentEl=new Audio(silentWav()); silentEl.loop=true; silentEl.volume=0.01; silentEl.setAttribute('playsinline',''); } if(bgm.on&&silentEl.paused) silentEl.play().catch(()=>{}); }catch(e){}
+  return audioCtx; }
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 function marimba(ac,dest,m,t,vol,len=.45){
   const f=mtof(m);
@@ -1386,18 +1400,25 @@ function bgmSchedule(){
 function setMusic(on){
   bgm.on=on; try{ localStorage.setItem('mullae-music',on?'on':'off'); }catch(e){}
   $('musicBtn').textContent=on?'♪ 음악 끄기':'♪ 음악 켜기'; $('musicBtn').setAttribute('aria-pressed',on);
-  if(on){ const ac=audio();
+  if(on){ bgm.on=true; const ac=audio();
     if(!bgm.master){ bgm.master=ac.createGain(); const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3200; bgm.master.connect(lp); lp.connect(ac.destination); }
     bgm.master.gain.cancelScheduledValues(ac.currentTime); bgm.master.gain.setValueAtTime(.0001,ac.currentTime); bgm.master.gain.linearRampToValueAtTime(.075,ac.currentTime+1.2); // quiet, fades in
     bgm.next=ac.currentTime+.1; bgm.step=0; clearInterval(bgm.timer); bgm.timer=setInterval(bgmSchedule,100); bgmSchedule();
-  } else { clearInterval(bgm.timer); if(bgm.master&&audioCtx){ bgm.master.gain.cancelScheduledValues(audioCtx.currentTime); bgm.master.gain.setTargetAtTime(0,audioCtx.currentTime,.15); } }
+  } else { clearInterval(bgm.timer); try{ if(silentEl) silentEl.pause(); }catch(e){} if(bgm.master&&audioCtx){ bgm.master.gain.cancelScheduledValues(audioCtx.currentTime); bgm.master.gain.setTargetAtTime(0,audioCtx.currentTime,.15); } }
 }
 let musicPref='on'; try{ musicPref=localStorage.getItem('mullae-music')||'on'; }catch(e){}
 $('musicBtn').addEventListener('click',e=>{ e.stopPropagation(); setMusic(!bgm.on); });
 // first interaction anywhere starts the music (unless the viewer turned it off before)
-const firstTouch=()=>{ removeEventListener('pointerdown',firstTouch,true); removeEventListener('keydown',firstTouch,true); if(musicPref!=='off'&&!bgm.on) setMusic(true); };
-addEventListener('pointerdown',firstTouch,true); addEventListener('keydown',firstTouch,true);
-document.addEventListener('visibilitychange',()=>{ if(!audioCtx) return; if(document.hidden) audioCtx.suspend(); else if(bgm.on) audioCtx.resume(); });
+// iPhone only counts touchend/click as a real tap for sound, so listen to all of them and keep trying
+// until the audio is actually running
+const UNLOCK=['pointerdown','touchend','click','keydown'];
+const firstTouch=()=>{
+  if(musicPref==='off'){ UNLOCK.forEach(t=>removeEventListener(t,firstTouch,true)); return; }
+  if(!bgm.on) setMusic(true); else audio();
+  if(audioCtx&&audioCtx.state==='running') UNLOCK.forEach(t=>removeEventListener(t,firstTouch,true));
+};
+UNLOCK.forEach(t=>addEventListener(t,firstTouch,true));
+document.addEventListener('visibilitychange',()=>{ if(!audioCtx) return; if(document.hidden){ audioCtx.suspend(); try{ silentEl&&silentEl.pause(); }catch(e){} } else if(bgm.on){ audio(); bgm.next=audioCtx.currentTime+.1; } });
 $('saveBtn').addEventListener('click',()=>{
   if(!active) return; const c=active.clay;
   if(c.open<.95){ warn('구멍을 뚫고 벽을 세워야 선반에 올릴 수 있어요'); return; }
