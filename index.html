@@ -903,6 +903,39 @@ P(new THREE.CylinderGeometry(.03,.03,.11,14),sprayMat,.78,-.352,.075); P(new THR
   });
   collide(5.05,5.99,-.36,.72);
 }
+// a palm-fibre broom with a bamboo handle, leaning on the wall to the right of the clay stack
+{
+  const outer=new THREE.Group(); outer.position.set(5.8,0,1.05); outer.rotation.y=Math.PI/2+.08; scene.add(outer);  // local +z points at the wall
+  const b=new THREE.Group(); b.rotation.x=.12; outer.add(b);                                                       // leaning back against it
+  const bamboo=new THREE.MeshStandardMaterial({roughness:.55,map:canvasTex(64,256,(g,w,h)=>{ g.fillStyle='#a8743f'; g.fillRect(0,0,w,h);
+    for(let i=0;i<30;i++){ g.fillStyle=`rgba(${Math.random()<.5?'90,55,25':'200,150,95'},.25)`; g.fillRect(rnd(0,w),0,rnd(1,3),h); } })});
+  const node=new THREE.MeshStandardMaterial({color:'#7a4f28',roughness:.6});
+  const fibreTex=canvasTex(128,256,(g,w,h)=>{ g.fillStyle='#8a5328'; g.fillRect(0,0,w,h);
+    for(let i=0;i<260;i++){ const x=rnd(0,w); g.strokeStyle=['rgba(60,30,12,.45)','rgba(170,105,55,.4)','rgba(120,70,35,.5)'][i%3]; g.lineWidth=rnd(.6,1.8); g.beginPath(); g.moveTo(x,0); g.lineTo(x+rnd(-4,4),h); g.stroke(); } });
+  const fibre=new THREE.MeshStandardMaterial({map:fibreTex,roughness:.95,side:THREE.DoubleSide});
+  const tie=new THREE.MeshStandardMaterial({color:'#5a3518',roughness:.8});
+  const add=(geo,mat,x,y,z)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=m.receiveShadow=true; b.add(m); return m; };
+  // handle with bamboo nodes
+  const HB=.42, HT=1.55;
+  add(new THREE.CylinderGeometry(.013,.015,HT-HB,12),bamboo,0,(HB+HT)/2,0);
+  for(let y=HB+.12;y<HT;y+=.2) add(new THREE.CylinderGeometry(.0165,.0165,.012,12),node,0,y,0);
+  add(new THREE.SphereGeometry(.014,10,8),node,0,HT,0);
+  // head: a fan of tied fibre bundles, narrow at the binding and spreading to a flat sweep
+  const n=9;
+  for(let k=0;k<n;k++){ const u=(k/(n-1))-.5;
+    const top=new THREE.Vector3(u*.2,.36,0), bot=new THREE.Vector3(u*.4,.005,rnd(-.008,.008));
+    const dir=bot.clone().sub(top), L=dir.length();
+    const bun=new THREE.Mesh(new THREE.CylinderGeometry(.03,.021,L,10,1),fibre); bun.scale.set(1,1,.45);
+    bun.position.copy(top).add(bot).multiplyScalar(.5); bun.quaternion.setFromUnitVectors(new THREE.Vector3(0,-1,0),dir.normalize());
+    bun.castShadow=true; b.add(bun);
+    // twine wraps near the top of each bundle
+    const w=new THREE.Mesh(new THREE.TorusGeometry(.021,.003,6,14),tie); w.position.copy(top).lerp(bot,.1); w.quaternion.copy(bun.quaternion); w.rotateX(Math.PI/2); w.scale.set(1,.5,1); b.add(w);
+  }
+  // the arched binding that gathers the bundles onto the handle
+  const arch=add(new THREE.TorusGeometry(.12,.012,8,28,Math.PI),fibre,0,.33,0); arch.scale.set(1,.35,.5);
+  add(new THREE.CylinderGeometry(.022,.03,.07,12),fibre,0,.42,0);
+  [.39,.44].forEach(y=>add(new THREE.TorusGeometry(.024,.004,6,14),tie,0,y,0).rotation.x=Math.PI/2);
+}
 
 /* ---------- spare aprons on the back wall ---------- */
 function apronShape(){
