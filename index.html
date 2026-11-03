@@ -2739,10 +2739,10 @@ $('chat').addEventListener('submit',e=>{
   sayN++; setTag(myBubble,text); myBubble.visible=true; myBubbleUntil=clock.elapsedTime+5;
   if(room) room.presence({say:{n:sayN,text}}).catch(()=>{});
 });
-/* ---------- together outside claude.ai: Firebase (Realtime Database + anonymous sign-in) ----------
+/* ---------- together outside claude.ai: Supabase (Realtime presence + broadcast, a shelf table, anonymous sign-in) ----------
    On claude.ai the page uses its built-in room/db/user. Anywhere else (GitHub Pages) it falls back to
-   Firebase when FIREBASE_CONFIG is filled in, offering the same small interface. */
-const FIREBASE_CONFIG=null;   // ← Firebase 콘솔의 firebaseConfig 를 여기에 넣으면 여러 사람이 같이 들어올 수 있어요
+   Supabase when SUPABASE_CONFIG is filled in, offering the same small interface. */
+const SUPABASE_CONFIG=null;   // ← {url:'https://xxxx.supabase.co', key:'anon public key'} 를 넣으면 여러 사람이 같이 들어올 수 있어요
 function loadScript(src){ return new Promise((ok,no)=>{ const sc=document.createElement('script'); sc.src=src; sc.onload=ok; sc.onerror=no; document.head.appendChild(sc); }); }
 function askName(){
   return new Promise(res=>{
@@ -2753,42 +2753,48 @@ function askName(){
     box.addEventListener('submit',e=>{ e.preventDefault(); const v=inp.value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim().slice(0,12)||'도예가'; box.remove(); res(v); });
   });
 }
-async function firebaseCaps(){
-  const V='10.12.2', base=`https://www.gstatic.com/firebasejs/${V}/`;
-  await loadScript(base+'firebase-app-compat.js');
-  await Promise.all([loadScript(base+'firebase-auth-compat.js'),loadScript(base+'firebase-database-compat.js')]);
-  firebase.initializeApp(FIREBASE_CONFIG);
-  const cred=await firebase.auth().signInAnonymously(); const id=cred.user.uid, db=firebase.database();
+async function supabaseCaps(){
+  await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js');
+  const sb=window.supabase.createClient(SUPABASE_CONFIG.url,SUPABASE_CONFIG.key);
+  let {data:{session}}=await sb.auth.getSession();
+  if(!session){ const r=await sb.auth.signInAnonymously(); if(r.error) throw r.error; session=r.data.session; }
+  const id=session.user.id;
   let name=''; try{ name=localStorage.getItem('mullae-name')||''; }catch(e){}
   if(!name){ name=await askName(); try{ localStorage.setItem('mullae-name',name); }catch(e){} }
-  const names={[id]:name};
+  const names={[id]:name}, clean=v=>String(v||'').replace(/[\u0000-\u001f\u007f-\u009f]/g,'').slice(0,12);
   const user={ id:async()=>id, profiles:async ids=>{ const o={}; ids.forEach(k=>{ if(names[k]) o[k]={name:names[k]}; }); return o; } };
-  const peerRef=db.ref('rooms/studio/peers/'+id); peerRef.onDisconnect().remove();
-  let mine={};
-  const room={
-    presence(obj){ mine=Object.assign({},mine,obj,{name}); return peerRef.set({p:mine,t:firebase.database.ServerValue.TIMESTAMP}); },
-    onPeers(cb,onErr){ let prev=new Set();
-      db.ref('rooms/studio/peers').on('value',snap=>{
-        const v=snap.val()||{}, peers=[];
-        Object.keys(v).forEach(k=>{ const d=v[k]; if(!d||!d.p) return; if(typeof d.p.name==='string') names[k]=d.p.name.slice(0,12);
-          peers.push({peer:k,by:k,kind:'viewer',isMe:k===id,presence:d.p,updatedAt:d.t||0}); });
-        const cur=new Set(peers.map(q=>q.peer)), left=[...prev].filter(k=>!cur.has(k)).map(k=>({peer:k})); prev=cur;
-        cb({peers,left}); },e=>onErr&&onErr(e)); }
-  };
+  // room: presence says who is here (with their name); broadcast carries where they are and what they're doing
+  const states={}, ch=sb.channel('studio',{config:{presence:{key:id},broadcast:{self:false}}});
+  let peersCb=null, prev=new Set(), mine={};
+  const emit=()=>{ if(!peersCb) return; const ps=ch.presenceState(), peers=[];
+    Object.keys(ps).forEach(k=>{ const meta=(ps[k]||[])[0]||{}; if(meta.name) names[k]=clean(meta.name);
+      const st=states[k]; peers.push({peer:k,by:k,kind:'viewer',isMe:k===id,presence:Object.assign({},st?st.p:{},{name:names[k]}),updatedAt:st?st.t:0}); });
+    const cur=new Set(peers.map(q=>q.peer)), left=[...prev].filter(q=>!cur.has(q)).map(q=>({peer:q})); prev=cur;
+    left.forEach(q=>delete states[q.peer]);
+    peersCb({peers,left}); };
+  const sendMine=()=>Object.keys(mine).length?ch.send({type:'broadcast',event:'st',payload:{id,p:mine}}):Promise.resolve();
+  ch.on('presence',{event:'sync'},emit);
+  ch.on('presence',{event:'join'},()=>{ sendMine(); });          // someone new arrived: tell them where I am
+  ch.on('broadcast',{event:'st'},({payload})=>{ if(!payload||typeof payload.id!=='string'||!payload.p||typeof payload.p!=='object') return; states[payload.id]={p:payload.p,t:Date.now()}; emit(); });
+  await new Promise((ok,no)=>ch.subscribe(async status=>{ if(status==='SUBSCRIBED'){ await ch.track({name}); ok(); } else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT') no(new Error(status)); }));
+  const room={ slow:true, presence(obj){ mine=Object.assign({},mine,obj); return sendMine().then(()=>{}); }, onPeers(cb){ peersCb=cb; emit(); } };
+  // shelf: one row per person (their last 8 pots), readable by everyone, writable only by its owner
   const shelfDb={
-    collection:()=>({ onSnapshot(cb,err){ db.ref('shelf').on('value',snap=>{ const v=snap.val()||{};
-      const docs=Object.keys(v).map(k=>{ const d=v[k]||{}; if(typeof d.name==='string') names[k]=d.name.slice(0,12); return {id:k,data:()=>d}; });
-      cb({metadata:{fromCache:false},docs}); },err); } }),
-    doc:path=>({ set:val=>db.ref(path).set(Object.assign({},val,{name})) })
+    collection:()=>({ onSnapshot(cb,err){
+      const load=async()=>{ const {data,error}=await sb.from('shelf').select('id,name,pots'); if(error){ err&&err(error); return; }
+        cb({metadata:{fromCache:false},docs:(data||[]).map(r=>{ if(r.name) names[r.id]=clean(r.name); return {id:r.id,data:()=>({pots:Array.isArray(r.pots)?r.pots:[]})}; })}); };
+      load(); sb.channel('shelf-changes').on('postgres_changes',{event:'*',schema:'public',table:'shelf'},()=>load()).subscribe();
+      setInterval(load,60000); } }),
+    doc:path=>({ set:async val=>{ const {error}=await sb.from('shelf').upsert({id:path.split('/')[1],name,pots:val.pots,updated_at:new Date().toISOString()}); if(error) throw error; } })
   };
   return {user,db:shelfDb,room};
 }
 (async()=>{
   const cl=window.claude; let caps=null;
   if(!cl||typeof cl.use!=='function'){
-    if(!FIREBASE_CONFIG){ $('who').textContent='혼자 작업 중'; return; }
+    if(!SUPABASE_CONFIG){ $('who').textContent='혼자 작업 중'; return; }
     $('who').textContent='공방 연결 중…';
-    try{ caps=await firebaseCaps(); }catch(e){ console.warn(e); $('who').textContent='혼자 작업 중'; return; }
+    try{ caps=await supabaseCaps(); }catch(e){ console.warn(e); $('who').textContent='혼자 작업 중'; return; }
   }
   const use=async k=>caps?caps[k]:cl.use(k);
   try{ userCap=await use('user'); if(userCap) myId=await userCap.id(); }catch(e){ userCap=null; }
@@ -2930,7 +2936,7 @@ function frame(){
   // share my state
   presT-=dt;
   if(room&&presT<=0){
-    presT=.1;
+    presT=room.slow?.2:.1;   // Supabase: 5 updates a second is plenty and stays well inside the free limits
     const st={x:+avatar.position.x.toFixed(2),z:+avatar.position.z.toFixed(2),ry:+avatar.rotation.y.toFixed(2),mv:(mode==='walk'&&moving)?1:0,
       w:mode!=='walk'?wheels.indexOf(active):-1,rpm:mode==='throw'?active.rpm:0,clay:mode==='throw'?encodeClay(active.clay):null,uid:myId};
     const key=JSON.stringify(st);
