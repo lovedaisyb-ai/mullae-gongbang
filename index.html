@@ -1518,8 +1518,70 @@ collide(-RX,-RX+.45,-.8,.4);
   collide(TX-TW/2,TX+TW/2,TZ-TD/2,TZ+TD/2);
   // eight pieces of baekja, arranged loosely
   const baekja=new THREE.MeshStandardMaterial({color:'#f5f5f0',roughness:.14,metalness:.02,side:THREE.DoubleSide});
-  [['moon',-.22,-.08,1.0],['vase',.38,-.16,1.05],['vase',.58,.06,.7],['jar',-.6,-.12,.9],['bowl',.1,.2,1.0],['cup',-.42,.22,1],['cup',-.3,.24,.9],['plate',.62,.24,.6]]
+  // finished baekja pushed to the back half of the table
+  [['moon',-.58,-.2,.9],['vase',.5,-.22,1.0],['vase',.66,-.08,.7],['jar',-.3,-.22,.8]]
     .forEach(([s,dx,dz,sc])=>addPot(s,baekja,TX+dx,TH,TZ+dz,sc).rotation.y=rnd(0,6.28));
+  // work in progress on the front half: a banding wheel with a bowl being painted, an underglaze palette,
+  // paint jars, brushes, a fettling knife and other tools, a sponge, sketches, scraps and trimmings
+  const W=(geo,mat,dx,y,dz,ry=0)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(TX+dx,TH+y,TZ+dz); m.rotation.y=ry; m.castShadow=m.receiveShadow=true; scene.add(m); return m; };
+  const iron=new THREE.MeshStandardMaterial({color:'#3b3f42',roughness:.55,metalness:.4}), alu=new THREE.MeshStandardMaterial({color:'#c3c7ca',roughness:.3,metalness:.6});
+  const wood=new THREE.MeshStandardMaterial({color:'#b88a5a',roughness:.6}), steel=new THREE.MeshStandardMaterial({color:'#b9bec2',roughness:.25,metalness:.8});
+  const bisque=new THREE.MeshStandardMaterial({color:'#efe3d2',roughness:.8});
+  // banding wheel + a bisque bowl with half-painted cobalt bands
+  W(new THREE.CylinderGeometry(.075,.1,.045,28),iron,-.12,.0225,.06); W(new THREE.CylinderGeometry(.03,.04,.025,16),iron,-.12,.057,.06);
+  W(new THREE.CylinderGeometry(.125,.125,.016,40),alu,-.12,.078,.06);
+  const bandTex=canvasTex(256,64,(g,w,h)=>{ g.fillStyle='#efe3d2'; g.fillRect(0,0,w,h); g.fillStyle='#2f4f8f'; g.fillRect(0,h*.62,w*.7,5); g.fillRect(0,h*.78,w*.55,3);
+    for(let i=0;i<9;i++){ g.beginPath(); g.ellipse(14+i*20,h*.35,5,9,.4,0,7); g.fill(); } });
+  const pb=new THREE.Mesh(potGeo(SHAPES.bowl,.006),new THREE.MeshStandardMaterial({map:bandTex,roughness:.75})); pb.position.set(TX-.12,TH+.086,TZ+.06); pb.scale.setScalar(1.1); pb.castShadow=true; scene.add(pb);
+  // palette: a white plate with dabs of underglaze
+  const palTex=canvasTex(128,128,(g,w,h)=>{ g.fillStyle='#f6f4ef'; g.fillRect(0,0,w,h);
+    [['#2f4f8f',40,40],['#8a2c27',82,36],['#4f7a3a',92,78],['#c9a13d',50,90],['#3a2a22',28,70]].forEach(([c,x,y])=>{ g.fillStyle=c; g.beginPath(); g.ellipse(x,y,rnd(9,13),rnd(7,10),rnd(0,3),0,7); g.fill(); });
+    g.strokeStyle='rgba(47,79,143,.6)'; g.lineWidth=3; g.beginPath(); g.moveTo(40,40); g.quadraticCurveTo(60,60,64,64); g.stroke(); });
+  W(new THREE.CylinderGeometry(.1,.09,.012,32),new THREE.MeshStandardMaterial({color:'#f6f4ef',roughness:.3}),.22,.006,.14);
+  const pal=W(new THREE.CircleGeometry(.092,32),new THREE.MeshStandardMaterial({map:palTex,roughness:.35}),.22,.0125,.14); pal.rotation.x=-Math.PI/2;
+  // little jars of underglaze with coloured lids
+  ['#2f4f8f','#8a2c27','#4f7a3a','#c9a13d','#3a2a22'].forEach((c,i)=>{ const dx=.4+(i%3)*.055, dz=.02+Math.floor(i/3)*.06;
+    W(new THREE.CylinderGeometry(.022,.022,.05,16),new THREE.MeshStandardMaterial({color:'#f2f2ee',roughness:.4,transparent:true,opacity:.9}),dx,.025,dz);
+    W(new THREE.CylinderGeometry(.023,.023,.014,16),new THREE.MeshStandardMaterial({color:c,roughness:.5}),dx,.057,dz); });
+  // brushes standing in a cup, one lying on the table
+  W(new THREE.CylinderGeometry(.035,.03,.09,20,1,true),new THREE.MeshStandardMaterial({color:'#8fb5a3',roughness:.3,side:THREE.DoubleSide}),.66,.045,.16);
+  const brush=(len,tip,x,y,z,rx,rz)=>{ const g=new THREE.Group(); g.position.set(TX+x,TH+y,TZ+z); g.rotation.set(rx,0,rz); scene.add(g);
+    const h=new THREE.Mesh(new THREE.CylinderGeometry(.004,.005,len,8),wood); h.position.y=len/2; h.castShadow=true; g.add(h);
+    const f=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.012,8),steel); f.position.y=-.004; g.add(f);
+    const b=new THREE.Mesh(new THREE.ConeGeometry(.007,.03,8),new THREE.MeshStandardMaterial({color:tip,roughness:.9})); b.position.y=-.024; b.rotation.x=Math.PI; g.add(b); };
+  [[.2,'#3a2a22',-.01,.0,.12],[.22,'#c9b089',.01,.01,-.1],[.18,'#2f4f8f',-.012,-.01,.05],[.24,'#c9b089',.008,.0,-.16],[.2,'#3a2a22',0,.012,.2]]
+    .forEach(([l,c,ox,oz,tilt])=>brush(l,c,.66+ox,.05,.16+oz,tilt*.5,tilt));
+  brush(.2,'#2f4f8f',.08,.008,.3,0,Math.PI/2+.25);
+  // fettling knife (창칼): wooden handle with a long thin blade, lying across the front
+  { const g=new THREE.Group(); g.position.set(TX-.4,TH+.008,TZ+.29); g.rotation.y=.35; scene.add(g);
+    const h=new THREE.Mesh(new THREE.BoxGeometry(.1,.016,.02),wood); h.position.x=-.05; h.castShadow=true; g.add(h);
+    const ferr=new THREE.Mesh(new THREE.BoxGeometry(.012,.014,.016),steel); ferr.position.x=.006; g.add(ferr);
+    const bl=new THREE.Mesh(new THREE.BoxGeometry(.11,.002,.012),steel); bl.position.x=.067; bl.castShadow=true; g.add(bl);
+    const tip=new THREE.Mesh(new THREE.ConeGeometry(.006,.02,4),steel); tip.rotation.z=-Math.PI/2; tip.position.x=.13; tip.scale.y=1; g.add(tip); }
+  // needle tool and a wire loop trimming tool
+  { const n=W(new THREE.CylinderGeometry(.005,.005,.09,8),wood,-.2,.006,.33); n.rotation.set(0,.0,Math.PI/2); n.rotation.y=-.5;
+    const nd=W(new THREE.CylinderGeometry(.0012,.0012,.05,6),steel,-.16,.006,.355); nd.rotation.set(0,-.5,Math.PI/2); }
+  { const lt=W(new THREE.CylinderGeometry(.006,.006,.11,8),wood,-.62,.007,.06); lt.rotation.set(0,.9,Math.PI/2);
+    const loop=W(new THREE.TorusGeometry(.016,.0015,6,16),steel,-.66,.008,.11); loop.rotation.x=Math.PI/2; }
+  // yellow sponge and a damp cloth
+  W(new THREE.BoxGeometry(.08,.03,.055),new THREE.MeshStandardMaterial({color:'#e9c85a',roughness:.95}),-.5,.015,.24,.4);
+  { const cl=W(new THREE.BoxGeometry(.2,.012,.14),new THREE.MeshStandardMaterial({color:'#dfe6e9',roughness:1}),-.7,.006,.2,-.2); }
+  // sketch paper with pot outlines
+  { const sk=canvasTex(256,180,(g,w,h)=>{ g.fillStyle='#fbf8f0'; g.fillRect(0,0,w,h); g.strokeStyle='#4a4038'; g.lineWidth=2;
+      g.beginPath(); g.moveTo(40,40); g.bezierCurveTo(20,90,30,140,60,150); g.lineTo(100,150); g.bezierCurveTo(130,140,140,90,120,40); g.stroke();
+      g.beginPath(); g.ellipse(80,40,40,8,0,0,7); g.stroke();
+      g.beginPath(); g.moveTo(160,70); g.quadraticCurveTo(170,140,200,145); g.quadraticCurveTo(232,140,240,70); g.stroke();
+      g.fillStyle='#4a4038'; g.font='16px "Gaegu", sans-serif'; g.fillText('Ø14 · 10cm',150,40); g.fillText('굽 1cm',30,172); });
+    const sp=W(new THREE.PlaneGeometry(.24,.17),new THREE.MeshStandardMaterial({map:sk,roughness:.9}),.04,.002,.25,-.12); sp.rotation.x=-Math.PI/2; sp.rotation.z=.12; }
+  // clay scraps and trimming curls around the banding wheel
+  const scrap=new THREE.MeshStandardMaterial({color:'#9c8e7e',roughness:.8});
+  for(let k=0;k<7;k++){ const m=W(new THREE.SphereGeometry(rnd(.008,.016),8,6),scrap,-.12+rnd(-.2,.2),.006,.06+rnd(.12,.2)); m.scale.y=.5; }
+  for(let k=0;k<6;k++){ const c=W(new THREE.TorusGeometry(rnd(.008,.014),.0025,5,12,rnd(3,5.5)),scrap,-.3+rnd(-.08,.12),.006,.12+rnd(-.05,.06)); c.rotation.set(rnd(0,3),rnd(0,3),rnd(0,3)); }
+  // a stool in front, the same as the ones at the wheels
+  { const sx=TX+.05, sz=TZ+.78;
+    W(new THREE.CylinderGeometry(.19,.19,.05,24),M.wood,.05,.46-TH,.78);
+    [[.12,.12],[-.12,.12],[.12,-.12],[-.12,-.12]].forEach(([dx,dz])=>W(new THREE.CylinderGeometry(.018,.022,.44,8),M.woodDark,.05+dx,.22-TH,.78+dz));
+    collide(sx-.22,sx+.22,sz-.22,sz+.22); }
 }
 
 
