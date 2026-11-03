@@ -743,7 +743,7 @@ collide(3.58,4.36,-4.35,-4.1);
 const dayCal=(()=>{
   const c=document.createElement('canvas'); c.width=360; c.height=520;
   const tex=new THREE.CanvasTexture(c); tex.encoding=THREE.sRGBEncoding; tex.anisotropy=4;
-  const g=new THREE.Group(); g.position.set(3.3,1.5,-RZ+.012); scene.add(g);
+  const g=new THREE.Group(); g.position.set(3.3,1.55,-RZ+.012); g.scale.setScalar(1.4); scene.add(g);
   const pad=new THREE.Mesh(new THREE.BoxGeometry(.27,.39,.012),new THREE.MeshStandardMaterial({color:'#f4f3ef',roughness:.9})); pad.position.z=.006; g.add(pad);
   const face=new THREE.Mesh(new THREE.PlaneGeometry(.27,.39),new THREE.MeshStandardMaterial({map:tex,roughness:.85})); face.position.z=.0125; g.add(face);
   for(let k=1;k<6;k++){ const sh=new THREE.Mesh(new THREE.BoxGeometry(.27,.0015,.012),new THREE.MeshStandardMaterial({color:'#e6e3dc',roughness:1})); sh.position.set(0,-.195-.0012*k,.006-.0008*k); g.add(sh); }   // page edges below
@@ -835,8 +835,8 @@ const dayCal=(()=>{
   }
   plant(-2.98,-4.12,'kumquat');   // and a kumquat on its other side
   plant(2.98,-4.12,'willow');     // right speaker: narrow-leaf plant
-  plant(3.64,-3.84,'coffee');     // coffee plant in front of the bricks
-  plant(4.02,-3.76,'eucalyptus'); // tall eucalyptus by the kiln
+  plant(-5.5,-2.45,'coffee');     // moved from the kiln: on the floor in front of the garden window
+  plant(-5.42,4.14,'eucalyptus'); // moved from the kiln: the spare corner to the left of the entrance door
   plant(-RX+.34,2.92,'olive');     // by the entrance door, on its right as you face it
   collide(-RX,-RX+.55,2.7,3.14);
 }
@@ -1982,7 +1982,8 @@ $('saveBtn').addEventListener('click',()=>{
     const m=new THREE.Mesh(active.mesh.geometry.clone(),M.clay); m.castShadow=m.receiveShadow=true; m.userData.t=Date.now();
     const slot=shelfSlots[saveIndex%shelfSlots.length];
     if(savedPots[saveIndex%shelfSlots.length]) scene.remove(savedPots[saveIndex%shelfSlots.length]);
-    m.position.copy(slot); m.rotation.y=rnd(0,6.28); scene.add(m);
+    m.position.copy(slot); m.position.y+=.018; m.rotation.y=rnd(0,6.28); scene.add(m);
+    { const bd=wareBoardFor(m); scene.remove(bd); bd.position.y=-.009; m.add(bd); }   // on its own square ware board
     savedPots[saveIndex%shelfSlots.length]=m; saveIndex++;
     toast(`선반에 올렸어요 · ${saveIndex}번째 작품 (높이 ${(c.H*100).toFixed(1)}cm)`); updateMyWorkBtn(); offerGoWork();
   }
@@ -2467,6 +2468,13 @@ function setPotLabel(l,name){
   g.fillStyle='#f4efe4'; g.fillRect(0,0,c.width,c.height); g.fillStyle='#2b3a36'; g.font='30px "Gowun Dodum", sans-serif';
   g.textAlign='center'; g.textBaseline='middle'; g.fillText(name,c.width/2,30,c.width-20); t.needsUpdate=true;
 }
+// every pot on a shelf sits on its own square wooden ware board
+const wareBoardMat=new THREE.MeshStandardMaterial({roughness:.75,map:canvasTex(128,128,(g,w,h)=>{ g.fillStyle='#c39a68'; g.fillRect(0,0,w,h);
+  for(let i=0;i<30;i++){ const y=rnd(0,h); g.strokeStyle=Math.random()<.5?'rgba(120,80,45,.25)':'rgba(225,190,140,.25)'; g.lineWidth=rnd(.5,2); g.beginPath(); g.moveTo(0,y); g.bezierCurveTo(w*.3,y+rnd(-4,4),w*.7,y+rnd(-4,4),w,y+rnd(-3,3)); g.stroke(); } })});
+const wareBoardGeo=new THREE.BoxGeometry(1,1,1);
+function wareBoardFor(mesh){ const g=mesh.geometry; if(!g.boundingBox) g.computeBoundingBox(); const bb=g.boundingBox;
+  const r=Math.max(bb.max.x,bb.max.z,-bb.min.x,-bb.min.z), side=Math.min(.34,Math.max(.18,r*2+.06));
+  const b=new THREE.Mesh(wareBoardGeo,wareBoardMat); b.scale.set(side,.018,side); b.castShadow=b.receiveShadow=true; scene.add(b); return b; }
 function renderShelf(docs){
   const all=[];
   docs.forEach(d=>{ const b=d.data(); if(!b||!Array.isArray(b.pots)) return;
@@ -2474,13 +2482,13 @@ function renderShelf(docs){
       all.push({key:d.id+'/'+p.id,id:p.id,owner:d.id,t:numIn(p.t,0,1e15,0),clay:cl,l:numIn(p.l,-.06,.06,0)}); }); });
   all.sort((a,b)=>b.t-a.t);
   const shown=all.slice(0,SBOARDS.length*SPER), keep=new Set(shown.map(p=>p.key));
-  sharedPots.forEach((v,k)=>{ if(!keep.has(k)){ scene.remove(v.mesh); scene.remove(v.label); v.mesh.geometry.dispose(); sharedPots.delete(k); } });
+  sharedPots.forEach((v,k)=>{ if(!keep.has(k)){ scene.remove(v.mesh); scene.remove(v.label); if(v.board) scene.remove(v.board); v.mesh.geometry.dispose(); sharedPots.delete(k); } });
   shown.forEach((p,i)=>{
     let v=sharedPots.get(p.key);
     if(!v){ const mesh=new THREE.Mesh(clayGeo(p.clay),M.clay); mesh.castShadow=mesh.receiveShadow=true; mesh.rotation.y=rnd(0,6.28); scene.add(mesh);
-      v={mesh,label:potLabel(),owner:p.owner,t:p.t,id:p.id}; sharedPots.set(p.key,v); }
+      v={mesh,label:potLabel(),owner:p.owner,t:p.t,id:p.id,board:wareBoardFor(mesh)}; sharedPots.set(p.key,v); }
     const by=SBOARDS[Math.floor(i/SPER)], x=-2.75+(i%SPER)*.61;
-    v.mesh.position.set(x,by+.02,SZ+.02); v.label.position.set(x,by-.035,SZ-.192);
+    v.board.position.set(x,by+.029,SZ+.02); v.board.rotation.y=(p.l||0)*.5; v.mesh.position.set(x,by+.038,SZ+.02); v.label.position.set(x,by-.035,SZ-.192);
   });
   drawSign(all.length?`작품 ${all.length}점`:'첫 작품을 올려 보세요');
   nameLabels(); updateMyWorkBtn();
