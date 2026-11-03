@@ -52,6 +52,8 @@ button:focus-visible{outline:2px solid var(--celadon);outline-offset:2px;}
 #stats .sl{display:grid;gap:4px;min-width:0;}
 #rpmWrap{border-radius:10px;padding:4px 6px;margin:-4px -6px;}
 #rpmWrap.blink{animation:rpmBlink 1s ease-in-out infinite;}
+.nudge{animation:nudge 1s ease-in-out infinite;}
+@keyframes nudge{0%,100%{box-shadow:0 0 0 0 rgba(147,188,172,0);}50%{box-shadow:0 0 0 3px var(--celadon),0 0 14px 2px rgba(147,188,172,.75);}}
 @keyframes rpmBlink{0%,100%{box-shadow:0 0 0 0 rgba(147,188,172,0);background:transparent;}50%{box-shadow:0 0 0 2px var(--celadon);background:rgba(147,188,172,.2);}}
 #stats label{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:6px;}
 #stats label output{color:var(--ink);font-variant-numeric:tabular-nums;}
@@ -132,7 +134,7 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
   #tools button{flex:1 1 0;min-width:0;padding:11px 2px;font-size:12.5px;white-space:nowrap;justify-items:center;}
   #tools button small{display:none;}
 }
-@media (prefers-reduced-motion:reduce){ #toast,.meter i{transition:none;} #rpmWrap.blink{animation:none;box-shadow:0 0 0 2px var(--celadon);} }
+@media (prefers-reduced-motion:reduce){ #toast,.meter i{transition:none;} #rpmWrap.blink{animation:none;box-shadow:0 0 0 2px var(--celadon);} .nudge{animation:none;box-shadow:0 0 0 3px var(--celadon);} }
 </style>
 
 <div id="loading">공방 문을 여는 중…</div>
@@ -1353,6 +1355,22 @@ function setTip(){ const el=$('tip');
   else { el.textContent=TIPS[tool]; el.classList.remove('warn'); } }
 function updateSpeedPrompt(){ $('rpmWrap').classList.toggle('blink',!!needSpeed()); setTip(); }
 function warn(msg){ tipOverride=msg; tipTimer=1.2; setTip(); }
+// the button for the step to do next blinks: center → open → floor → pull → shape → shelf → stand up
+let justSaved=false, lastStep='';
+function nextStep(){
+  if(!active) return '';
+  if(justSaved) return 'stand';
+  const c=active.clay;
+  if(c.open<.02&&c.center<.8) return 'center';
+  if(c.open<.95) return 'open';
+  if((c.flat||0)<.4) return 'flat';
+  if(c.tw>.016) return 'pull';
+  if((c.shaped||0)<1.5) return 'shape';
+  return 'save';
+}
+function updateStepNudge(force){ const st=mode==='throw'?nextStep():''; if(st===lastStep&&!force) return; lastStep=st;
+  document.querySelectorAll('#tools button').forEach(b=>b.classList.toggle('nudge',b.dataset.tool===st));
+  $('saveBtn').classList.toggle('nudge',st==='save'); $('standBtn').classList.toggle('nudge',st==='stand'); }
 function setTool(t){ tool=t; document.querySelectorAll('#tools button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tool===t)); setTip(); }
 document.querySelectorAll('#tools button').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.tool)));
 function setRpm(v){ if(!active) return; active.rpm=v; $('rpm').value=v; $('rpmOut').textContent=v+' rpm'; updateSpeedPrompt(); }
@@ -1360,7 +1378,7 @@ $('rpm').addEventListener('input',e=>setRpm(+e.target.value));
 $('finger').addEventListener('input',e=>{ fingerMM=+e.target.value; $('fingerOut').textContent=fingerMM+' mm'; marker.scale.setScalar(fingerMM/8); });
 $('sitBtn').addEventListener('click',trySit);
 $('standBtn').addEventListener('click',()=>stand());
-$('resetBtn').addEventListener('click',()=>{ if(!active) return; active.clay=newClay(); rebuild(active); setTool('center'); toast('새 흙 1kg을 올렸어요'); });
+$('resetBtn').addEventListener('click',()=>{ if(!active) return; justSaved=false; active.clay=newClay(); rebuild(active); setTool('center'); toast('새 흙 1kg을 올렸어요'); });
 let audioCtx=null;
 function fanfare(){
   try{
@@ -1459,6 +1477,7 @@ $('saveBtn').addEventListener('click',()=>{
     toast(`선반에 올렸어요 · ${saveIndex}번째 작품 (높이 ${(c.H*100).toFixed(1)}cm)`); updateMyWorkBtn(); offerGoWork();
   }
   active.clay=newClay(); rebuild(active); setTool('center');
+  justSaved=true; updateStepNudge();
 });
 
 function nearestWheel(){
@@ -1494,7 +1513,7 @@ function resetPose(){
 // stand(): get up with a stretch; stand(true): get up at once (used when jumping elsewhere)
 function stand(now){
   if(mode==='walk'||(mode==='rising'&&!now)) return;
-  pressing=false; marker.visible=false; document.body.classList.remove('throwing');
+  pressing=false; marker.visible=false; document.body.classList.remove('throwing'); justSaved=false;
   $('throwHud').hidden=true;
   if(now||mode==='sitting'||matchMedia('(prefers-reduced-motion: reduce)').matches){ finishStand(); return; }
   // seated pose, then the outro plays in riseOutro()
@@ -1867,7 +1886,7 @@ function workClay(w,dt){
     }
   } else if(tool==='shape'){
     if(w.rpm<60) warn('모양 잡기는 60rpm 정도로 천천히 돌릴 때 좋아요');
-    shapeAt(c,hit.r,hit.y,dt*2.2*Math.max(.4,sf)); changed=true;
+    shapeAt(c,hit.r,hit.y,dt*2.2*Math.max(.4,sf)); c.shaped=(c.shaped||0)+dt; changed=true;
   }
   pullAcc=0; pushAcc=0;
   if(changed){ clampR(c); conserve(c); }
@@ -2077,23 +2096,28 @@ function makeCarry(plankTex){
     [-.03,-.01,.01].forEach(z=>blob(V(.004,-T-.02,z),[.012,.011,.011],skin));   // knuckles curling under
     [-.032,-.011,.01,.03].forEach((z,i)=>{ const L=[.062,.07,.068,.056][i];   // fingers spread under the board
       seg(V(-.012,-T-.016,z),V(-.012-L*.55,-T-.011,z*1.05),.0095,.0088,skin); seg(V(-.012-L*.55,-T-.011,z*1.05),V(-.012-L,-T-.009,z*1.1),.0088,.0078,skin); });
-    // thumb wraps over the edge and lies on top of the board
-    seg(V(.026,-T*.4,.036),V(.012,.006,.038),.012,.0105,skin); seg(V(.012,.006,.038),V(-.022,.009,.03),.0105,.0095,skin); seg(V(-.022,.009,.03),V(-.048,.0085,.022),.0095,.0085,skin);
-    blob(V(-.05,.0145,.022),[.008,.0025,.007],nail);
+    // the web of the hand wraps over the edge; the thumb lies flat on the board top, pointing in and away
+    seg(V(.03,-.01,.03),V(.004,.007,.026),.016,.013,skin);
+    blob(V(-.002,.006,.026),[.024,.011,.03],skin);                     // thumb base resting on the board
+    seg(V(-.002,.008,.022),V(-.026,.0085,-.004),.0125,.011,skin); seg(V(-.026,.0085,-.004),V(-.043,.008,-.027),.011,.0095,skin);
+    { const n=blob(V(-.045,.0165,-.03),[.0068,.0018,.0082],nail); n.rotation.y=-.66; }
     // wrist and forearm toward the viewer, rolled-up sleeve
     seg(V(.03,-T-.006,.018),V(.075,-.075,.16),.026,.029,skin); seg(V(.075,-.075,.16),V(.15,-.2,.42),.029,.034,skin,false);
     seg(V(.12,-.15,.31),V(.2,-.3,.62),.044,.05,cuff,false); seg(V(.15,-.2,.42),V(.28,-.45,.95),.05,.058,sleeve,false);
     return g; };
   mkHand(1); mkHand(-1);
+  root.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
   return root;
 }
 function openViewer(mesh,title,celebrate){
   if(!vRenderer){
     vRenderer=new THREE.WebGLRenderer({canvas:$('vc'),antialias:true}); vRenderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    vRenderer.shadowMap.enabled=true; vRenderer.shadowMap.type=THREE.PCFSoftShadowMap;
     vRenderer.outputEncoding=THREE.sRGBEncoding; vRenderer.toneMapping=THREE.ACESFilmicToneMapping;
     vScene=new THREE.Scene(); vScene.background=new THREE.Color('#1f2221');
     vScene.add(new THREE.HemisphereLight('#fff3e2','#3a332c',.85));
     const d=new THREE.DirectionalLight('#fff0d6',1.25); d.position.set(1.5,2.5,2); vScene.add(d);
+    d.castShadow=true; d.shadow.mapSize.set(1024,1024); Object.assign(d.shadow.camera,{left:-.6,right:.6,top:.6,bottom:-.6,near:.5,far:8}); d.shadow.camera.updateProjectionMatrix(); d.shadow.bias=-.0005; d.shadow.radius=3;
     const d2=new THREE.DirectionalLight('#ffd7a8',.45); d2.position.set(-2,1,-1.5); vScene.add(d2);
     const disc=new THREE.Mesh(new THREE.CylinderGeometry(1,1,.02,48),new THREE.MeshStandardMaterial({color:'#3a3f3d',roughness:.8})); disc.name='disc'; vScene.add(disc);
     // a long wooden ware board, the plank finished pots are carried to the shelf on
@@ -2110,7 +2134,7 @@ function openViewer(mesh,title,celebrate){
   if(vPot) vScene.remove(vPot);
   if(!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
   const bb=mesh.geometry.boundingBox, h=bb.max.y, r=Math.max(bb.max.x,bb.max.z,-bb.min.x,-bb.min.z);
-  vPot=new THREE.Mesh(mesh.geometry,mesh.material); vScene.add(vPot);
+  vPot=new THREE.Mesh(mesh.geometry,mesh.material); vPot.castShadow=true; vScene.add(vPot);
   const disc=vScene.getObjectByName('disc'), board=vScene.getObjectByName('board'), conf=vScene.getObjectByName('confetti'), carry=vScene.getObjectByName('carry');
   disc.scale.set(r*1.4,1,r*1.4); disc.position.y=-.011; disc.visible=!celebrate;
   board.visible=false;
@@ -2341,7 +2365,7 @@ function frame(){
     riseOutro(dt);
   } else {
     const w=active, c=w.clay;
-    if(workClay(w,dt)) rebuild(w);
+    if(workClay(w,dt)){ rebuild(w); justSaved=false; }
     if(tipTimer>0){ tipTimer-=dt; if(tipTimer<=0){ tipOverride=''; setTip(); } }
     const maxR=throwCam(w);
     updateHands(w,dt);
@@ -2351,6 +2375,7 @@ function frame(){
       $('sCenter').textContent=Math.round(c.center*100)+'%'; $('mCenter').style.width=(c.center*100)+'%';
       $('sH').textContent=(c.H*100).toFixed(1)+' cm'; $('sD').textContent=(maxR*200).toFixed(1)+' cm';
       $('sT').textContent=c.open>.5?(c.tw*1000).toFixed(1)+' mm':'—';
+      updateStepNudge();
     }
   }
   updateClock();
