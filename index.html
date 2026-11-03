@@ -894,7 +894,21 @@ function bakeSinkEnv(){ sinkGroup.visible=false; sinkCubeCam.update(renderer,sce
   { const arc=add(new THREE.TorusGeometry(.07,.012,10,20,Math.PI),chrome,.2,TOP+.25,-.15); arc.rotation.y=Math.PI/2; }
   add(new THREE.CylinderGeometry(.013,.011,.06,12),chrome,.2,TOP+.22,-.08);
   add(new THREE.BoxGeometry(.012,.012,.06),chrome,.235,TOP+.1,-.22).rotation.z=-.4;
-  add(new THREE.CylinderGeometry(.022,.022,.03,14),chrome,-.12,TOP+.015,-.23);
+  // amber glass hand-wash bottle with a black pump and a plain cream label, on the back deck
+  { const bx=-.13, bz=-.225, by=TOP, R0=.028, HB=.15;
+    const amber=new THREE.MeshPhysicalMaterial({color:'#2e1103',roughness:.12,metalness:0,clearcoat:1,clearcoatRoughness:.04});
+    const black=new THREE.MeshStandardMaterial({color:'#151515',roughness:.45});
+    const label=new THREE.MeshStandardMaterial({color:'#e9e1cc',roughness:.9,map:canvasTex(256,128,(g,w,h)=>{ g.fillStyle='#ebe3cf'; g.fillRect(0,0,w,h);
+      g.fillStyle='rgba(40,35,28,.55)'; g.fillRect(w*.32,h*.22,w*.36,5); for(let i=0;i<5;i++) g.fillRect(w*.28,h*.45+i*11,w*(.44-(i%2)*.1),2); })});
+    const add2=(geo,mat,y)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(bx,by+y,bz); m.castShadow=true; g.add(m); return m; };
+    const prof=[[0,0],[R0-.002,0],[R0,.004],[R0,HB*.78],[R0*.92,HB*.86],[R0*.55,HB*.93],[.011,HB*.96],[.011,HB]].map(v=>new THREE.Vector2(v[0],v[1]));
+    add2(new THREE.LatheGeometry(prof,32),amber,0);
+    const lb=add2(new THREE.CylinderGeometry(R0+.0008,R0+.0008,.07,32,1,true,-Math.PI*.55,Math.PI*1.1),label,.055);   // label faces the room (+z)
+    add2(new THREE.CylinderGeometry(.013,.013,.012,18),black,HB+.005);          // collar
+    add2(new THREE.CylinderGeometry(.0045,.0045,.03,10),black,HB+.024);         // stem
+    const head=add2(new THREE.BoxGeometry(.016,.012,.05),black,HB+.042); head.position.z+=.014; // pump head pointing to the room
+    add2(new THREE.CylinderGeometry(.003,.003,.008,8),black,HB+.034).position.z+=.036;        // spout tip
+  }
   // stainless frame: four legs, rails, towel bar, slatted lower shelf
   [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>add(new THREE.BoxGeometry(.025,TOP-.2,.025),chrome,sx*(W/2-.02),(TOP-.2)/2,sz*(D/2-.02)));
   [-1,1].forEach(s=>{ add(new THREE.BoxGeometry(W-.02,.02,.02),chrome,0,.22,s*(D/2-.02)); add(new THREE.BoxGeometry(.02,.02,D-.02),chrome,s*(W/2-.02),.22,0); });
