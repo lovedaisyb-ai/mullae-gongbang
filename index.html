@@ -2887,6 +2887,20 @@ async function supabaseCaps(){
 })();
 
 /* ---------- loop ---------- */
+
+// white industrial ceiling: bright white deck, four painted steel I-beams and one big spiral duct
+{ const W=new THREE.MeshStandardMaterial({color:'#f3f2ee',roughness:.6}), W2=new THREE.MeshStandardMaterial({color:'#e9e8e3',roughness:.55,metalness:.15}),
+    DUCT=new THREE.MeshStandardMaterial({color:'#f0f0ec',roughness:.35,metalness:.45}), DK=new THREE.MeshStandardMaterial({color:'#cfd0cc',roughness:.5,metalness:.3});
+  const add=(geo,mat,x,y,z)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=false; m.receiveShadow=true; scene.add(m); return m; };
+  ceil.material=new THREE.MeshStandardMaterial({color:'#ffffff',roughness:.9,emissive:'#ffffff',emissiveIntensity:.18});
+  // deep steel I-beams across the room
+  [-4.2,-1.4,1.4,4.2].forEach(x=>{ add(new THREE.BoxGeometry(.03,.32,RZ*2),W,x,RH-.21,0); add(new THREE.BoxGeometry(.16,.025,RZ*2),W,x,RH-.06,0); add(new THREE.BoxGeometry(.16,.025,RZ*2),W,x,RH-.36,0); });
+  // one big round spiral duct along the back of the room, on hangers
+  const duct=(x1,z1,x2,z2,r,y)=>{ const L=Math.hypot(x2-x1,z2-z1), m=add(new THREE.CylinderGeometry(r,r,L,32,1,true),DUCT,(x1+x2)/2,y,(z1+z2)/2); m.rotation.z=Math.PI/2; m.rotation.y=-Math.atan2(z2-z1,x2-x1); m.material.side=THREE.DoubleSide;
+    for(let t=.1;t<1;t+=.2){ const s=add(new THREE.TorusGeometry(r+.004,.006,6,32),DK,x1+(x2-x1)*t,y,z1+(z2-z1)*t); s.rotation.y=Math.PI/2-Math.atan2(z2-z1,x2-x1); }
+    for(let t=.15;t<1;t+=.3){ add(new THREE.CylinderGeometry(.006,.006,RH-y-r,6),DK,x1+(x2-x1)*t,(RH+y+r)/2,z1+(z2-z1)*t); } };
+  duct(-RX+.2,-2.6,RX-.2,-2.6,.22,RH-.62);
+}
 const clock=new THREE.Clock(); let walkPhase=0, statT=0;
 const camTarget=new THREE.Vector3(), camPos=new THREE.Vector3();
 camera.position.set(.4,2.2,4.6);
