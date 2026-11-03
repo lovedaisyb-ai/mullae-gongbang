@@ -887,6 +887,39 @@ function bakeSinkEnv(){ sinkGroup.visible=false; sinkCubeCam.update(renderer,sce
   [-1,1].forEach(s=>add(new THREE.BoxGeometry(.012,.012,.04),chrome,s*(W/2-.06),.6,D/2+.012));
   add(new THREE.BoxGeometry(.18,.22,.012),towelM,.28,.5,D/2+.04);                                         // towel hanging on the bar
   [0,1,2].forEach(k=>add(new THREE.BoxGeometry(.34,.035,.24),towelM,-.12,.26+k*.036,0));                   // folded towels below
+  // two hooks on the front of the basin, each with a hand towel hung by the loop tag sewn on its edge
+  { const fz=D/2;   // front face of the basin
+    const towelTex=(bg,draw)=>canvasTex(256,320,(g,w,h)=>{ g.fillStyle=bg; g.fillRect(0,0,w,h); draw(g,w,h);
+      // terry texture: tiny speckles + a woven hem band near the bottom
+      for(let i=0;i<2600;i++){ g.fillStyle=Math.random()<.5?'rgba(255,255,255,.07)':'rgba(0,0,0,.05)'; g.fillRect(Math.random()*w,Math.random()*h,2,2); }
+      g.fillStyle='rgba(0,0,0,.07)'; g.fillRect(0,h-26,w,12); g.fillStyle='rgba(255,255,255,.12)'; g.fillRect(0,h-22,w,4); });
+    const dots=towelTex('#e6d6b9',(g,w,h)=>{ g.fillStyle='#3f6db3'; for(let y=18,row=0;y<h;y+=34,row++) for(let x=(row%2?34:17);x<w;x+=34){ g.beginPath(); g.arc(x,y,7,0,Math.PI*2); g.fill(); } });
+    const check=towelTex('#86bde3',(g,w,h)=>{ g.fillStyle='rgba(247,214,82,.62)'; for(let x=12;x<w;x+=48) g.fillRect(x,0,14,h); for(let y=12;y<h;y+=48) g.fillRect(0,y,w,14);
+      g.fillStyle='rgba(247,214,82,.35)'; for(let x=32;x<w;x+=48) g.fillRect(x,0,3,h); for(let y=32;y<h;y+=48) g.fillRect(0,y,w,3); });
+    const hookM=new THREE.MeshStandardMaterial({color:'#a2afbb',roughness:.14,metalness:1,envMap:sinkEnvRT.texture,envMapIntensity:1.1});
+    // towel cloth hung from its centre loop: the top gathers toward the tag and soft vertical folds ripple down
+    const towelGeo=(W2,L)=>{ const geo=new THREE.PlaneGeometry(W2,L,16,22), P=geo.attributes.position;
+      for(let i=0;i<P.count;i++){ const x=P.getX(i), y=P.getY(i), t=Math.min(1,Math.max(0,(L/2-y)/L));   // t: 0 at top, 1 at bottom
+        const gather=.28+.72*Math.min(1,Math.pow(t/.45,.8));
+        const fold=Math.sin(x/W2*Math.PI*5.2+t*1.4)*.009*(.4+.6*t)+Math.cos(x/W2*Math.PI*2.1)*.006;
+        P.setXYZ(i,x*gather,y-(1-gather)*.02*Math.abs(x)/W2,fold+.004*(1-t)); }
+      geo.computeVertexNormals(); return geo; };
+    [[-.25,dots,.21,.3],[.03,check,.2,.28]].forEach(([hx,tex,W2,L],k)=>{
+      const hy=TOP-.04;
+      // hook: round chrome rose on the panel, a short arm out and a little up-turned tip
+      add(new THREE.CylinderGeometry(.014,.014,.006,18),hookM,hx,hy,fz+.003).rotation.x=Math.PI/2;
+      add(new THREE.CylinderGeometry(.0045,.0045,.034,10),hookM,hx,hy,fz+.02).rotation.x=Math.PI/2;
+      add(new THREE.CylinderGeometry(.0045,.0045,.016,10),hookM,hx,hy+.007,fz+.036);
+      add(new THREE.SphereGeometry(.0055,10,8),hookM,hx,hy+.015,fz+.036);
+      // fabric loop tag over the hook (same colour as the towel's accent)
+      const tagM=new THREE.MeshStandardMaterial({color:k?'#e9c64c':'#3f6db3',roughness:.85,side:THREE.DoubleSide});
+      const loop=add(new THREE.TorusGeometry(.016,.0028,6,20),tagM,hx,hy-.008,fz+.03); loop.scale.set(.75,1.25,1);
+      add(new THREE.BoxGeometry(.012,.022,.004),tagM,hx,hy-.034,fz+.031);
+      // the towel itself, hanging from the tag in front of the basin
+      const cloth=new THREE.Mesh(towelGeo(W2,L),new THREE.MeshStandardMaterial({map:tex,roughness:.95,side:THREE.DoubleSide}));
+      cloth.position.set(hx,hy-.044-L/2,fz+.03); cloth.rotation.y=(k?-.05:.04); cloth.castShadow=cloth.receiveShadow=true; g.add(cloth);
+    });
+  }
   add(new THREE.SphereGeometry(.035,10,8),new THREE.MeshStandardMaterial({color:'#b9a27a',roughness:1}),.12,.27,.02).scale.set(1.2,.6,.9); // scrub brush
 }
 collide(5.4,6,1.38,2.32);
