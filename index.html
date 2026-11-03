@@ -840,11 +840,19 @@ collide(4.35,5.45,-4.1,-3.1);
 
 // utility sink (where the wedging table used to stand): white ceramic basin with a washboard,
 // chrome gooseneck tap, stainless frame with a towel bar and a slatted lower shelf. Faces the room (-x).
+// the stainless reflects a snapshot of the studio taken once from in front of the sink
+const sinkEnvRT=new THREE.WebGLCubeRenderTarget(128,{generateMipmaps:true,minFilter:THREE.LinearMipmapLinearFilter});
+sinkEnvRT.texture.encoding=THREE.sRGBEncoding;
+const sinkCubeCam=new THREE.CubeCamera(.05,30,sinkEnvRT); sinkCubeCam.position.set(5.1,1.05,1.85); scene.add(sinkCubeCam);
+let sinkGroup=null, sinkEnvDone=0;
+function bakeSinkEnv(){ sinkGroup.visible=false; sinkCubeCam.update(renderer,scene); sinkGroup.visible=true; }
 {
-  const g=new THREE.Group(); g.position.set(5.7,0,1.85); g.rotation.y=-Math.PI/2; scene.add(g); // against the right wall, under the pegboard
-  // brushed stainless steel basin
-  const cer=new THREE.MeshStandardMaterial({color:'#b7bcc1',roughness:.32,metalness:.55});
-  const chrome=new THREE.MeshStandardMaterial({color:'#c8ccd0',roughness:.3,metalness:.35});
+  const g=new THREE.Group(); g.position.set(5.7,0,1.85); g.rotation.y=-Math.PI/2; scene.add(g); sinkGroup=g; // against the right wall, under the pegboard
+  // polished stainless steel basin: metallic, picks up the room's reflections and a crisp highlight
+  // fine horizontal brushing in the roughness so the highlights streak a little
+  const brush=canvasTex(256,256,(g,w,h)=>{ g.fillStyle='#5a5a5a'; g.fillRect(0,0,w,h); for(let i=0;i<500;i++){ const v=70+Math.random()*60|0; g.fillStyle=`rgba(${v},${v},${v},.5)`; g.fillRect(0,Math.random()*h,w,Math.random()*1.4+.3); } },[2,2]);
+  const cer=new THREE.MeshStandardMaterial({color:'#8796a4',roughness:1,roughnessMap:brush,metalness:1,envMap:sinkEnvRT.texture,envMapIntensity:1});
+  const chrome=new THREE.MeshStandardMaterial({color:'#a2afbb',roughness:.14,metalness:1,envMap:sinkEnvRT.texture,envMapIntensity:1.1});
   const drk=new THREE.MeshStandardMaterial({color:'#3a3a3a',roughness:.5});
   const towelM=new THREE.MeshStandardMaterial({color:'#f6f4ee',roughness:1});
   const add=(geo,mat,x,y,z)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=m.receiveShadow=true; g.add(m); return m; };
@@ -857,6 +865,9 @@ collide(4.35,5.45,-4.1,-3.1);
   add(new THREE.BoxGeometry(.29,.2,D),cer,-W/2+.145,TOP-.1,0);               // left block under the washboard
   add(new THREE.BoxGeometry(.02,.17,.41),cer,-.105,TOP-.105,.02);            // divider
   for(let i=0;i<8;i++) add(new THREE.BoxGeometry(.24,.008,.012),cer,-W/2+.15,TOP+.003,.15-i*.03); // washboard ribs
+  // rolled rim around the top edge: round tubes catch a bright specular line like real stainless
+  [[W,0,D/2-.004],[W,0,-D/2+.004]].forEach(([L,x,z])=>add(new THREE.CylinderGeometry(.009,.009,L,12),chrome,x,TOP+.001,z).rotation.z=Math.PI/2);
+  [W/2-.004,-W/2+.004].forEach(x=>add(new THREE.CylinderGeometry(.009,.009,D,12),chrome,x,TOP+.001,0).rotation.x=Math.PI/2);
   add(new THREE.CylinderGeometry(.025,.025,.004,16),drk,.16,TOP-.176,.04);    // drain
   add(new THREE.CylinderGeometry(.012,.012,.004,12),drk,.16,TOP-.06,-D/2+.101).rotation.x=Math.PI/2; // overflow
   // tap: gooseneck on the back deck, lever handle; soap pump on the left
@@ -2372,6 +2383,7 @@ function frame(){
     const key=JSON.stringify(st);
     if(key!==lastPres){ lastPres=key; room.presence(st).catch(()=>{}); }
   }
+  if(sinkEnvDone<3 && ++sinkEnvDone===3) bakeSinkEnv();
   if(viewer.open) renderViewer(dt); else renderer.render(scene,camera);
   requestAnimationFrame(frame);
 }
