@@ -894,20 +894,32 @@ function bakeSinkEnv(){ sinkGroup.visible=false; sinkCubeCam.update(renderer,sce
   { const arc=add(new THREE.TorusGeometry(.07,.012,10,20,Math.PI),chrome,.2,TOP+.25,-.15); arc.rotation.y=Math.PI/2; }
   add(new THREE.CylinderGeometry(.013,.011,.06,12),chrome,.2,TOP+.22,-.08);
   add(new THREE.BoxGeometry(.012,.012,.06),chrome,.235,TOP+.1,-.22).rotation.z=-.4;
-  // amber glass hand-wash bottle with a black pump and a plain cream label, on the back deck
-  { const bx=-.13, bz=-.225, by=TOP, R0=.028, HB=.15;
-    const amber=new THREE.MeshPhysicalMaterial({color:'#2e1103',roughness:.12,metalness:0,clearcoat:1,clearcoatRoughness:.04});
-    const black=new THREE.MeshStandardMaterial({color:'#151515',roughness:.45});
-    const label=new THREE.MeshStandardMaterial({color:'#e9e1cc',roughness:.9,map:canvasTex(256,128,(g,w,h)=>{ g.fillStyle='#ebe3cf'; g.fillRect(0,0,w,h);
-      g.fillStyle='rgba(40,35,28,.55)'; g.fillRect(w*.32,h*.22,w*.36,5); for(let i=0;i<5;i++) g.fillRect(w*.28,h*.45+i*11,w*(.44-(i%2)*.1),2); })});
-    const add2=(geo,mat,y)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(bx,by+y,bz); m.castShadow=true; g.add(m); return m; };
-    const prof=[[0,0],[R0-.002,0],[R0,.004],[R0,HB*.78],[R0*.92,HB*.86],[R0*.55,HB*.93],[.011,HB*.96],[.011,HB]].map(v=>new THREE.Vector2(v[0],v[1]));
-    add2(new THREE.LatheGeometry(prof,32),amber,0);
-    const lb=add2(new THREE.CylinderGeometry(R0+.0008,R0+.0008,.07,32,1,true,-Math.PI*.55,Math.PI*1.1),label,.055);   // label faces the room (+z)
-    add2(new THREE.CylinderGeometry(.013,.013,.012,18),black,HB+.005);          // collar
-    add2(new THREE.CylinderGeometry(.0045,.0045,.03,10),black,HB+.024);         // stem
-    const head=add2(new THREE.BoxGeometry(.016,.012,.05),black,HB+.042); head.position.z+=.014; // pump head pointing to the room
-    add2(new THREE.CylinderGeometry(.003,.003,.008,8),black,HB+.034).position.z+=.036;        // spout tip
+  // two dark brown glass hand-wash bottles (500ml boston round) with a white studio label and black pumps
+  { const R0=.033, HB=.15;
+    const glass=new THREE.MeshPhysicalMaterial({color:'#1a0a03',roughness:.1,metalness:0,clearcoat:1,clearcoatRoughness:.03});
+    const black=new THREE.MeshStandardMaterial({color:'#0e0e0e',roughness:.4});
+    const labelTex=canvasTex(512,256,(g,w,h)=>{ g.fillStyle='#f4f2ec'; g.fillRect(0,0,w,h);
+      const x0=w*.31, ww=w*.38;   // the visible front of the wrap
+      g.fillStyle='#222'; g.font='600 34px "Gowun Batang", serif'; g.textBaseline='top'; g.fillText('물레 공방',x0,h*.1);
+      g.font='15px system-ui,sans-serif'; g.fillText('Clay Studio Hand Wash',x0,h*.32);
+      g.fillStyle='#3a3a3a'; g.fillRect(x0,h*.42,ww,18); g.fillStyle='#f4f2ec'; g.font='12px system-ui,sans-serif'; g.fillText('흙 묻은 손을 부드럽게 · 500 mL',x0+4,h*.42+3);
+      g.fillStyle='rgba(30,30,30,.6)'; for(let k=0;k<6;k++) g.fillRect(x0,h*.56+k*14,ww*(k%3===2?.6:.95),3); });
+    const label=new THREE.MeshStandardMaterial({map:labelTex,roughness:.85});
+    const prof=[[0,0],[R0-.003,0],[R0,.005],[R0,HB*.74],[R0*.97,HB*.8],[R0*.82,HB*.87],[R0*.55,HB*.92],[.012,HB*.95],[.012,HB]].map(v=>new THREE.Vector2(v[0],v[1]));
+    const bodyGeo=new THREE.LatheGeometry(prof,36);
+    [[-.2,-.225,.25],[-.115,-.222,-.3]].forEach(([bx,bz,ry])=>{
+      const b=new THREE.Group(); b.position.set(bx,TOP,bz); b.rotation.y=ry; g.add(b);
+      const add2=(geo,mat,x,y,z)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=true; b.add(m); return m; };
+      add2(bodyGeo,glass,0,0,0);
+      add2(new THREE.CylinderGeometry(R0+.0007,R0+.0007,.085,36,1,true,-Math.PI*.62,Math.PI*1.24),label,0,.058,0);   // big white label on the front
+      const collar=add2(new THREE.CylinderGeometry(.0145,.0145,.016,20),black,0,HB+.007,0);                       // ribbed screw collar
+      for(let k=0;k<3;k++) add2(new THREE.TorusGeometry(.0147,.0009,4,20),black,0,HB+.002+k*.005,0).rotation.x=Math.PI/2;
+      add2(new THREE.CylinderGeometry(.008,.011,.012,16),black,0,HB+.021,0);                                    // shoulder of the pump
+      add2(new THREE.CylinderGeometry(.0048,.0048,.026,12),black,0,HB+.04,0);                                   // stem
+      add2(new THREE.CylinderGeometry(.009,.009,.012,16),black,0,HB+.058,0);                                    // actuator
+      const noz=add2(new THREE.BoxGeometry(.011,.009,.046),black,0,HB+.06,.025); noz.rotation.x=.12;               // long nozzle toward the room
+      add2(new THREE.BoxGeometry(.011,.012,.006),black,0,HB+.054,.047);                                          // nozzle tip, angled down
+    });
   }
   // stainless frame: four legs, rails, towel bar, slatted lower shelf
   [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>add(new THREE.BoxGeometry(.025,TOP-.2,.025),chrome,sx*(W/2-.02),(TOP-.2)/2,sz*(D/2-.02)));
