@@ -508,7 +508,7 @@ const glassMat=new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,
   });
   // the coat, hung by the loop inside its collar on the rightmost hook: the neck is pulled up into a small peak,
   // the shoulders slump down and forward, the fronts fall open a little at the top and the sleeves hang alongside
-  const cg=new THREE.Group(); cg.position.set(.21,.0,.03); cg.rotation.x=.045; rg.add(cg);
+  const cg=new THREE.Group(); cg.position.set(.21,.0,.03); cg.rotation.x=.045; cg.scale.setScalar(.85); rg.add(cg);
   const dots=canvasTex(512,512,(g,w,h)=>{ g.fillStyle='#f2dd98'; g.fillRect(0,0,w,h);
     for(let i=0;i<3000;i++){ g.fillStyle=Math.random()<.5?'rgba(255,255,255,.06)':'rgba(120,90,40,.05)'; g.fillRect(rnd(0,w),rnd(0,h),2,2); }
     g.fillStyle='#7b4a26'; for(let y=20,row=0;y<h;y+=64,row++) for(let x=(row%2?52:20);x<w;x+=64){ g.beginPath(); g.arc(x,y,9,0,7); g.fill(); } },[2,1.5]);
@@ -551,7 +551,7 @@ const glassMat=new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,
     add(new THREE.CylinderGeometry(.04,.042,.045,18,1,true),trim,sd*.2,-.675,.12,cg); });
   add(new THREE.TorusGeometry(.012,.003,6,14),new THREE.MeshStandardMaterial({color:'#7b4a26'}),0,.012,.0,cg);   // hanging loop over the hook
   // cognac leather bag hung by its two handles on the leftmost hook
-  { const bg=new THREE.Group(); bg.position.set(-.21,-.035,.045); bg.rotation.y=.06; rg.add(bg);
+  { const bg=new THREE.Group(); bg.position.set(-.21,-.035,.045); bg.rotation.y=.06; bg.scale.setScalar(.82); rg.add(bg);
     const leather=new THREE.MeshStandardMaterial({roughness:.55,map:canvasTex(256,256,(g,w,h)=>{ g.fillStyle='#b4622f'; g.fillRect(0,0,w,h);
       for(let i=0;i<70;i++){ const gr=g.createRadialGradient(rnd(0,w),rnd(0,h),0,rnd(0,w),rnd(0,h),rnd(10,40)); gr.addColorStop(0,'rgba(190,110,60,.25)'); gr.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=gr; g.fillRect(0,0,w,h); }
       for(let i=0;i<2500;i++){ g.fillStyle=Math.random()<.5?'rgba(60,25,8,.05)':'rgba(220,150,95,.07)'; g.fillRect(rnd(0,w),rnd(0,h),2,1); } })});
