@@ -136,6 +136,22 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 }
 @media (prefers-reduced-motion:reduce){ #toast,.meter i{transition:none;} #rpmWrap.blink{animation:none;box-shadow:0 0 0 2px var(--celadon);} .nudge{animation:none;box-shadow:0 0 0 3px var(--celadon);} }
 </style>
+<style>
+/* light theme: pale lime panels, dark olive text, orange accent */
+:root{--ink:#38492a;--muted:#6c7f58;--panel:rgba(232,246,214,.94);--panel-solid:#e8f6d6;--line:rgba(56,73,42,.16);--celadon:#ffbe85;--celadon-deep:#f48b34;--warn:#c0452b;color-scheme:light;}
+.panel{box-shadow:0 4px 18px rgba(60,50,30,.12);}
+.primary,#tools button[aria-pressed=true],#prompt button,#myWorkBtn,#goWork button,#chat button{color:#fff;}
+#tools button[aria-pressed=true] small{color:rgba(255,255,255,.9);}
+.meter{background:rgba(56,73,42,.16);}
+#who{color:#e07a22;}
+#joy{background:rgba(232,246,214,.6);}
+#knob{background:rgba(244,139,52,.55);border-color:#f48b34;}
+#chat input{background:rgba(255,255,255,.6);}
+#workPanel .danger{color:#fff;}
+@keyframes nudge{0%,100%{box-shadow:0 0 0 0 rgba(0,0,0,0);}50%{box-shadow:0 0 0 3px #f48b34,0 0 14px 2px rgba(244,139,52,.6);}}
+@keyframes rpmBlink{0%,100%{box-shadow:0 0 0 0 rgba(0,0,0,0);background:transparent;}50%{box-shadow:0 0 0 2px #f48b34;background:rgba(244,139,52,.15);}}
+@media (prefers-reduced-motion:reduce){ .nudge{box-shadow:0 0 0 3px #f48b34;} #rpmWrap.blink{box-shadow:0 0 0 2px #f48b34;} }
+</style>
 
 <div id="loading">공방 문을 여는 중…</div>
 <canvas id="c" tabindex="0" aria-label="도자기 공방 3D 공간"></canvas>
@@ -908,16 +924,16 @@ function bakeSinkEnv(){ sinkGroup.visible=false; sinkCubeCam.update(renderer,sce
       const hy=TOP-.04;
       // hook: round chrome rose on the panel, a short arm out and a little up-turned tip
       add(new THREE.CylinderGeometry(.014,.014,.006,18),hookM,hx,hy,fz+.003).rotation.x=Math.PI/2;
-      add(new THREE.CylinderGeometry(.0045,.0045,.034,10),hookM,hx,hy,fz+.02).rotation.x=Math.PI/2;
-      add(new THREE.CylinderGeometry(.0045,.0045,.016,10),hookM,hx,hy+.007,fz+.036);
-      add(new THREE.SphereGeometry(.0055,10,8),hookM,hx,hy+.015,fz+.036);
+      add(new THREE.CylinderGeometry(.0045,.0045,.064,10),hookM,hx,hy,fz+.035).rotation.x=Math.PI/2;
+      add(new THREE.CylinderGeometry(.0045,.0045,.016,10),hookM,hx,hy+.007,fz+.066);
+      add(new THREE.SphereGeometry(.0055,10,8),hookM,hx,hy+.015,fz+.066);
       // fabric loop tag over the hook (same colour as the towel's accent)
       const tagM=new THREE.MeshStandardMaterial({color:k?'#e9c64c':'#3f6db3',roughness:.85,side:THREE.DoubleSide});
-      const loop=add(new THREE.TorusGeometry(.016,.0028,6,20),tagM,hx,hy-.008,fz+.03); loop.scale.set(.75,1.25,1);
-      add(new THREE.BoxGeometry(.012,.022,.004),tagM,hx,hy-.034,fz+.031);
+      const loop=add(new THREE.TorusGeometry(.016,.0028,6,20),tagM,hx,hy-.008,fz+.06); loop.scale.set(.75,1.25,1);
+      add(new THREE.BoxGeometry(.012,.022,.004),tagM,hx,hy-.034,fz+.061);
       // the towel itself, hanging from the tag in front of the basin
       const cloth=new THREE.Mesh(towelGeo(W2,L),new THREE.MeshStandardMaterial({map:tex,roughness:.95,side:THREE.DoubleSide}));
-      cloth.position.set(hx,hy-.044-L/2,fz+.03); cloth.rotation.y=(k?-.05:.04); cloth.castShadow=cloth.receiveShadow=true; g.add(cloth);
+      cloth.position.set(hx,hy-.044-L/2,fz+.062); cloth.rotation.y=(k?-.05:.04); cloth.castShadow=cloth.receiveShadow=true; g.add(cloth);
     });
   }
   add(new THREE.SphereGeometry(.035,10,8),new THREE.MeshStandardMaterial({color:'#b9a27a',roughness:1}),.12,.27,.02).scale.set(1.2,.6,.9); // scrub brush
