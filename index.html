@@ -1335,6 +1335,21 @@ function vintagePendant(parent,x,z,drop,big){
 
 /* ---------- wheels ---------- */
 const HEADY=.56;
+const PEDAL={
+  body:new THREE.MeshStandardMaterial({color:'#e9eae6',roughness:.45}),
+  foot:new THREE.MeshStandardMaterial({color:'#2a2a2a',roughness:.6}),
+  pad:new THREE.MeshStandardMaterial({roughness:.8,map:canvasTex(128,224,(g,w,h)=>{
+    g.fillStyle='#cfd2cd'; g.fillRect(0,0,w,h);
+    g.fillStyle='rgba(0,0,0,.06)'; for(let y=6;y<h;y+=10) g.fillRect(6,y,w-12,3);        // grip ridges
+    // a right footprint: sole, heel and five toes (toes toward the front = bottom of the texture)
+    g.fillStyle='#8a6f5a';
+    g.save(); g.translate(w*.5,h*.46); g.rotate(-.08);
+    g.beginPath(); g.ellipse(4,-30,24,34,0,0,7); g.fill();            // heel / back of the sole
+    g.beginPath(); g.ellipse(-2,8,20,22,.1,0,7); g.fill();            // arch
+    g.beginPath(); g.ellipse(-4,40,27,24,0,0,7); g.fill();            // ball of the foot
+    [[-22,72,9],[-6,78,8],[8,77,7],[20,72,6],[29,64,5]].forEach(([x,y,r])=>{ g.beginPath(); g.ellipse(x,y,r,r*1.15,0,0,7); g.fill(); });
+    g.restore(); })}),
+};
 function makeWheel(x,z){
   const g=new THREE.Group(); g.position.set(x,0,z); scene.add(g);
   const add=(geo,mat,px,py,pz)=>{const m=new THREE.Mesh(geo,mat); m.position.set(px,py,pz); m.castShadow=m.receiveShadow=true; g.add(m); return m;};
@@ -1344,8 +1359,17 @@ function makeWheel(x,z){
   add(new THREE.CylinderGeometry(.03,.03,.12,12),M.steel,0,.47,0);
   const head=new THREE.Group(); head.position.y=HEADY; g.add(head);
   const plate=new THREE.Mesh(new THREE.CylinderGeometry(.17,.17,.03,40),M.steel); plate.castShadow=plate.receiveShadow=true; head.add(plate);
-  // pedal
-  add(new THREE.BoxGeometry(.14,.05,.22),M.frame,.22,.03,.42);
+  // foot pedal on the right of the wheel (the potter's right foot): a low box with a sloped top plate
+  // carrying a footprint mark, and a cable running back into the wheel body
+  { const pg=new THREE.Group(); pg.position.set(.42,0,.36); pg.rotation.y=-.12; g.add(pg);
+    const pa=(geo,mat,px,py,pz)=>{const m=new THREE.Mesh(geo,mat); m.position.set(px,py,pz); m.castShadow=m.receiveShadow=true; pg.add(m); return m;};
+    pa(new THREE.BoxGeometry(.17,.05,.27),PEDAL.body,0,.025,0);                       // base
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>pa(new THREE.CylinderGeometry(.012,.012,.008,10),PEDAL.foot,sx*.065,.004,sz*.11));
+    const top=pa(new THREE.BoxGeometry(.15,.022,.25),PEDAL.body,0,.068,0); top.rotation.x=.13;   // sloped plate, higher at the back
+    const pad=pa(new THREE.PlaneGeometry(.13,.22),PEDAL.pad,0,.0805,0); pad.rotation.set(-Math.PI/2+.13,0,Math.PI);   // toes point toward the wheel
+    pa(new THREE.BoxGeometry(.15,.035,.03),PEDAL.body,0,.055,-.115);                  // hinge block at the back
+    const cable=new THREE.CatmullRomCurve3([[0,.03,-.135],[-.02,.012,-.2],[-.08,.008,-.24],[-.13,.03,-.3]].map(v=>new THREE.Vector3(...v)));
+    const c=new THREE.Mesh(new THREE.TubeGeometry(cable,20,.005,6,false),PEDAL.foot); c.castShadow=true; pg.add(c); }
   // stool
   add(new THREE.CylinderGeometry(.19,.19,.05,24),M.wood,0,.46,.66);
   [[.12,.12],[-.12,.12],[.12,-.12],[-.12,-.12]].forEach(([dx,dz])=>{const l=add(new THREE.CylinderGeometry(.018,.022,.44,8),M.woodDark,dx,.22,.66+dz);});
