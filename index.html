@@ -354,9 +354,6 @@ box(RX*2,RH,.2,M.wall,0,RH/2,-RZ-.1,{cast:false});
 box(RX*2,RH,.2,M.wall,0,RH/2,RZ+.1,{cast:false});
 box(.2,RH,RZ*2,M.wall,-RX-.1,RH/2,0,{cast:false});
 box(.2,RH,RZ*2,M.wall,RX+.1,RH/2,0,{cast:false});
-// skirting
-box(RX*2,.12,.03,M.woodDark,0,.06,-RZ+.015,{cast:false});
-box(RX*2,.12,.03,M.woodDark,0,.06,RZ-.015,{cast:false});
 
 // vintage wooden windows looking out on a sunny garden
 const viewTex=canvasTex(1024,840,(g,w,h)=>{
@@ -1792,7 +1789,7 @@ rig.name='rig'; legL.name='legL'; legR.name='legR'; armL.name='armL'; armR.name=
 const keys={};
 let yaw=0, pitch=.3, camDist=2.8;
 let mode='walk', active=null, tool='center';
-let pressing=false, ptr={x:0,y:0}, lastPtrY=0, pullAcc=0, pushAcc=0, dragging=null;
+let pressing=false, ptr={x:0,y:0}, lastPtrY=0, lastPtrX=0, pullAcc=0, pushAcc=0, sideAcc=0, dragging=null;
 const isTouch=matchMedia('(pointer:coarse)').matches;
 $('joy').hidden=true; // phones move by tapping the floor; the joystick is never shown
 
@@ -1818,13 +1815,13 @@ document.addEventListener('selectstart',e=>{ if(!(e.target instanceof HTMLInputE
 document.getElementById('throwHud').addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('pointerdown',e=>{
   canvas.setPointerCapture(e.pointerId); canvas.focus();
-  ptr.x=e.clientX; ptr.y=e.clientY; lastPtrY=e.clientY;
+  ptr.x=e.clientX; ptr.y=e.clientY; lastPtrY=e.clientY; lastPtrX=e.clientX;
   if(mode==='sitting'){ sitT=Math.max(sitT,2.25); return; }
   if(mode==='rising'){ riseT=Math.max(riseT,2.45); return; }
   if(mode==='throw'){ pressing=true; } else { dragging={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,t:performance.now()}; if(focus) releaseFocus(); }
 });
 canvas.addEventListener('pointermove',e=>{
-  if(mode==='throw'){ if(pressing){ const dy=lastPtrY-e.clientY; if(dy>0) pullAcc+=dy; else pushAcc-=dy; lastPtrY=e.clientY; } ptr.x=e.clientX; ptr.y=e.clientY; }
+  if(mode==='throw'){ if(pressing){ const dy=lastPtrY-e.clientY; if(dy>0) pullAcc+=dy; else pushAcc-=dy; lastPtrY=e.clientY; sideAcc+=e.clientX-lastPtrX; lastPtrX=e.clientX; } ptr.x=e.clientX; ptr.y=e.clientY; }
   else if(dragging){ yaw-=(e.clientX-dragging.x)*.006; pitch=Math.min(1.1,Math.max(.05,pitch+(e.clientY-dragging.y)*.004)); dragging.x=e.clientX; dragging.y=e.clientY; }
 });
 const endPtr=e=>{
@@ -1854,7 +1851,7 @@ const TIPS={
   flat:'오른손 손가락을 구멍 안 바닥에 대고 누르면 넓게 펴져요. 손가락을 둔 자리가 바닥 지름이 돼요',
   open:'두 손으로 흙 윗부분을 감싸고, 엄지를 가운데에 넣은 채 아래로 누르면 구멍이 깊어져요. 바닥은 1cm 남겨요',
   pull:'흙을 누른 채 위로 끌어 올리면 벽이 얇아지며 높아지고, 아래로 내리면 낮아져요',
-  shape:'양손으로 흙을 감싼 채 윤곽을 따라 천천히 끌면 그 높이만 조금씩 바뀌어요. 손끝 크기로 범위를 조절해요',
+  shape:'누른 채 바깥쪽으로 끌면 그 높이가 넓게 펴지고, 안쪽으로 끌면 좁아져요. 위아래로 옮겨 가며 윤곽을 잡아요. 손끝 크기로 범위를 조절해요',
 };
 let tipOverride='', tipTimer=0;
 function needSpeed(){ return mode==='throw'&&active&&active.rpm<=0; }
@@ -2336,6 +2333,13 @@ function clayHit(w){
   const l=w.group.worldToLocal(tmpV.clone());
   return {r:Math.hypot(l.x,l.z), y:l.y-HEADY-.015, n};
 }
+// widen (+) or narrow (-) the wall around one height by a small amount, as wide as the fingertip
+function spreadAt(c,py,amt){
+  const dh=c.H/(N-1), sig=fingerMM/1000*.8, minR=c.open>.5?c.tw+.006:.012;
+  amt=Math.max(-.006,Math.min(.006,amt));
+  for(let i=1;i<N;i++){ const wgt=Math.exp(-((i*dh-py)**2)/(2*sig*sig)); if(wgt<.01) continue; c.r[i]=Math.min(.17,Math.max(minR,c.r[i]+amt*wgt)); }
+  smooth(c,.01);
+}
 function shapeAt(c,pr,py,k){
   // a fingertip of fingerMM: only nearby heights move, and only a little per moment
   const dh=c.H/(N-1), sig=fingerMM/1000*.6, lim=.012*k;
@@ -2349,7 +2353,7 @@ function workClay(w,dt){
   if(pressing) hit=clayHit(w);
   handHit=hit;
   marker.visible=false;
-  if(!pressing || !hit){ pullAcc=0; pushAcc=0; return false; }
+  if(!pressing || !hit){ pullAcc=0; pushAcc=0; sideAcc=0; return false; }
   // marker on the clay surface facing the camera
   const dh=c.H/(N-1), idx=Math.max(0,Math.min(N-1,Math.round(hit.y/dh)));
   if(hit.y>-.01 && hit.y<c.H+.03){
@@ -2358,7 +2362,7 @@ function workClay(w,dt){
     marker.position.copy(w.group.localToWorld(new THREE.Vector3(d.x*(sr+.006),HEADY+.015+Math.min(c.H,Math.max(0,hit.y)),d.y*(sr+.006))));
     marker.visible=true;
   }
-  if(w.rpm<30){ warn('물레를 먼저 돌려주세요 (속도 30rpm 이상)'); pullAcc=0; pushAcc=0; return false; }
+  if(w.rpm<30){ warn('물레를 먼저 돌려주세요 (속도 30rpm 이상)'); pullAcc=0; pushAcc=0; sideAcc=0; return false; }
   let changed=false;
   if(tool==='center'){
     c.center=Math.min(1,c.center+dt*.32*sf); smooth(c,dt*5*sf);
@@ -2396,9 +2400,14 @@ function workClay(w,dt){
     }
   } else if(tool==='shape'){
     if(w.rpm<60) warn('모양 잡기는 60rpm 정도로 천천히 돌릴 때 좋아요');
-    shapeAt(c,hit.r,hit.y,dt*2.2*Math.max(.4,sf)); c.shaped=(c.shaped||0)+dt; changed=true;
+    // drag away from the pot's centre line to belly it out, toward it to draw it in; just holding still only smooths
+    const axisS=w.group.localToWorld(new THREE.Vector3(0,HEADY,0)).project(camera), b=canvas.getBoundingClientRect();
+    const ax=b.left+(axisS.x+1)/2*b.width, side=Math.sign(ptr.x-ax)||1, out=sideAcc*side;
+    if(Math.abs(out)>0){ spreadAt(c,hit.y,out*.00022*Math.max(.5,sf)); changed=true; }
+    else { smooth(c,dt*.6); }
+    c.shaped=(c.shaped||0)+dt; changed=true;
   }
-  pullAcc=0; pushAcc=0;
+  pullAcc=0; pushAcc=0; sideAcc=0;
   if(changed){ clampR(c); conserve(c); }
   return changed;
 }
