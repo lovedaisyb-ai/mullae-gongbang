@@ -2739,13 +2739,62 @@ $('chat').addEventListener('submit',e=>{
   sayN++; setTag(myBubble,text); myBubble.visible=true; myBubbleUntil=clock.elapsedTime+5;
   if(room) room.presence({say:{n:sayN,text}}).catch(()=>{});
 });
+/* ---------- together outside claude.ai: Firebase (Realtime Database + anonymous sign-in) ----------
+   On claude.ai the page uses its built-in room/db/user. Anywhere else (GitHub Pages) it falls back to
+   Firebase when FIREBASE_CONFIG is filled in, offering the same small interface. */
+const FIREBASE_CONFIG=null;   // ← Firebase 콘솔의 firebaseConfig 를 여기에 넣으면 여러 사람이 같이 들어올 수 있어요
+function loadScript(src){ return new Promise((ok,no)=>{ const sc=document.createElement('script'); sc.src=src; sc.onload=ok; sc.onerror=no; document.head.appendChild(sc); }); }
+function askName(){
+  return new Promise(res=>{
+    const box=document.createElement('form'); box.className='hud panel'; box.id='nameBox';
+    box.style.cssText='left:50%;top:50%;transform:translate(-50%,-50%);padding:18px;display:grid;gap:10px;width:min(320px,calc(100vw - 32px));z-index:30;text-align:center;';
+    box.innerHTML='<strong style="font-family:var(--display);font-size:18px">서나네 물레 공방에 오신 걸 환영해요</strong><span style="font-size:13px;color:var(--muted)">공방에서 쓸 이름을 알려 주세요</span><input maxlength="12" placeholder="이름" style="padding:9px 10px;font:15px var(--body);border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.7);color:var(--ink)"><button type="submit" class="primary" style="padding:10px">들어가기</button>';
+    document.body.appendChild(box); const inp=box.querySelector('input'); setTimeout(()=>inp.focus(),50);
+    box.addEventListener('submit',e=>{ e.preventDefault(); const v=inp.value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim().slice(0,12)||'도예가'; box.remove(); res(v); });
+  });
+}
+async function firebaseCaps(){
+  const V='10.12.2', base=`https://www.gstatic.com/firebasejs/${V}/`;
+  await loadScript(base+'firebase-app-compat.js');
+  await Promise.all([loadScript(base+'firebase-auth-compat.js'),loadScript(base+'firebase-database-compat.js')]);
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const cred=await firebase.auth().signInAnonymously(); const id=cred.user.uid, db=firebase.database();
+  let name=''; try{ name=localStorage.getItem('mullae-name')||''; }catch(e){}
+  if(!name){ name=await askName(); try{ localStorage.setItem('mullae-name',name); }catch(e){} }
+  const names={[id]:name};
+  const user={ id:async()=>id, profiles:async ids=>{ const o={}; ids.forEach(k=>{ if(names[k]) o[k]={name:names[k]}; }); return o; } };
+  const peerRef=db.ref('rooms/studio/peers/'+id); peerRef.onDisconnect().remove();
+  let mine={};
+  const room={
+    presence(obj){ mine=Object.assign({},mine,obj,{name}); return peerRef.set({p:mine,t:firebase.database.ServerValue.TIMESTAMP}); },
+    onPeers(cb,onErr){ let prev=new Set();
+      db.ref('rooms/studio/peers').on('value',snap=>{
+        const v=snap.val()||{}, peers=[];
+        Object.keys(v).forEach(k=>{ const d=v[k]; if(!d||!d.p) return; if(typeof d.p.name==='string') names[k]=d.p.name.slice(0,12);
+          peers.push({peer:k,by:k,kind:'viewer',isMe:k===id,presence:d.p,updatedAt:d.t||0}); });
+        const cur=new Set(peers.map(q=>q.peer)), left=[...prev].filter(k=>!cur.has(k)).map(k=>({peer:k})); prev=cur;
+        cb({peers,left}); },e=>onErr&&onErr(e)); }
+  };
+  const shelfDb={
+    collection:()=>({ onSnapshot(cb,err){ db.ref('shelf').on('value',snap=>{ const v=snap.val()||{};
+      const docs=Object.keys(v).map(k=>{ const d=v[k]||{}; if(typeof d.name==='string') names[k]=d.name.slice(0,12); return {id:k,data:()=>d}; });
+      cb({metadata:{fromCache:false},docs}); },err); } }),
+    doc:path=>({ set:val=>db.ref(path).set(Object.assign({},val,{name})) })
+  };
+  return {user,db:shelfDb,room};
+}
 (async()=>{
-  const cl=window.claude;
-  if(!cl||typeof cl.use!=='function'){ $('who').textContent='혼자 작업 중'; return; }
-  try{ userCap=await cl.use('user'); if(userCap) myId=await userCap.id(); }catch(e){ userCap=null; }
-  try{ sharedDb=await cl.use('db'); }catch(e){ sharedDb=null; }
+  const cl=window.claude; let caps=null;
+  if(!cl||typeof cl.use!=='function'){
+    if(!FIREBASE_CONFIG){ $('who').textContent='혼자 작업 중'; return; }
+    $('who').textContent='공방 연결 중…';
+    try{ caps=await firebaseCaps(); }catch(e){ console.warn(e); $('who').textContent='혼자 작업 중'; return; }
+  }
+  const use=async k=>caps?caps[k]:cl.use(k);
+  try{ userCap=await use('user'); if(userCap) myId=await userCap.id(); }catch(e){ userCap=null; }
+  try{ sharedDb=await use('db'); }catch(e){ sharedDb=null; }
   if(sharedDb&&myId) startShelf(); else sharedDb=null;
-  try{ room=await cl.use('room'); }catch(e){ room=null; }
+  try{ room=await use('room'); }catch(e){ room=null; }
   if(!room){ $('who').textContent='혼자 작업 중'; return; }
   $('chat').hidden=mode!=='walk';
   room.onPeers(ch=>{
