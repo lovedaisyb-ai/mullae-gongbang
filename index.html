@@ -1424,11 +1424,46 @@ shelfUnit(RX-.21,-2.2,-Math.PI/2,1.4,[.12,.58,1.04,1.5,1.96],(mk,pot,g)=>{
   sign.position.set(0,2.12,-.17); g.add(sign);
 });
 collide(RX-.45,RX,-2.95,-1.45);
-// glazed work between the windows
-shelfUnit(-RX+.21,-.2,Math.PI/2,1.0,[.3,.8,1.3,1.8,2.3],(mk,pot)=>{
-  const set=[['bowl',M.celadon],['cup',M.tenmoku],['jar',M.moon],['vase',M.celadon],['plate',M.tenmoku],['cup',M.celadon],['bowl',M.moon],['jar',M.tenmoku],['cup',M.moon],['vase',M.tenmoku],['bowl',M.celadon],['cup',M.celadon]];
-  [.3,.8,1.3,1.8].forEach((y,row)=>{ for(let i=0;i<3;i++){ const [s,m]=set[row*3+i]; pot(s,m,-.32+i*.32,y+.018,0,s==='plate'?.7:1).rotation.y=rnd(0,6.28); } });
-});
+// finished work between the windows: crowded like a pottery shop, stacks of nested cups and planters,
+// bowls piled up, jars and vases in all sizes and a palette of glazes
+{
+  const GL=['#f1ece2','#e6dccb','#d9c7ae','#c98e6b','#b5674a','#8e8a86','#5d5c5b','#3a3634','#d9a9a6','#e6c27a','#a9b8a2','#8fb5a3','#c7bcb0','#efe4c8']
+    .map(c=>new THREE.MeshStandardMaterial({color:c,roughness:rnd(.25,.6)}));
+  const EXTRA={
+    planter:[[.045,0],[.05,.04],[.058,.08],[.066,.085],[.066,.1]],
+    tumbler:[[.03,0],[.032,.06],[.034,.12]],
+    tallvase:[[.035,0],[.05,.06],[.052,.14],[.032,.22],[.026,.28],[.032,.3]],
+    pot:[[.05,0],[.06,.02],[.07,.07],[.072,.1]],
+    bottle:[[.035,0],[.055,.05],[.055,.1],[.02,.15],[.016,.2],[.02,.21]],
+  };
+  const geoCache={};
+  const geoOf=k=>geoCache[k]||(geoCache[k]=potGeo(SHAPES[k]||EXTRA[k],.006));
+  const HT={bowl:.07,cup:.1,vase:.23,moon:.28,jar:.16,plate:.03,planter:.1,tumbler:.12,tallvase:.3,pot:.1,bottle:.21};
+  const WD={bowl:.088,cup:.044,vase:.074,moon:.13,jar:.08,plate:.13,planter:.066,tumbler:.034,tallvase:.052,pot:.072,bottle:.055};
+  shelfUnit(-RX+.21,-.2,Math.PI/2,1.0,[.3,.8,1.3,1.8,2.3],(mk,pot,g)=>{
+    const put=(k,mat,x,y,z,s)=>{ const m=new THREE.Mesh(geoOf(k),mat); m.position.set(x,y,z); m.scale.setScalar(s); m.rotation.y=rnd(0,6.28); m.castShadow=s>.9; m.receiveShadow=true; g.add(m); return m; };
+    const pick=a=>a[Math.floor(Math.random()*a.length)];
+    [.3,.8,1.3,1.8,2.3].forEach((y,row)=>{
+      const maxH=row===4?.34:.43;
+      [[-.085,1],[.085,.9]].forEach(([z,zs])=>{       // back row, then a slightly smaller front row
+        let x=-.47;
+        while(x<.46){
+          const mat=pick(GL), kind=Math.random();
+          let k, s=rnd(.7,1.15)*zs, n=1, step;
+          if(kind<.3){ k=pick(['cup','tumbler','planter','pot']); n=Math.max(1,Math.min(6,Math.floor(maxH/(HT[k]*s*.32))-1)); n=Math.floor(rnd(2,n+1)); }     // nested stack
+          else if(kind<.45){ k='bowl'; n=Math.floor(rnd(2,5)); s*=.85; }                                                    // pile of bowls
+          else if(kind<.52){ k='plate'; n=Math.floor(rnd(3,7)); s*=.7; }                                                    // pile of plates
+          else { k=pick(['vase','jar','tallvase','bottle','moon','pot','cup','planter']); }
+          if(HT[k]*s>maxH) s=maxH/HT[k]*.92;
+          const r=WD[k]*s; if(x+r*2>.48) break;
+          const cx=x+r+rnd(0,.012), nest=k==='plate'?.012:k==='bowl'?.022:HT[k]*s*.3;
+          for(let q=0;q<n;q++){ const top=y+.018+q*nest; if(top+HT[k]*s>y+maxH) break; put(k,n>1?mat:mat,cx+rnd(-.003,.003),top,z+rnd(-.012,.012),s); }
+          step=r*2+rnd(.008,.03); x+=step;
+        }
+      });
+    });
+  });
+}
 collide(-RX,-RX+.45,-.8,.4);
 
 /* ---------- reclaimed-wood table with white porcelain (back-left corner) ---------- */
