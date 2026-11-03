@@ -422,6 +422,72 @@ const glassMat=new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,
     panel(zc,-1); panel(zc,1);
   });
 }
+// arched double wooden door with a stone surround on the left wall (to the left of the garden window),
+// two tall arched glass panes with black iron scrolls, and the same garden view outside
+{
+  const zc=3.45, DW=1.2, DH=1.72, AR=DW/2;           // door width, straight height, arch radius
+  const dg=new THREE.Group(); dg.position.set(-RX,0,zc); dg.rotation.y=Math.PI/2; scene.add(dg);   // local +z = into the room, local +x = toward -z
+  const doorWood=new THREE.MeshStandardMaterial({roughness:.55,map:canvasTex(256,512,(g,w,h)=>{
+    g.fillStyle='#9c5c27'; g.fillRect(0,0,w,h);
+    for(let i=0;i<90;i++){ const x=rnd(0,w); g.strokeStyle=Math.random()<.5?'rgba(70,32,10,.28)':'rgba(190,120,60,.22)'; g.lineWidth=rnd(.6,2.2); g.beginPath(); g.moveTo(x,0); g.bezierCurveTo(x+rnd(-8,8),h*.3,x+rnd(-8,8),h*.7,x+rnd(-6,6),h); g.stroke(); }
+  })});
+  const darkWood=new THREE.MeshStandardMaterial({color:'#5a2f12',roughness:.6});
+  const iron=new THREE.MeshStandardMaterial({color:'#141414',roughness:.45,metalness:.5});
+  const stone=new THREE.MeshStandardMaterial({roughness:.95,map:canvasTex(256,256,(g,w,h)=>{
+    g.fillStyle='#a99a8a'; g.fillRect(0,0,w,h);
+    for(let i=0;i<5000;i++){ const v=rnd(-1,1); g.fillStyle=v>0?`rgba(235,225,212,${v*.35})`:`rgba(90,78,66,${-v*.3})`; g.fillRect(rnd(0,w),rnd(0,h),2,2); }
+    for(let i=0;i<60;i++){ g.fillStyle=`rgba(${rnd(120,170)|0},${rnd(110,150)|0},${rnd(100,140)|0},.25)`; g.beginPath(); g.arc(rnd(0,w),rnd(0,h),rnd(6,20),0,7); g.fill(); }
+  },[2,2])});
+  const archShape=(w,hs,r,inset=0)=>{ const sh=new THREE.Shape(); sh.moveTo(-w/2,0); sh.lineTo(w/2,0); sh.lineTo(w/2,hs); sh.absarc(0,hs,r,0,Math.PI,false); sh.lineTo(-w/2,0); return sh; };
+  const ext=(sh,dep)=>new THREE.ExtrudeGeometry(sh,{depth:dep,bevelEnabled:true,bevelThickness:.006,bevelSize:.006,bevelSegments:2,curveSegments:32});
+  const mk=(geo,mat,x,y,z)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; dg.add(m); return m; };
+
+  // stone surround: an outer arch with the door opening cut out, standing a little proud of the wall
+  { const SW=.2, outer=archShape(DW+SW*2,DH,AR+SW); outer.holes.push(archShape(DW,DH,AR)); mk(ext(outer,.07),stone,0,0,0);
+    // joints between the arch stones
+    const jm=new THREE.MeshStandardMaterial({color:'#6f6357',roughness:1});
+    for(let k=1;k<8;k++){ const a=k/8*Math.PI, j=mk(new THREE.BoxGeometry(SW,.008,.004),jm,Math.cos(a)*(AR+SW/2),DH+Math.sin(a)*(AR+SW/2),.077); j.rotation.z=a; }
+    [.55,1.15].forEach(y=>[-1,1].forEach(sd=>mk(new THREE.BoxGeometry(SW,.008,.004),jm,sd*(DW/2+SW/2),y,.077))); }
+
+  // the garden outside, seen through the glass (same view as the windows)
+  { const vt=viewTex.clone(); vt.needsUpdate=true; vt.repeat.set(.32,.62); vt.offset.set(.6,.3);
+    const out=mk(new THREE.PlaneGeometry(DW,DH+AR),new THREE.MeshBasicMaterial({map:vt,toneMapped:false}),0,(DH+AR)/2,.004); out.castShadow=false; }
+
+  // two door leaves; each has a tall arched glass pane near its outer edge and a raised panel below
+  const LW=DW/2;
+  [-1,1].forEach(side=>{
+    const leaf=new THREE.Shape(), x0=side<0?-LW:0, x1=side<0?0:LW;
+    // leaf outline: bottom, inner straight edge, and its half of the arch
+    if(side<0){ leaf.moveTo(-LW,0); leaf.lineTo(0,0); leaf.lineTo(0,DH+AR); leaf.absarc(0,DH,AR,Math.PI/2,Math.PI,false); leaf.lineTo(-LW,0); }
+    else { leaf.moveTo(0,0); leaf.lineTo(LW,0); leaf.lineTo(LW,DH); leaf.absarc(0,DH,AR,0,Math.PI/2,false); leaf.lineTo(0,0); }
+    // glass hole: from 0.95m up to the arch, following a smaller arch
+    const gw=.26, gx=side*(LW*.5+.01), gy0=.95, gTop=DH+.05, hole=new THREE.Path();
+    hole.moveTo(gx-gw/2,gy0); hole.lineTo(gx+gw/2,gy0); hole.lineTo(gx+gw/2,gTop); hole.absarc(gx,gTop,gw/2,0,Math.PI,false); hole.lineTo(gx-gw/2,gy0);
+    leaf.holes.push(hole);
+    mk(ext(leaf,.045),doorWood,0,0,.012);
+    // glass and the iron scroll inside it
+    const glass=new THREE.Shape(); glass.moveTo(gx-gw/2,gy0); glass.lineTo(gx+gw/2,gy0); glass.lineTo(gx+gw/2,gTop); glass.absarc(gx,gTop,gw/2,0,Math.PI,false); glass.lineTo(gx-gw/2,gy0);
+    const gm=mk(new THREE.ShapeGeometry(glass,24),new THREE.MeshStandardMaterial({color:'#1d2a2c',transparent:true,opacity:.28,roughness:.05,metalness:.3}),0,0,.035); gm.castShadow=false;
+    const sc=new THREE.CatmullRomCurve3([
+      [gx+side*.02,gTop+.1],[gx-side*.07,gTop-.05],[gx-side*.06,gTop-.35],[gx+side*.03,gTop-.55],[gx+side*.09,gTop-.72],[gx+side*.02,gy0+.06],[gx-side*.08,gy0+.08],[gx-side*.08,gy0+.17],[gx-side*.02,gy0+.2],[gx+side*.005,gy0+.14]
+    ].map(([x,y])=>new THREE.Vector3(x,y,.04)));
+    mk(new THREE.TubeGeometry(sc,80,.0055,6,false),iron,0,0,0);
+    const sc2=new THREE.CatmullRomCurve3([[gx-side*.06,gTop-.35],[gx-side*.1,gTop-.5],[gx-side*.07,gTop-.62],[gx-side*.03,gTop-.6]].map(([x,y])=>new THREE.Vector3(x,y,.04)));
+    mk(new THREE.TubeGeometry(sc2,30,.0045,6,false),iron,0,0,0);
+    // moulding frame around the glass and a raised panel below
+    mk(new THREE.BoxGeometry(gw+.05,.03,.02),darkWood,gx,gy0-.012,.068);
+    mk(new THREE.BoxGeometry(LW*.66,.42,.025),doorWood,gx,.5,.07);
+    mk(new THREE.BoxGeometry(LW*.66-.06,.42-.06,.018),darkWood,gx,.5,.083).scale.set(1,1,.6);
+  });
+  // centre meeting stile, brass-dark handle plate and keyhole
+  mk(new THREE.BoxGeometry(.03,DH+AR-.02,.012),darkWood,0,(DH+AR)/2,.066);
+  mk(new THREE.BoxGeometry(.04,.2,.012),iron,-.04,1.05,.075);
+  mk(new THREE.CylinderGeometry(.009,.009,.06,10),iron,-.04,1.1,.095).rotation.z=Math.PI/2;
+  mk(new THREE.BoxGeometry(.008,.02,.004),new THREE.MeshBasicMaterial({color:'#000'}),-.04,1.0,.083);
+  // stone threshold
+  mk(new THREE.BoxGeometry(DW+.4,.03,.22),stone,0,.015,.08);
+  collide(-RX,-RX+.25,zc-.85,zc+.85);
+}
 // a little plant on the first sill
 { const pot=new THREE.Mesh(new THREE.CylinderGeometry(.07,.055,.12,20),new THREE.MeshStandardMaterial({color:'#b5643f',roughness:.85})); pot.position.set(-RX+.17,.97+.06,-2.3); pot.castShadow=true; scene.add(pot);
   const leaf=new THREE.MeshStandardMaterial({color:'#4d8a46',roughness:.7});
@@ -672,9 +738,10 @@ function makeBucket(name,col,x,z,ry){
 // big buckets no longer fit under the lowest shelves, so they stand in a row just in front of each shelf
 // 18 buckets: nine along the back shelving, nine in front of the shared shelf
 // nine buckets along the back shelving (none in front of the shared shelf)
-GLAZES.slice(0,6).forEach(([n,c],i)=>makeBucket(n,c,-2.0+i*.8,-RZ+.62,rnd(-.15,.15)));
+// gathered toward the right end of the shelf with uneven gaps and a little stagger, as if put down by hand
+[[-.3,.62],[.3,.75],[1.15,.58],[1.76,.69],[2.36,.6],[2.93,.74]].forEach(([x,dz],i)=>makeBucket(GLAZES[i][0],GLAZES[i][1],x,-RZ+dz,rnd(-.4,.4)));
 // dipping tongs leaning on the last bucket
-{ const t=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.42,6),M.steel); t.position.set(2.3,.34,-RZ+.68); t.scale.y=1.8; t.rotation.z=.35; t.castShadow=true; scene.add(t); }
+{ const t=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.42,6),M.steel); t.position.set(-.64,.34,-RZ+.62); t.scale.y=1.8; t.rotation.z=-.35; t.castShadow=true; scene.add(t); }
 
 /* ---------- tool pegboard above the wedging table ---------- */
 const peg=new THREE.Group(); peg.position.set(RX-.015,1.75,2.35); peg.rotation.y=-Math.PI/2; scene.add(peg);
