@@ -875,7 +875,7 @@ const dayCal=(()=>{
   plant(2.98,-4.12,'willow');     // right speaker: narrow-leaf plant
   plant(-5.5,-2.45,'coffee');     // moved from the kiln: on the floor in front of the garden window
   plant(-RX+.34,2.92,'olive');     // by the entrance door, on its right as you face it
-  plant(-RX+.34,2.42,'olive');     // and a second olive just to its right
+  plant(-RX+.34,2.42,'kumquat');   // and a kumquat (same as by the left speaker) just to its right
   collide(-RX,-RX+.55,2.2,3.14);
 }
 
@@ -908,7 +908,7 @@ function makeBucket(name,col,x,z,ry){
 // 18 buckets: nine along the back shelving, nine in front of the shared shelf
 // nine buckets along the back shelving (none in front of the shared shelf)
 // gathered toward the right end of the shelf with uneven gaps and a little stagger, as if put down by hand
-[[-.45,.36],[.16,.4],[.98,.34],[1.58,.39],[2.2,.35],[2.78,.41]].forEach(([x,dz],i)=>makeBucket(GLAZES[i][0],GLAZES[i][1],x,-RZ+dz,rnd(-.4,.4)));   // tucked under the lowest shelf
+[[-.95,.34],[-.34,.37],[.42,.33],[1.02,.36],[1.68,.34],[2.32,.37]].forEach(([x,dz],i)=>makeBucket(GLAZES[i][0],GLAZES[i][1],x,-RZ+dz,rnd(-.4,.4)));   // tucked under the lowest shelf
 
 /* ---------- tool pegboard above the wedging table ---------- */
 const peg=new THREE.Group(); peg.position.set(RX-.015,1.75,2.35); peg.rotation.y=-Math.PI/2; scene.add(peg);
