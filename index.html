@@ -179,6 +179,7 @@ body.throwing #brand{display:none;}
 <div class="hud panel" id="help">
   <div><b>클릭</b>한 곳으로 걷기 · 드래그로 시점</div>
   <div><b>물레를 클릭</b>하면 걸어가서 앉기</div>
+  <div><b>내 캐릭터를 클릭</b>하면 춤추기</div>
   <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 걷기 · <kbd>E</kbd> 앉기/일어나기</div>
   <div><b>물레 앞:</b> <kbd>1</kbd>–<kbd>5</kbd> 도구 · <kbd>Space</kbd> 물레 켜기</div>
 </div>
@@ -2637,10 +2638,21 @@ let moveTarget=null, autoSit=null, stuckT=0;
 const floorPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
 const tapRing=new THREE.Mesh(new THREE.RingGeometry(.11,.16,36),new THREE.MeshBasicMaterial({color:'#93bcac',transparent:true,opacity:.85,side:THREE.DoubleSide,depthWrite:false}));
 tapRing.rotation.x=-Math.PI/2; tapRing.position.y=.012; tapRing.visible=false; scene.add(tapRing);
+// tap your own character to make it dance for a few seconds
+let danceT=0, danceClock=0;
+const DANCE_LEN=4.2;
+function dancePose(o,t,amt){   // o: {rig,armL,armR,legL,legR,head}
+  const b=t*6.5, up=a=>.55+amt*1.7*(.5+.5*Math.sin(a));
+  o.armL.rotation.x=-.25*amt*Math.sin(b); o.armR.rotation.x=.25*amt*Math.sin(b);
+  o.armL.rotation.z=-up(b); o.armR.rotation.z=up(b+Math.PI);
+  o.legL.rotation.x=.35*amt*Math.max(0,Math.sin(b)); o.legR.rotation.x=.35*amt*Math.max(0,-Math.sin(b));
+  o.rig.rotation.z=Math.sin(b)*.16*amt; o.rig.position.y=Math.abs(Math.sin(b))*.07*amt;
+  o.head.rotation.z=Math.sin(b+1)*.18*amt; }
 function handleTap(cx,cy){
   const b=canvas.getBoundingClientRect();
   ndc.set(((cx-b.left)/b.width)*2-1,-((cy-b.top)/b.height)*2+1);
   ray.setFromCamera(ndc,camera);
+  if(mode==='walk'&&avatar.visible&&ray.intersectObject(avatar,true).length){ danceT=DANCE_LEN; danceClock=0; moveTarget=null; autoSit=null; tapRing.visible=false; return; }
   // tapped one of my own pots? go to it
   const potMeshes=[...sharedPots.values()].map(v=>v.mesh).concat(savedPots.filter(Boolean));
   const ph=ray.intersectObjects(potMeshes,false);
@@ -2998,7 +3010,7 @@ function upsertRemote(p){
   if(!r){ r=makeRemote(p); remotes.set(p.peer,r); resolveName(r,p); r.root.position.set(numIn(pr.x,-RX,RX,0),0,numIn(pr.z,-RZ,RZ,0)); }
   const w=(Number.isInteger(pr.w)&&pr.w>=0&&pr.w<wheels.length)?pr.w:-1;
   const clayKey=w>=0&&pr.clay?JSON.stringify(pr.clay):null;
-  r.t={x:numIn(pr.x,-RX,RX,0),z:numIn(pr.z,-RZ,RZ,0),ry:numIn(pr.ry,-10,10,0),mv:!!pr.mv,w,rpm:numIn(pr.rpm,0,250,0),clayKey,clayObj:(r.t&&r.t.clayKey===clayKey)?r.t.clayObj:decodeClay(pr.clay)};
+  r.t={x:numIn(pr.x,-RX,RX,0),z:numIn(pr.z,-RZ,RZ,0),ry:numIn(pr.ry,-10,10,0),mv:!!pr.mv,dn:!!pr.dn,w,rpm:numIn(pr.rpm,0,250,0),clayKey,clayObj:(r.t&&r.t.clayKey===clayKey)?r.t.clayObj:decodeClay(pr.clay)};
   if(pr.say&&typeof pr.say==='object'&&pr.say.n!==r.sayN){
     const first=r.sayN===null; r.sayN=pr.say.n;
     const text=String(pr.say.text||'').slice(0,40);
@@ -3267,7 +3279,13 @@ function frame(){
     rig.position.y=Math.abs(Math.sin(walkPhase))*.05*mv+Math.sin(tNow*2.2)*.008*(1-mv);
     rig.rotation.z=Math.sin(walkPhase)*.07*mv;
     avHead.rotation.z=Math.sin(tNow*1.3)*.05*(1-mv);
-    const blink=(tNow%3.7)<.12?.12:1.25; eyes.forEach(e=>e.scale.y=blink);
+    if(mv>.1) danceT=0;
+    if(danceT>0){ danceT-=dt; danceClock+=dt; const amt=Math.min(1,danceClock*4,danceT*4);
+      dancePose({rig,armL,armR,legL,legR,head:avHead},danceClock,amt);
+      if(danceClock>1.7&&danceClock<2.5) avatar.rotation.y+=dt*Math.PI*2/.8;          // a little twirl in the middle
+      eyes.forEach(e=>e.scale.y=.12); }
+    else { armL.rotation.z=-.55; armR.rotation.z=.55;
+    const blink=(tNow%3.7)<.12?.12:1.25; eyes.forEach(e=>e.scale.y=blink); }
 
     if(focus){
       // keep the pot in the upper middle, clear of the panel at the bottom
@@ -3318,6 +3336,8 @@ function frame(){
       const sw=Math.sin(r.phase)*.7*mv;
       r.legL.rotation.x=sw; r.legR.rotation.x=-sw; r.armL.rotation.x=-sw*.9; r.armR.rotation.x=sw*.9;
       r.rig.position.y=Math.abs(Math.sin(r.phase))*.05*mv; r.rig.rotation.z=Math.sin(r.phase)*.07*mv;
+      if(t.dn&&!mv){ r.dance=(r.dance||0)+dt; dancePose({rig:r.rig,armL:r.armL,armR:r.armR,legL:r.legL,legR:r.legR,head:r.head},r.dance,Math.min(1,r.dance*4)); }
+      else { r.dance=0; r.armL.rotation.z=-.55; r.armR.rotation.z=.55; if(r.head) r.head.rotation.z=0; }
     }
     const bl=(clock.elapsedTime+r.phase*0.1)%4.1<.12?.12:1.25; r.eyes.forEach(e=>e.scale.y=bl);
     if(r.bubbleUntil&&clock.elapsedTime>r.bubbleUntil){ r.bubble.visible=false; r.bubbleUntil=0; }
@@ -3328,7 +3348,7 @@ function frame(){
   presT-=dt;
   if(room&&presT<=0){
     presT=room.slow?.2:.1;   // Supabase: 5 updates a second is plenty and stays well inside the free limits
-    const st={x:+avatar.position.x.toFixed(2),z:+avatar.position.z.toFixed(2),ry:+avatar.rotation.y.toFixed(2),mv:(mode==='walk'&&moving)?1:0,
+    const st={x:+avatar.position.x.toFixed(2),z:+avatar.position.z.toFixed(2),ry:+avatar.rotation.y.toFixed(2),mv:(mode==='walk'&&moving)?1:0,dn:danceT>0?1:0,
       w:mode!=='walk'?wheels.indexOf(active):-1,rpm:mode==='throw'?active.rpm:0,clay:mode==='throw'?encodeClay(active.clay):null,uid:myId};
     const key=JSON.stringify(st);
     if(key!==lastPres){ lastPres=key; room.presence(st).catch(()=>{}); }
