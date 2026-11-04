@@ -359,7 +359,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261105-0115';
+(function(){ const BUILD='20261105-0120';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -3828,7 +3828,7 @@ function tunePerf(raw){
 document.addEventListener('visibilitychange',()=>{ perfAcc=perfN=perfT=perfSlow=0; perfStart=performance.now()-6000; });
 function frame(){
   const raw=clock.getDelta(), dt=Math.min(.05,raw); frameN++;
-  if(!document.hidden&&raw<.5&&!viewer.open&&!PT.s.open) tunePerf(raw);
+  /* resolution stays at full sharpness (the automatic lowering was turned off: sharpness matters more here) */
   { const busy=mode!=='walk'||moving||danceT>0||remotes.size>0||!!focus;
     if(frameN%(busy?2:30)===0) renderer.shadowMap.needsUpdate=true; }
 
