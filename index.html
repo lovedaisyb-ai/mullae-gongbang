@@ -105,15 +105,16 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 #vInfo{font-size:15px;font-variant-numeric:tabular-nums;}
 #vHint{font-size:12px;color:var(--muted);}
 /* the two cute buttons on the finished-pot screen: chunky round letters, pastel candy colours, a little press */
-#vSave,#vPaint{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));display:flex;align-items:center;gap:8px;height:48px;padding:0 18px 0 6px;border-radius:999px;border:2.5px solid #fff;font-family:"Jua","Gaegu",var(--body);font-size:17px;letter-spacing:.01em;white-space:nowrap;cursor:pointer;transition:transform .12s,box-shadow .12s;animation:cuteIn .5s cubic-bezier(.3,1.6,.5,1) both;}
-#vSave .ic,#vPaint .ic{width:36px;height:36px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:19px;font-style:normal;line-height:1;}
-#vSave{top:calc(12px + env(safe-area-inset-top,0px));background:#ffd6cc;color:#8a3f30;box-shadow:0 4px 0 #f2ad9d,0 10px 22px rgba(120,60,40,.22);}
-#vPaint{top:calc(70px + env(safe-area-inset-top,0px));background:#ddd5ff;color:#4d3d94;box-shadow:0 4px 0 #b8aaf2,0 10px 22px rgba(70,50,140,.22);animation-delay:.08s;}
+#vSave,#vPaint{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));display:flex;align-items:center;gap:8px;height:40px;padding:0 15px 0 5px;border-radius:999px;border:2px solid #fff;font-family:"Jua","Gaegu",var(--body);font-size:15px;-webkit-font-smoothing:antialiased;letter-spacing:.01em;white-space:nowrap;cursor:pointer;transition:transform .12s,box-shadow .12s;animation:cuteIn .5s cubic-bezier(.3,1.6,.5,1) both;}
+#vSave .ic,#vPaint .ic{width:30px;height:30px;border-radius:50%;background:#fff;display:grid;place-items:center;font-style:normal;}
+#vSave .ic svg,#vPaint .ic svg{width:19px;height:19px;display:block;}
+#vSave{top:calc(12px + env(safe-area-inset-top,0px));background:#ffd6cc;color:#8a3f30;box-shadow:0 3px 0 #f2ad9d,0 6px 14px rgba(120,60,40,.2);}
+#vPaint{top:calc(60px + env(safe-area-inset-top,0px));background:#ddd5ff;color:#4d3d94;box-shadow:0 3px 0 #b8aaf2,0 6px 14px rgba(70,50,140,.2);animation-delay:.08s;}
 #vSave:active,#vPaint:active{transform:translateY(3px);}
 #vSave:active{box-shadow:0 1px 0 #f2ad9d,0 4px 10px rgba(120,60,40,.2);}
 #vPaint:active{box-shadow:0 1px 0 #b8aaf2,0 4px 10px rgba(70,50,140,.2);}
 #vSave:disabled{opacity:.65;}
-@keyframes cuteIn{0%{transform:scale(.6);opacity:0;}100%{transform:none;opacity:1;}}
+@keyframes cuteIn{0%{transform:translateY(-6px);opacity:0;}100%{transform:none;opacity:1;}}
 @media (prefers-reduced-motion:reduce){#vSave,#vPaint{animation:none;}}
 #paintScr{position:fixed;inset:0;z-index:40;background:#fff;color:#26302c;font-family:var(--body);-webkit-user-select:none;user-select:none;}
 #paintScr button{color:#26302c;font-family:var(--body);-webkit-tap-highlight-color:transparent;}
@@ -123,8 +124,9 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 #ptTop{position:absolute;left:0;right:0;top:calc(12px + env(safe-area-inset-top,0px));padding:0 14px;display:flex;align-items:center;gap:10px;pointer-events:none;}
 #ptTop>*{pointer-events:auto;} #ptTop .sp{flex:1;}
 #paintScr #ptDone{background:#4f7f70;border-color:#4f7f70;color:#fff;}
-#ptTitle{position:absolute;left:50%;transform:translateX(-50%);top:calc(72px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:7px;padding:8px 16px 8px 10px;border-radius:999px;background:#fff6d9;border:2px solid #fff;box-shadow:0 3px 0 #f1dfa6,0 8px 18px rgba(0,0,0,.08);font-family:"Jua","Gaegu",var(--body);font-size:16px;color:#7a5b16;white-space:nowrap;pointer-events:none;}
-#ptTitle i{font-style:normal;display:inline-block;animation:ptSpin 3s linear infinite;}
+#ptTitle{position:absolute;left:50%;transform:translateX(-50%);top:calc(72px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:6px;padding:6px 13px 6px 8px;border-radius:999px;background:#fff6d9;border:1.5px solid #fff;box-shadow:0 2px 0 #f1dfa6,0 5px 12px rgba(0,0,0,.07);font-family:"Jua","Gaegu",var(--body);font-size:14px;-webkit-font-smoothing:antialiased;color:#7a5b16;white-space:nowrap;pointer-events:none;}
+#ptTitle i{font-style:normal;display:block;width:18px;height:18px;animation:ptSpin 3s linear infinite;}
+#ptTitle i svg{width:18px;height:18px;display:block;}
 @keyframes ptSpin{to{transform:rotate(360deg);}}
 #paintScr .ptPop,#ptColor h3,#ptPig button{font-family:"Jua","Gaegu",var(--body);}
 #ptTray{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));width:min(440px,calc(100vw - 24px));box-sizing:border-box;background:#f5f4f1;border:1px solid #e3e1dc;border-radius:26px;padding:10px 14px 0;display:flex;align-items:flex-end;gap:2px;box-shadow:0 8px 30px rgba(0,0,0,.08);height:96px;overflow:hidden;}
@@ -246,9 +248,9 @@ body.throwing #brand{display:none;}
 </div>
 <div id="viewer" hidden><canvas id="vc" aria-label="작품 크게 보기"></canvas>
   <button id="vClose" type="button" aria-label="닫기">✕</button>
-  <button id="vSave" type="button"><i class="ic" aria-hidden="true">📷</i><span>사진첩에 저장</span></button>
+  <button id="vSave" type="button"><i class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c0604a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.3-2h5.2l1.3 2h1.6A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z" fill="#ffe9e3"/><circle cx="12" cy="12.4" r="3.4" fill="#fff"/><circle cx="16.9" cy="9" r=".6" fill="#c0604a" stroke="none"/></svg></i><span>사진첩에 저장</span></button>
   <div class="panel" id="vBar"><div id="vInfo">작품</div><div id="vHint">드래그해서 돌려 보기 · 두 손가락이나 휠로 확대</div></div>
-  <button id="vPaint" type="button" hidden><i class="ic" aria-hidden="true">🎨</i><span>그림 그리기</span></button>
+  <button id="vPaint" type="button" hidden><i class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#6a57c4" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5c-4.9 0-8.5 3.6-8.5 8.1 0 4.4 3.6 8.9 7.6 8.9 1.5 0 2-1 1.6-2.2-.4-1.2.3-2.3 1.6-2.3h2.2c2.4 0 4-1.9 4-4.3 0-4.6-3.8-8.2-8.5-8.2z" fill="#f1edff"/><circle cx="8" cy="11" r="1.4" fill="#ff8a7a" stroke="none"/><circle cx="10.6" cy="7.4" r="1.4" fill="#ffc94d" stroke="none"/><circle cx="15" cy="7.6" r="1.4" fill="#6fd08f" stroke="none"/><circle cx="17.2" cy="11.2" r="1.4" fill="#6fa8ff" stroke="none"/></svg></i><span>그림 그리기</span></button>
 </div>
 <div id="paintScr" hidden>
   <canvas id="ptc" aria-label="작품에 그림 그리기"></canvas>
@@ -259,7 +261,7 @@ body.throwing #brand{display:none;}
     <button class="ptRound" id="ptRedo" type="button" aria-label="다시 하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="matrix(-1 0 0 1 24 0)"><path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12h-2" transform="translate(0,-6)"/></g></svg></button>
     <button class="ptRound" id="ptDone" type="button" aria-label="그림 입히기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
   </div>
-  <div id="ptTitle"><i aria-hidden="true">🔄</i>360도 돌리면서 그려주세요</div>
+  <div id="ptTitle"><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c9922a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.6 4.2v3.6H16"/></svg></i>360도 돌리면서 그려주세요</div>
   <div class="ptPop" id="ptWidth" hidden>
     <div id="ptWs"></div>
     <div class="ptLbl" id="ptOpL"><span>불투명도</span><span id="ptOpV">100%</span></div>
@@ -317,7 +319,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261104-2245';
+(function(){ const BUILD='20261104-2325';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
