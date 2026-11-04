@@ -1736,6 +1736,54 @@ collide(-RX,-RX+.45,-.8,.4);
 }
 
 
+/* ---------- hanging plants on the back wall behind the painting table (at loose, uneven heights) ---------- */
+{ const brass=new THREE.MeshStandardMaterial({color:'#b9933f',roughness:.35,metalness:.8}), jute=new THREE.MeshStandardMaterial({color:'#b89a6a',roughness:1});
+  const stemM=new THREE.MeshStandardMaterial({color:'#4f6b2a',roughness:.8});
+  const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+  // heart-shaped leaf, tip along +y
+  const heart=(()=>{ const s=new THREE.Shape(); s.moveTo(0,0); s.bezierCurveTo(-.03,.004,-.045,.03,-.035,.05); s.bezierCurveTo(-.025,.07,-.008,.085,0,.1); s.bezierCurveTo(.008,.085,.025,.07,.035,.05); s.bezierCurveTo(.045,.03,.03,.004,0,0);
+    const g=new THREE.ShapeGeometry(s,8), P=g.attributes.position; for(let i=0;i<P.count;i++) P.setZ(i,-Math.abs(P.getX(i))*.3); g.computeVertexNormals(); return g; })();
+  const beadGeo=new THREE.SphereGeometry(1,8,6);
+  function hangingPlant(x,hookY,o){
+    const g=new THREE.Group(); g.position.set(x,0,-RZ); scene.add(g);
+    const add=(geo,mat,px,py,pz)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(px,py,pz); m.castShadow=true; g.add(m); return m; };
+    // wall hook: round plate and an arm that curls up at the tip
+    add(new THREE.CylinderGeometry(.018,.018,.008,14),brass,0,hookY,.004).rotation.x=Math.PI/2;
+    add(new THREE.CylinderGeometry(.005,.005,.17,8),brass,0,hookY,.09).rotation.x=Math.PI/2;
+    add(new THREE.CylinderGeometry(.005,.005,.03,8),brass,0,hookY+.015,.175);
+    const hx=0, hy=hookY+.004, hz=.165, R=o.r, potY=hy-o.drop, pz=.2;
+    // pot and three hanging cords from the rim up to the hook
+    add(new THREE.CylinderGeometry(R,R*.8,R*1.1,20),o.potM,0,potY-R*.55,pz);
+    add(new THREE.CylinderGeometry(R*.93,R*.93,.008,18),new THREE.MeshStandardMaterial({color:'#3a2a1e',roughness:1}),0,potY-.02,pz);
+    for(let k=0;k<3;k++){ const a=k/3*Math.PI*2+.4, rim=V(Math.cos(a)*R,potY,pz+Math.sin(a)*R), top=V(hx,hy,hz), d=top.clone().sub(rim);
+      const c=add(new THREE.CylinderGeometry(.0018,.0018,d.length(),4),o.cordM||jute,0,0,0); c.position.copy(rim).addScaledVector(d,.5); c.quaternion.setFromUnitVectors(V(0,1,0),d.normalize()); }
+    // a tuft over the pot and strands spilling down, each with its own sway and length
+    const beads=[], leaves=[];
+    for(let k=0;k<o.strands;k++){
+      const a=rnd(0,6.28), sr=R*rnd(.4,1), sx=Math.cos(a)*sr, sz=pz+Math.sin(a)*sr, L=rnd(o.len*.45,o.len), sway=rnd(-.08,.08), out=Math.max(0,Math.sin(a))*.05+.02;
+      const pts=[V(sx,potY+.015,sz),V(sx*1.4,potY-.01,sz+out*.5),V(sx*1.5+sway*.3,potY-L*.35,sz+out),V(sx*1.4+sway*.8,potY-L*.7,sz+out*1.2),V(sx*1.3+sway,potY-L,sz+out*1.1)];
+      const c=new THREE.CatmullRomCurve3(pts);
+      add(new THREE.TubeGeometry(c,24,o.stem,4,false),stemM,0,0,0);
+      const step=o.kind==='pearl'?.018:o.kind==='hearts'?.035:.075;
+      for(let t=0;t<1;t+=step/L){ const pnt=c.getPoint(t); if(o.kind==='pearl') beads.push([pnt,rnd(.0065,.009)]); else leaves.push([pnt,c.getTangent(t)]); }
+    }
+    for(let k=0;k<o.tuft;k++){ const a=rnd(0,6.28), r=rnd(0,R), pnt=V(Math.cos(a)*r,potY+rnd(.01,.06),pz+Math.sin(a)*r); if(o.kind==='pearl') beads.push([pnt,rnd(.007,.01)]); else leaves.push([pnt,V(Math.cos(a),.6,Math.sin(a))]); }
+    if(beads.length){ const im=new THREE.InstancedMesh(beadGeo,new THREE.MeshStandardMaterial({color:o.leaf,roughness:.45}),beads.length); im.castShadow=true; const m4=new THREE.Matrix4();
+      beads.forEach(([pnt,r],i)=>{ m4.makeScale(r,r,r).setPosition(pnt.x+rnd(-.004,.004),pnt.y,pnt.z+rnd(-.004,.004)); im.setMatrixAt(i,m4); }); g.add(im); }
+    if(leaves.length){ const mats=o.leafs.map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.5,side:THREE.DoubleSide}));
+      leaves.forEach(([pnt,tan],i)=>{ const m=new THREE.Mesh(heart,mats[i%mats.length]); m.position.copy(pnt); m.scale.setScalar(o.leafScale*rnd(.75,1.2));
+        m.lookAt(pnt.clone().add(V(rnd(-.6,.6),rnd(-.3,.3),1)));   // face the room
+        m.rotateZ(Math.PI+rnd(-.9,.9)); m.castShadow=true; g.add(m); }); }
+  }
+  const terra=new THREE.MeshStandardMaterial({color:'#b5643f',roughness:.85}), clayPot=new THREE.MeshStandardMaterial({color:'#7a5a3e',roughness:.8}), blackPot=new THREE.MeshStandardMaterial({color:'#2a2b2c',roughness:.55});
+  // string of pearls, high on the left, long strands
+  hangingPlant(-5.2,2.7,{kind:'pearl',r:.07,drop:.42,potM:clayPot,strands:16,len:.95,stem:.0018,tuft:60,leaf:'#5e8a32'});
+  // string-of-pearls on a black wire hanger, a little lower toward the corner
+  hangingPlant(-5.68,2.35,{kind:'pearl',r:.06,drop:.32,potM:blackPot,cordM:new THREE.MeshStandardMaterial({color:'#1b1b1b',roughness:.6}),strands:12,len:.7,stem:.0016,tuft:50,leaf:'#7da64a'});
+  // heartleaf philodendron in terracotta, up above the aprons
+  hangingPlant(-4.0,3.0,{kind:'heart',r:.08,drop:.38,potM:terra,strands:9,len:.75,stem:.0025,tuft:14,leafs:['#2f5a1c','#3d6e24','#28501a'],leafScale:1.05});
+}
+
 /* ---------- clay model ---------- */
 const N=48, FLOOR=.011, MIN_WALL=.0045;
 let fingerMM=8;
