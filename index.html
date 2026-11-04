@@ -2720,7 +2720,7 @@ function arriveTarget(){
 
 /* ---------- shared shelf on the front wall ---------- */
 let sharedDb=null, myPots=[], saveChain=Promise.resolve();
-const SZ=RZ-.2, SBOARDS=[1.05,1.55,.55,2.05,2.55,3.05], SPER=13, sharedPots=new Map();
+const SZ=RZ-.2, SBOARDS=[1.05,1.55,.55,2.05,2.55,3.05], SPER=14, sharedPots=new Map();
 [.55,1.05,1.55,2.05,2.55,3.05].forEach(y=>box(6.2,.04,.38,M.wood,0,y,SZ));
 [-3.1,0,3.1].forEach(x=>box(.05,2.62,.38,M.woodDark,x,1.8,SZ));
 collide(-3.2,3.2,RZ-.45,RZ);
@@ -2762,7 +2762,7 @@ function renderShelf(docs){
     let v=sharedPots.get(p.key);
     if(!v){ const mesh=new THREE.Mesh(clayGeo(p.clay),clayMats[p.clay.k||0]); mesh.castShadow=mesh.receiveShadow=true; mesh.rotation.y=rnd(0,6.28); scene.add(mesh);
       v={mesh,label:potLabel(),owner:p.owner,t:p.t,id:p.id,board:wareBoardFor(mesh)}; sharedPots.set(p.key,v); }
-    const by=SBOARDS[Math.floor(i/SPER)], x=-2.82+(i%SPER)*.47;
+    const by=SBOARDS[Math.floor(i/SPER)], j=i%SPER, x=(j<7?-1.55:1.55)+(j%7-3)*.43; /* 7 per bay, clear of the middle post */
     v.board.position.set(x,by+.029,SZ+.02); v.board.rotation.y=(p.l||0)*.5; v.mesh.position.set(x,by+.038,SZ+.02); v.label.position.set(x,by-.035,SZ-.192);
   });
   drawSign(all.length?`작품 ${all.length}점`:'첫 작품을 올려 보세요');
