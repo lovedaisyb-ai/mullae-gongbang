@@ -359,7 +359,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261105-0025';
+(function(){ const BUILD='20261105-0030';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -2898,8 +2898,18 @@ function potLabel(){ const c=document.createElement('canvas'); c.width=256; c.he
 function setPotLabel(l,name){
   if(l.userData.name===name) return; l.userData.name=name;
   const {c,t}=l.userData, g=c.getContext('2d');
-  g.fillStyle=name.startsWith('⭐')?'#ffe7a3':'#f4efe4'; g.fillRect(0,0,c.width,c.height); g.fillStyle=name.startsWith('⭐')?'#6b4a00':'#2b3a36'; g.font='30px "Gowun Dodum", sans-serif';
-  g.textAlign='center'; g.textBaseline='middle'; g.fillText(name,c.width/2,30,c.width-20); t.needsUpdate=true;
+  g.textAlign='center'; g.textBaseline='middle';
+  if(name.startsWith('⭐')){   // 선아씨 추천: orange tag, a yellow star, white letters
+    const nm=name.replace(/^⭐\s*/,''); g.fillStyle='#e8742a'; g.fillRect(0,0,c.width,c.height);
+    g.font='bold 30px "Gowun Dodum", sans-serif'; const tw=Math.min(c.width-74,g.measureText(nm).width), x0=(c.width-(tw+40))/2;
+    // a drawn five-point star (crisper than an emoji at this size)
+    g.beginPath(); for(let i=0;i<10;i++){ const r=i%2?7.5:17, a=-Math.PI/2+i*Math.PI/5; g.lineTo(x0+17+Math.cos(a)*r,29+Math.sin(a)*r); } g.closePath();
+    g.fillStyle='#ffc400'; g.fill(); g.lineWidth=1.6; g.strokeStyle='#a9500c'; g.stroke();
+    g.fillStyle='#ffffff'; g.textAlign='left'; g.fillText(nm,x0+40,30,c.width-74);
+  } else {
+    g.fillStyle='#f4efe4'; g.fillRect(0,0,c.width,c.height); g.fillStyle='#2b3a36'; g.font='30px "Gowun Dodum", sans-serif'; g.fillText(name,c.width/2,30,c.width-20);
+  }
+  t.needsUpdate=true;
 }
 // every pot on a shelf sits on its own square wooden ware board
 const wareBoardMat=new THREE.MeshStandardMaterial({roughness:.75,map:canvasTex(128,128,(g,w,h)=>{ g.fillStyle='#c39a68'; g.fillRect(0,0,w,h);
