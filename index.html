@@ -359,12 +359,12 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261105-0105';
+(function(){ const BUILD='20261105-0110';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
     let seen=null; try{ seen=sessionStorage.getItem('mullae-build'); sessionStorage.setItem('mullae-build',m[1]); }catch(e){}
-    if(seen!==m[1]) location.replace(location.pathname+'?v='+m[1]);
+    if(seen!==m[1]){ const q=new URLSearchParams(location.search); q.set('v',m[1]); location.replace(location.pathname+'?'+q.toString()+location.hash); }
   }).catch(()=>{}); })();
 (function(){
 const $ = id => document.getElementById(id);
@@ -3611,9 +3611,11 @@ async function supabaseCaps(){
   const id=session.user.id;
   let name=''; try{ name=localStorage.getItem('mullae-name')||''; }catch(e){}
   // #name in the address asks for the name again (to change the name this browser uses in the studio)
-  const renaming=/name/.test(location.hash);
+  const renaming=/name/.test(location.hash)||new URLSearchParams(location.search).has('name');
   if(!name||renaming){ name=await askName(); try{ localStorage.setItem('mullae-name',name); }catch(e){}
-    if(renaming){ sb.from('shelf').update({name}).eq('id',id).then(()=>{},()=>{}); try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} } }
+    if(renaming){ sb.from('shelf').update({name}).eq('id',id).then(()=>{},()=>{}); try{ const q=new URLSearchParams(location.search); q.delete('name'); history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')); }catch(e){} } }
+  // the #name link opened on a page that was already open only changes the hash: ask then too
+  addEventListener('hashchange',async()=>{ if(!/name/.test(location.hash)) return; const nn=await askName(); try{ localStorage.setItem('mullae-name',nn); }catch(e){} location.replace(location.pathname); });
   const names={[id]:name}, clean=v=>String(v||'').replace(/[\u0000-\u001f\u007f-\u009f]/g,'').slice(0,12);
   // the teacher on this device: open the page with #teacher to see this device's number and send it to Claude
   if(/teacher/.test(location.hash)){ const tb=document.createElement('div'); tb.className='hud panel'; tb.id='teachBox';
