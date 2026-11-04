@@ -3022,7 +3022,9 @@ function openViewer(mesh,title,celebrate){
   if(shelfBg){ vDist=Math.max(h*1.3,B)*2.3; vTarget=h*.38; vTilt=.42; }   // step back so the whole square board shows
   $('vInfo').textContent=celebrate?`완성했어요! · 높이 ${(h*100).toFixed(1)}cm · 지름 ${(r*200).toFixed(1)}cm`:`${title} · 높이 ${(h*100).toFixed(1)}cm · 지름 ${(r*200).toFixed(1)}cm`;
   $('vHint').textContent=celebrate?'나무판에 올려 선반으로 옮겨요 · 닫으면 계속 빚을 수 있어요':'드래그해서 돌려 보기 · 두 손가락이나 휠로 확대';
-  $('vPaint').hidden=!celebrate;
+  // paint any pot of mine: the one just finished, or one of mine opened from the shelf / work panel
+  const mine=celebrate||title==='내 작품'; $('vPaint').hidden=!mine;
+  if(mine&&!celebrate&&mesh.isMesh){ const u=mesh.userData; lastFinished={geo:u.srcGeo||mesh.geometry,mat:u.clayMat||mesh.material,paint:u.paint||null,local:mesh,fromShelf:true}; }
   $('viewer').hidden=false; viewer.open=true; resizeViewer();
   // on a tall phone screen the sides are the tight edge: step back so the whole pot (and board) fits
   if(vCam.aspect<1) vDist*=celebrate?Math.min(2.8,1.12/vCam.aspect):Math.min(2.2,.85/vCam.aspect);
@@ -3137,7 +3139,7 @@ const PT=(()=>{
     uv.needsUpdate=true; PLEN=maxV*.3; g.computeBoundingBox(); return g;
   }
   function fillBase(mat){
-    const g=base.getContext('2d'), c=mat.color.clone().convertLinearToSRGB();
+    const g=base.getContext('2d'), c=mat.color.clone();   // the clay colour as it reads on screen (texture is decoded as sRGB)
     g.fillStyle='#'+c.getHexString(); g.fillRect(0,0,TW,TH);
     const dark=c.getHSL({}).l<.3;
     for(let i=0;i<16000;i++){ const x=Math.random()*TW, y=Math.random()*TH, r=Math.random()*1.5+.3; g.fillStyle=Math.random()<.5?`rgba(${dark?'20,16,12':'90,72,55'},${Math.random()*.3})`:`rgba(${dark?'120,110,100':'250,244,232'},${Math.random()*.25})`; g.beginPath(); g.arc(x,y,r,0,7); g.fill(); }
@@ -3208,20 +3210,21 @@ const PT=(()=>{
 let lastFinished=null;
 function applyPaintTo(mesh,paintCv,clayMat){
   if(!mesh) return;
-  if(!mesh.userData.paintGeo){ mesh.geometry=PT.paintGeo(mesh.geometry); mesh.userData.paintGeo=true; }
-  mesh.material=PT.bakeMaterial(clayMat,paintCv);
+  const u=mesh.userData;
+  if(!u.paintGeo){ u.srcGeo=mesh.geometry; u.clayMat=clayMat; mesh.geometry=PT.paintGeo(mesh.geometry); u.paintGeo=true; }
+  mesh.material=PT.bakeMaterial(clayMat,paintCv); u.paint=paintCv;
 }
+function shelfOf(lf){ if(lf.local) return lf.local; let best=null; if(typeof sharedPots!=='undefined') sharedPots.forEach(v=>{ if(v.owner===myId&&(!best||v.t>best.t)) best=v; }); return best?best.mesh:null; }
 $('vPaint').addEventListener('click',()=>{
   if(!lastFinished) return;
   const lf=lastFinished;
   PT.open(lf.geo,lf.mat,lf.paint,cv=>{
     if(!cv) return;
     lf.paint=cv;
-    applyPaintTo(vPot,cv,lf.mat);
-    // the same pot on the shelf (mine, the newest)
-    let shelfMesh=lf.local||null;
-    if(!shelfMesh&&typeof sharedPots!=='undefined'){ let best=null; sharedPots.forEach(v=>{ if(v.owner===myId&&(!best||v.t>best.t)) best=v; }); if(best) shelfMesh=best.mesh; }
+    // the same pot on the shelf (mine, the newest), and the one in this close-up view
+    const shelfMesh=shelfOf(lf);
     applyPaintTo(shelfMesh,cv,lf.mat);
+    if(lf.fromShelf&&shelfMesh){ vPot.geometry=shelfMesh.geometry; vPot.material=shelfMesh.material; } else applyPaintTo(vPot,cv,lf.mat);
     $('vHint').textContent='그림을 입혔어요 · 사진첩에 저장해 보세요';
   });
 });
