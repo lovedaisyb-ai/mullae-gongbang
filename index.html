@@ -304,6 +304,15 @@ body.throwing #brand{display:none;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+/* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
+   newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
+(function(){ const BUILD='20261104-2240';
+  if(!/github\.io$/.test(location.hostname)) return;
+  fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
+    const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
+    let seen=null; try{ seen=sessionStorage.getItem('mullae-build'); sessionStorage.setItem('mullae-build',m[1]); }catch(e){}
+    if(seen!==m[1]) location.replace(location.pathname+'?v='+m[1]);
+  }).catch(()=>{}); })();
 (function(){
 const $ = id => document.getElementById(id);
 if(!window.THREE){ $('loading').textContent='3D 엔진을 불러오지 못했어요. 새로고침해 주세요.'; return; }
