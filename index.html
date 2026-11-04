@@ -359,7 +359,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261105-0020';
+(function(){ const BUILD='20261105-0025';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -3589,17 +3589,17 @@ async function supabaseCaps(){
   let myPicksEl=null, myLastPots=[];
   const shelfDb={
     collection:()=>({ onSnapshot(cb,err){
-      const load=async()=>{ const {data,error}=await sb.from('shelf').select('id,name,pots'); if(error){ err&&err(error); return; }
-        let pk=null;
+      const load=async()=>{ const {data,error}=await sb.from('shelf').select('id,name,pots,updated_at'); if(error){ err&&err(error); return; }
+        let pk=null, pkAt='';   // with several teacher devices, the most recently saved list of picks wins
         const docs=(data||[]).map(r=>{ if(r.name) names[r.id]=clean(r.name); const all=Array.isArray(r.pots)?r.pots:[];
-          const el=all.find(p=>p&&p.id==='_picks'); if(r.id===id){ myPicksEl=el||null; myLastPots=all.filter(p=>!(p&&p.id==='_picks')); } if(el&&TEACHER_IDS.includes(r.id)&&Array.isArray(el.keys)) pk=el.keys;
+          const el=all.find(p=>p&&p.id==='_picks'); if(r.id===id){ myPicksEl=el||null; myLastPots=all.filter(p=>!(p&&p.id==='_picks')); } if(el&&TEACHER_IDS.includes(r.id)&&Array.isArray(el.keys)&&String(el.at||r.updated_at||'')>=pkAt){ pk=el.keys; pkAt=String(el.at||r.updated_at||''); }
           return {id:r.id,data:()=>({pots:all.filter(p=>!(p&&p.id==='_picks'))})}; });
         if(pk) docs.push({id:'_picks',data:()=>({picks:pk})});
         cb({metadata:{fromCache:false},docs}); };
       load(); sb.channel('shelf-changes').on('postgres_changes',{event:'*',schema:'public',table:'shelf'},()=>load()).subscribe();
       setInterval(load,60000); } }),
     doc:path=>({ set:async val=>{
-      if(path==='shelf/_picks'){ myPicksEl={id:'_picks',keys:val.picks}; const {error}=await sb.from('shelf').upsert({id,name,pots:[...myLastPots,myPicksEl],updated_at:new Date().toISOString()}); if(error) throw error; return; }
+      if(path==='shelf/_picks'){ myPicksEl={id:'_picks',keys:val.picks,at:new Date().toISOString()}; const {error}=await sb.from('shelf').upsert({id,name,pots:[...myLastPots,myPicksEl],updated_at:new Date().toISOString()}); if(error) throw error; return; }
       myLastPots=val.pots; const {error}=await sb.from('shelf').upsert({id:path.split('/')[1],name,pots:myPicksEl?[...val.pots,myPicksEl]:val.pots,updated_at:new Date().toISOString()}); if(error) throw error; } })
   };
   return {user,db:shelfDb,room};
