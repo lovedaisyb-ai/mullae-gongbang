@@ -359,7 +359,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261105-0030';
+(function(){ const BUILD='20261105-0035';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -2982,6 +2982,41 @@ function potSilhouette(cv,cl,painted){
   g.beginPath(); g.ellipse(bx,by+2,maxR*sc*.9,4,0,0,7); g.fillStyle='rgba(0,0,0,.08)'; g.fill();
   if(painted){ g.font='16px sans-serif'; g.textAlign='right'; g.fillText('🎨',W-6,Hh-8); }
 }
+// real 3D thumbnails: one small renderer draws each pot (clay, throwing marks and any painting) as it came off
+// the wheel, then the picture is copied into the card; finished pictures are cached per pot
+let thumbR=null, thumbScene=null, thumbCam=null; const thumbCache=new Map();
+function thumbSetup(){
+  thumbR=new THREE.WebGLRenderer({antialias:true,alpha:true}); thumbR.setPixelRatio(1); thumbR.setSize(360,276,false);
+  thumbR.outputEncoding=THREE.sRGBEncoding; thumbR.toneMapping=THREE.ACESFilmicToneMapping; thumbR.toneMappingExposure=1.05;
+  thumbScene=new THREE.Scene(); thumbScene.add(new THREE.HemisphereLight('#fff6ea','#8a7a66',.9));
+  const k=new THREE.DirectionalLight('#fff1dc',1.15); k.position.set(1.4,2.2,1.8); thumbScene.add(k);
+  const r=new THREE.DirectionalLight('#dfe8ff',.35); r.position.set(-1.6,.8,-1.2); thumbScene.add(r);
+  thumbCam=new THREE.PerspectiveCamera(30,360/276,.01,20);
+}
+function thumbDraw(cv,mesh){
+  if(!thumbR) thumbSetup();
+  if(!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+  const bb=mesh.geometry.boundingBox, h=bb.max.y, r=Math.max(bb.max.x,bb.max.z,-bb.min.x,-bb.min.z);
+  mesh.rotation.set(0,.6,0); thumbScene.add(mesh);
+  const tilt=.32, fit=Math.max(h*1.55/(2*Math.tan(15*Math.PI/180)), r*3.1/(2*Math.tan(15*Math.PI/180)*thumbCam.aspect));
+  thumbCam.position.set(0,h*.5+Math.sin(tilt)*fit,Math.cos(tilt)*fit); thumbCam.lookAt(0,h*.5,0);
+  thumbR.render(thumbScene,thumbCam); thumbScene.remove(mesh);
+  const g=cv.getContext('2d'); g.clearRect(0,0,cv.width,cv.height);
+  // a soft contact shadow under the foot, then the pot
+  const sx=cv.width/2, sy=cv.height*.86; const sh=g.createRadialGradient(sx,sy,2,sx,sy,cv.width*.32); sh.addColorStop(0,'rgba(60,40,20,.28)'); sh.addColorStop(1,'rgba(60,40,20,0)');
+  g.save(); g.translate(sx,sy); g.scale(1,.18); g.translate(-sx,-sy); g.fillStyle=sh; g.beginPath(); g.arc(sx,sy,cv.width*.32,0,7); g.fill(); g.restore();
+  g.drawImage(thumbR.domElement,0,0,cv.width,cv.height);
+  const keep=document.createElement('canvas'); keep.width=cv.width; keep.height=cv.height; keep.getContext('2d').drawImage(cv,0,0); return keep;
+}
+function potThumb(cv,p,cl){
+  const key=p.id+':'+(p.pt?p.pt.length:0), hit=thumbCache.get(key);
+  if(hit){ cv.getContext('2d').drawImage(hit,0,0); return; }
+  potSilhouette(cv,cl,false);   // quick placeholder until the 3D picture is ready
+  const mat=clayMats[cl.k||0], mesh=new THREE.Mesh(clayGeo(cl),mat);
+  const done=()=>{ try{ thumbCache.set(key,thumbDraw(cv,mesh)); }catch(e){} mesh.geometry.dispose(); };
+  if(p.pt){ const img=new Image(); img.onload=()=>{ const c=document.createElement('canvas'); c.width=PT.TW/2; c.height=PT.TH/2; c.getContext('2d').drawImage(img,0,0,c.width,c.height); applyPaintTo(mesh,c,mat,true); done(); }; img.onerror=done; img.src=p.pt; }
+  else requestAnimationFrame(done);
+}
 function openBox(){ closeWork(); $('boxPanel').hidden=false; drawBox(); }
 function closeBox(){ $('boxPanel').hidden=true; }
 function drawBox(){
@@ -2991,7 +3026,7 @@ function drawBox(){
   if(!pots.length){ grid.innerHTML='<div id="boxEmpty">아직 작품이 없어요. 물레에서 빚어 선반에 올려 보세요</div>'; return; }
   pots.forEach(p=>{ const cl=decodeClay(p.c); if(!cl) return; const star=isStar(p), on=p.s===1||star;
     const card=document.createElement('div'); card.className='boxCard'+(on?' on':'');
-    const cv=document.createElement('canvas'); cv.width=240; cv.height=184; potSilhouette(cv,cl,!!p.pt); card.appendChild(cv);
+    const cv=document.createElement('canvas'); cv.width=360; cv.height=276; card.appendChild(cv); potThumb(cv,p,cl);
     card.insertAdjacentHTML('beforeend',`<span class="chip">${on?'선반 위':'작품함'}</span>${star?'<span class="star" title="선아씨 추천">⭐</span>':''}<div class="meta">높이 ${(cl.H*100).toFixed(1)}cm · ${new Date(p.t||0).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})}</div>`);
     const acts=document.createElement('div'); acts.className='acts';
     const mk=(txt,cls,fn)=>{ const b=document.createElement('button'); b.type='button'; b.className=cls; b.textContent=txt; b.addEventListener('click',fn); acts.appendChild(b); return b; };
