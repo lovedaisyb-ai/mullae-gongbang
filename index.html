@@ -1745,7 +1745,8 @@ collide(-RX,-RX+.45,-.8,.4);
     const g=new THREE.ShapeGeometry(s,8), P=g.attributes.position; for(let i=0;i<P.count;i++) P.setZ(i,-Math.abs(P.getX(i))*.3); g.computeVertexNormals(); return g; })();
   const beadGeo=new THREE.SphereGeometry(1,8,6);
   function hangingPlant(x,hookY,o){
-    const g=new THREE.Group(); g.position.set(x,0,-RZ); scene.add(g);
+    const g=new THREE.Group(); scene.add(g);
+    if(o.leftWall){ g.position.set(-RX,0,x); g.rotation.y=Math.PI/2; } else g.position.set(x,0,-RZ);   // local +z always points into the room
     const add=(geo,mat,px,py,pz)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(px,py,pz); m.castShadow=true; g.add(m); return m; };
     // wall hook: round plate and an arm that curls up at the tip
     add(new THREE.CylinderGeometry(.018,.018,.008,14),brass,0,hookY,.004).rotation.x=Math.PI/2;
@@ -1757,6 +1758,19 @@ collide(-RX,-RX+.45,-.8,.4);
     add(new THREE.CylinderGeometry(R*.93,R*.93,.008,18),new THREE.MeshStandardMaterial({color:'#3a2a1e',roughness:1}),0,potY-.02,pz);
     for(let k=0;k<3;k++){ const a=k/3*Math.PI*2+.4, rim=V(Math.cos(a)*R,potY,pz+Math.sin(a)*R), top=V(hx,hy,hz), d=top.clone().sub(rim);
       const c=add(new THREE.CylinderGeometry(.0018,.0018,d.length(),4),o.cordM||jute,0,0,0); c.position.copy(rim).addScaledVector(d,.5); c.quaternion.setFromUnitVectors(V(0,1,0),d.normalize()); }
+    if(o.kind==='fern'){
+      const fm=['#5f9a1e','#78b02a','#4f8a18'].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.55,side:THREE.DoubleSide}));
+      const leaflet=new THREE.PlaneGeometry(.012,.05); leaflet.translate(0,.025,0);
+      for(let k=0;k<o.fronds;k++){ const a=k/o.fronds*Math.PI*2+rnd(-.2,.2), up=rnd(.05,.25), L=rnd(.28,.45), dir=V(Math.cos(a),0,Math.sin(a));
+        const pts=[V(0,potY-.01,pz),V(dir.x*L*.3,potY+up,pz+dir.z*L*.3),V(dir.x*L*.65,potY+up*.6,pz+dir.z*L*.65),V(dir.x*L,potY-L*.45,pz+dir.z*L)];
+        if(pts.some(q=>q.z<.02)) pts.forEach(q=>q.z=Math.max(q.z,.03));
+        const c=new THREE.CatmullRomCurve3(pts); add(new THREE.TubeGeometry(c,16,.0025,4,false),stemM,0,0,0);
+        const mat=fm[k%fm.length];
+        for(let t=.08;t<.98;t+=.045){ const pnt=c.getPoint(t), tan=c.getTangent(t), side=V().crossVectors(tan,V(0,1,0)).normalize(), sc=1-Math.abs(t-.45)*1.1;
+          [-1,1].forEach(sd=>{ const m=new THREE.Mesh(leaflet,mat); m.position.copy(pnt); m.scale.set(1,Math.max(.35,sc),1);
+            const tip=pnt.clone().addScaledVector(side,sd).addScaledVector(tan,.6); m.up.set(0,1,0); m.lookAt(tip); m.rotateX(Math.PI/2); g.add(m); }); } }
+      return;
+    }
     // a tuft over the pot and strands spilling down, each with its own sway and length
     const beads=[], leaves=[];
     for(let k=0;k<o.strands;k++){
@@ -1781,6 +1795,10 @@ collide(-RX,-RX+.45,-.8,.4);
   // string-of-pearls on a black wire hanger, a little lower toward the corner
   hangingPlant(-5.74,2.35,{kind:'pearl',r:.06,drop:.32,potM:blackPot,cordM:new THREE.MeshStandardMaterial({color:'#1b1b1b',roughness:.6}),strands:12,len:.7,stem:.0016,tuft:50,leaf:'#7da64a'});
   // heartleaf philodendron in terracotta, hung highest, between the two strings of pearls
+  // on the wall beside the right-hand window: a Boston fern in a clear pot on a black wire hanger...
+  hangingPlant(-3.28,2.75,{leftWall:true,kind:'fern',r:.075,drop:.42,potM:new THREE.MeshStandardMaterial({color:'#d9d6cf',roughness:.15,transparent:true,opacity:.55}),cordM:new THREE.MeshStandardMaterial({color:'#1b1b1b',roughness:.6}),fronds:22});
+  // ...and a variegated trailing vine on a single jute loop, hung a bit lower
+  hangingPlant(-3.98,2.45,{leftWall:true,kind:'heart',r:.065,drop:.5,potM:new THREE.MeshStandardMaterial({color:'#e9e4da',roughness:.6}),strands:16,len:.5,stem:.0018,tuft:26,leafs:['#3f7a2a','#d8e3b6','#5a8f38','#eef2d8','#2f6420'],leafScale:.55});
   hangingPlant(-5.37,3.05,{kind:'heart',r:.08,drop:.38,potM:terra,strands:9,len:.75,stem:.0025,tuft:14,leafs:['#2f5a1c','#3d6e24','#28501a'],leafScale:1.05});
 }
 
