@@ -122,9 +122,10 @@ body.throwing #brand{display:none;}
 #chat{display:none!important;}
 @media (max-width:640px){
   #clayPick{top:calc(56px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));width:auto;padding:6px;gap:0;}
-  #clayPick h3,#clayPick small,#clayPick span{display:none;}
-  #clayPick .opts{grid-template-columns:repeat(4,44px);gap:4px;}
-  #clayPick button{justify-content:center;padding:8px;min-height:44px;}
+  #clayPick h3{display:none;}
+  #clayPick .opts{grid-template-columns:repeat(4,52px);gap:4px;}
+  #clayPick button{flex-direction:column;justify-content:center;gap:3px;padding:6px 2px;min-height:44px;font-size:11px;text-align:center;}
+  #clayPick i{width:24px;height:24px;flex:0 0 24px;}
   #prompt{bottom:calc(160px + env(safe-area-inset-bottom,0px));}
   #workPanel{bottom:calc(156px + env(safe-area-inset-bottom,0px));}
   #brand{top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));padding:6px 10px;border-radius:10px;}
@@ -198,10 +199,10 @@ body.throwing #brand{display:none;}
 
 <div id="throwHud" hidden>
   <div class="hud panel" id="clayPick" role="group" aria-label="흙 고르기"><h3>흙 고르기</h3><div class="opts">
-<button type="button" data-clay="0" aria-pressed="true" aria-label="백자토"><i style="background:radial-gradient(circle at 35% 30%,#f7f3ec,#ddd4c6)"></i><span>백자토<small>희고 매끈해요</small></span></button>
-<button type="button" data-clay="1" aria-pressed="false" aria-label="분청토"><i style="background:radial-gradient(circle at 35% 30%,#d8c4a4,#a9906c)"></i><span>분청토<small>회갈색, 철점이 보여요</small></span></button>
-<button type="button" data-clay="2" aria-pressed="false" aria-label="옹기토"><i style="background:radial-gradient(circle at 35% 30%,#b9714a,#7e4026)"></i><span>옹기토<small>붉고 거친 질감</small></span></button>
-<button type="button" data-clay="3" aria-pressed="false" aria-label="흑토"><i style="background:radial-gradient(circle at 35% 30%,#6a625c,#3b3632)"></i><span>흑토<small>짙은 먹색</small></span></button>
+<button type="button" data-clay="0" aria-pressed="true" aria-label="백자토"><i style="background:radial-gradient(circle at 35% 30%,#f7f3ec,#ddd4c6)"></i><span>백자토</span></button>
+<button type="button" data-clay="1" aria-pressed="false" aria-label="분청토"><i style="background:radial-gradient(circle at 35% 30%,#d8c4a4,#a9906c)"></i><span>분청토</span></button>
+<button type="button" data-clay="2" aria-pressed="false" aria-label="옹기토"><i style="background:radial-gradient(circle at 35% 30%,#b9714a,#7e4026)"></i><span>옹기토</span></button>
+<button type="button" data-clay="3" aria-pressed="false" aria-label="흑토"><i style="background:radial-gradient(circle at 35% 30%,#6a625c,#3b3632)"></i><span>흑토</span></button>
 </div></div>
   <div class="hud panel" id="tip">물레를 돌린 뒤, 흙을 누르고 있으면 중심이 잡혀요</div>
   <div class="hud panel" id="stats">
