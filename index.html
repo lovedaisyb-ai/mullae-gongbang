@@ -1777,11 +1777,11 @@ collide(-RX,-RX+.45,-.8,.4);
   }
   const terra=new THREE.MeshStandardMaterial({color:'#b5643f',roughness:.85}), clayPot=new THREE.MeshStandardMaterial({color:'#7a5a3e',roughness:.8}), blackPot=new THREE.MeshStandardMaterial({color:'#2a2b2c',roughness:.55});
   // string of pearls, high on the left, long strands
-  hangingPlant(-5.2,2.7,{kind:'pearl',r:.07,drop:.42,potM:clayPot,strands:16,len:.95,stem:.0018,tuft:60,leaf:'#5e8a32'});
+  hangingPlant(-4.98,2.7,{kind:'pearl',r:.07,drop:.42,potM:clayPot,strands:16,len:.95,stem:.0018,tuft:60,leaf:'#5e8a32'});
   // string-of-pearls on a black wire hanger, a little lower toward the corner
-  hangingPlant(-5.68,2.35,{kind:'pearl',r:.06,drop:.32,potM:blackPot,cordM:new THREE.MeshStandardMaterial({color:'#1b1b1b',roughness:.6}),strands:12,len:.7,stem:.0016,tuft:50,leaf:'#7da64a'});
-  // heartleaf philodendron in terracotta, up above the aprons
-  hangingPlant(-4.0,3.0,{kind:'heart',r:.08,drop:.38,potM:terra,strands:9,len:.75,stem:.0025,tuft:14,leafs:['#2f5a1c','#3d6e24','#28501a'],leafScale:1.05});
+  hangingPlant(-5.74,2.35,{kind:'pearl',r:.06,drop:.32,potM:blackPot,cordM:new THREE.MeshStandardMaterial({color:'#1b1b1b',roughness:.6}),strands:12,len:.7,stem:.0016,tuft:50,leaf:'#7da64a'});
+  // heartleaf philodendron in terracotta, hung highest, between the two strings of pearls
+  hangingPlant(-5.37,3.05,{kind:'heart',r:.08,drop:.38,potM:terra,strands:9,len:.75,stem:.0025,tuft:14,leafs:['#2f5a1c','#3d6e24','#28501a'],leafScale:1.05});
 }
 
 /* ---------- clay model ---------- */
