@@ -1610,9 +1610,10 @@ function shelfUnit(cx,cz,ry,width,boards,fill){
   });
   ws.traverse(o=>{ if(o.isMesh) o.castShadow=false; });   // no shadows from this shelf or its pots
   // teak finish on the shelf itself: warm golden-brown with long grain and a few knots, at real scale along each board
-  { const teakTex=canvasTex(256,512,(g,w,h)=>{ g.fillStyle='#b06a2c'; g.fillRect(0,0,w,h);
-      for(let i=0;i<110;i++){ const x=rnd(0,w); g.strokeStyle=Math.random()<.55?`rgba(110,55,18,${rnd(.18,.4)})`:`rgba(220,150,80,${rnd(.15,.3)})`; g.lineWidth=rnd(.6,3); g.beginPath(); g.moveTo(x,0); g.bezierCurveTo(x+rnd(-12,12),h*.3,x+rnd(-12,12),h*.7,x+rnd(-6,6),h); g.stroke(); }
-      for(let i=0;i<2;i++){ const cx=rnd(40,w-40), cy=rnd(60,h-60); for(let r=4;r<36;r+=4){ g.strokeStyle=`rgba(85,40,12,${.5-r*.011})`; g.lineWidth=1.6; g.beginPath(); g.ellipse(cx,cy,r*.6,r*1.9,0,0,7); g.stroke(); } g.fillStyle='rgba(70,32,10,.7)'; g.beginPath(); g.ellipse(cx,cy,5,9,0,0,7); g.fill(); } });
+  { const teakTex=canvasTex(256,512,(g,w,h)=>{ g.fillStyle='#d8b48a'; g.fillRect(0,0,w,h);      // light natural oak
+      for(let i=0;i<120;i++){ const x=rnd(0,w); g.strokeStyle=Math.random()<.55?`rgba(160,110,62,${rnd(.15,.32)})`:`rgba(245,215,170,${rnd(.15,.3)})`; g.lineWidth=rnd(.6,3); g.beginPath(); g.moveTo(x,0); g.bezierCurveTo(x+rnd(-12,12),h*.3,x+rnd(-12,12),h*.7,x+rnd(-6,6),h); g.stroke(); }
+      for(let i=0;i<2;i++){ const cx=rnd(30,w-30), cy=rnd(40,h-40); for(let r=4;r<26;r+=4){ g.strokeStyle=`rgba(140,90,45,${.35-r*.011})`; g.lineWidth=1.4; g.beginPath(); g.ellipse(cx,cy,r*.5,r*1.9,0,0,7); g.stroke(); } }
+      for(let i=0;i<5;i++){ const cx=rnd(10,w-10), cy=rnd(10,h-10), r=rnd(2.5,6); g.fillStyle='rgba(40,25,15,.9)'; g.beginPath(); g.ellipse(cx,cy,r,r*rnd(1,1.6),rnd(0,3),0,7); g.fill(); g.strokeStyle='rgba(120,75,35,.5)'; g.lineWidth=1.5; g.beginPath(); g.ellipse(cx,cy,r*1.8,r*2.6,0,0,7); g.stroke(); } });
     teakTex.wrapS=teakTex.wrapT=THREE.RepeatWrapping;
     const teakBump=canvasTex(256,512,(g,w,h)=>{ g.fillStyle='#808080'; g.fillRect(0,0,w,h); for(let i=0;i<120;i++){ const x=rnd(0,w); g.strokeStyle=Math.random()<.5?'rgba(40,40,40,.35)':'rgba(220,220,220,.3)'; g.lineWidth=rnd(.6,2); g.beginPath(); g.moveTo(x,0); g.bezierCurveTo(x+rnd(-12,12),h*.3,x+rnd(-12,12),h*.7,x+rnd(-6,6),h); g.stroke(); } });
     teakBump.wrapS=teakBump.wrapT=THREE.RepeatWrapping; teakBump.encoding=THREE.LinearEncoding;
@@ -3093,7 +3094,8 @@ async function supabaseCaps(){
   // wall plates along the top of the long walls
   [-1,1].forEach(sd=>add(new THREE.BoxGeometry(RX*2,.16,.2),W,0,RH+.08,sd*(RZ-.1)));
   // give every timber real-scale UVs with the grain running along its length (one texture tile ≈ 0.3 m × 1.4 m)
-  scene.traverse(o=>{ if(!o.isMesh||o.material!==W||o.geometry.type!=='BoxGeometry') return;
+  scene.traverse(o=>{ if(!o.isMesh||(o.material!==W&&o.material!==winWood)||o.geometry.type!=='BoxGeometry') return;
+    o.material=W;   // window frames get the same whitewashed timber as the roof
     const p=o.geometry.parameters, g=o.geometry=o.geometry.clone(), uv=g.attributes.uv, dims=[[p.depth,p.height],[p.depth,p.height],[p.width,p.depth],[p.width,p.depth],[p.width,p.height],[p.width,p.height]];
     const off=rnd(0,10);
     for(let f=0;f<6;f++){ const [du,dv]=dims[f], swap=du>dv; for(let k=0;k<4;k++){ const i=f*4+k, u=uv.getX(i), v=uv.getY(i);
