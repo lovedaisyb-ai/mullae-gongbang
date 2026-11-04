@@ -433,6 +433,8 @@ const glassMat=new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,
     g.fillStyle='#9c5c27'; g.fillRect(0,0,w,h);
     for(let i=0;i<90;i++){ const x=rnd(0,w); g.strokeStyle=Math.random()<.5?'rgba(70,32,10,.28)':'rgba(190,120,60,.22)'; g.lineWidth=rnd(.6,2.2); g.beginPath(); g.moveTo(x,0); g.bezierCurveTo(x+rnd(-8,8),h*.3,x+rnd(-8,8),h*.7,x+rnd(-6,6),h); g.stroke(); }
   })});
+  // the leaves' UVs are in metres (the left leaf's are negative): repeat the grain so both leaves look the same
+  doorWood.map.wrapS=doorWood.map.wrapT=THREE.RepeatWrapping; doorWood.map.repeat.set(1.6,.9); doorWood.map.needsUpdate=true;
   const darkWood=new THREE.MeshStandardMaterial({color:'#5a2f12',roughness:.6});
   const iron=new THREE.MeshStandardMaterial({color:'#141414',roughness:.45,metalness:.5});
   const stone=new THREE.MeshStandardMaterial({roughness:.95,map:canvasTex(256,256,(g,w,h)=>{
