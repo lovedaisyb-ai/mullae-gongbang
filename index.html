@@ -111,7 +111,20 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 #chat input:focus{outline:2px solid var(--celadon);outline-offset:1px;}
 #chat button{padding:8px 12px;font-size:13px;background:var(--celadon-deep);border:1px solid var(--celadon);border-radius:8px;}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+#clayPick{left:calc(14px + env(safe-area-inset-left,0px));top:calc(70px + env(safe-area-inset-top,0px));padding:12px;display:grid;gap:8px;width:190px;box-sizing:border-box;}
+#clayPick h3{margin:0;font-size:13px;font-weight:400;color:var(--muted);}
+#clayPick .opts{display:grid;gap:6px;}
+#clayPick button{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.45);font-size:13px;text-align:left;}
+#clayPick button[aria-pressed=true]{border-color:var(--celadon-deep);box-shadow:0 0 0 2px var(--celadon);background:#fff;}
+#clayPick i{width:26px;height:26px;border-radius:50%;flex:0 0 26px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);}
+#clayPick small{display:block;font-size:11px;color:var(--muted);}
+body.throwing #brand{display:none;}
+#chat{display:none!important;}
 @media (max-width:640px){
+  #clayPick{top:calc(56px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));width:auto;padding:6px;gap:0;}
+  #clayPick h3,#clayPick small,#clayPick span{display:none;}
+  #clayPick .opts{grid-template-columns:repeat(4,44px);gap:4px;}
+  #clayPick button{justify-content:center;padding:8px;min-height:44px;}
   #prompt{bottom:calc(160px + env(safe-area-inset-bottom,0px));}
   #workPanel{bottom:calc(156px + env(safe-area-inset-bottom,0px));}
   #brand{top:calc(8px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));padding:6px 10px;border-radius:10px;}
@@ -184,6 +197,12 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 <div class="hud" id="joy" hidden><div id="knob"></div></div>
 
 <div id="throwHud" hidden>
+  <div class="hud panel" id="clayPick" role="group" aria-label="흙 고르기"><h3>흙 고르기</h3><div class="opts">
+<button type="button" data-clay="0" aria-pressed="true" aria-label="백자토"><i style="background:radial-gradient(circle at 35% 30%,#f7f3ec,#ddd4c6)"></i><span>백자토<small>희고 매끈해요</small></span></button>
+<button type="button" data-clay="1" aria-pressed="false" aria-label="분청토"><i style="background:radial-gradient(circle at 35% 30%,#d8c4a4,#a9906c)"></i><span>분청토<small>회갈색, 철점이 보여요</small></span></button>
+<button type="button" data-clay="2" aria-pressed="false" aria-label="옹기토"><i style="background:radial-gradient(circle at 35% 30%,#b9714a,#7e4026)"></i><span>옹기토<small>붉고 거친 질감</small></span></button>
+<button type="button" data-clay="3" aria-pressed="false" aria-label="흑토"><i style="background:radial-gradient(circle at 35% 30%,#6a625c,#3b3632)"></i><span>흑토<small>짙은 먹색</small></span></button>
+</div></div>
   <div class="hud panel" id="tip">물레를 돌린 뒤, 흙을 누르고 있으면 중심이 잡혀요</div>
   <div class="hud panel" id="stats">
     <div class="sliders">
@@ -1834,12 +1853,20 @@ collide(-RX,-RX+.45,-.8,.4);
 /* ---------- clay model ---------- */
 const N=48, FLOOR=.011, MIN_WALL=.0045;
 let fingerMM=8;
+// clay bodies: each has its own material (colour + roughness of the surface)
+const CLAYS=[['#f6f2ec',.004],['#d6c19f',.006],['#b56a43',.009],['#3a3430',.006]];
+const clayMats=CLAYS.map(([c,b],i)=>{ if(i===0) return M.clay; const m=M.clay.clone(); m.color.set(c); m.bumpScale=b; return m; });
+let clayKind=0; try{ clayKind=Math.min(3,Math.max(0,+localStorage.getItem('mullae-clay')||0)); }catch(e){}
+function setClayKind(k){ clayKind=k; try{ localStorage.setItem('mullae-clay',k); }catch(e){}
+  document.querySelectorAll('#clayPick button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.clay===k));
+  if(active&&active.clay){ active.clay.k=k; if(active.mesh) active.mesh.material=clayMats[k]; } }
+document.querySelectorAll('#clayPick button').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); setClayKind(+b.dataset.clay); }));
 function newClay(){
   const r=new Float32Array(N), H=.105;
   // a smooth, slightly lumpy profile (no row-by-row jitter, which showed as fine horizontal lines)
   const ph=rnd(0,6.28), amp=rnd(.0015,.003);
   for(let i=0;i<N;i++){ const t=i/(N-1); r[i]=.074*(1-.38*t*t)+amp*Math.sin(t*4.2+ph); }
-  const c={r,H,tw:.024,open:0,center:0,flat:0,V0:0};
+  const c={r,H,tw:.024,open:0,center:0,flat:0,V0:0,k:clayKind};
   c.V0=vol(c); return c;
 }
 function innerR(c,i,k){ return Math.max(.002,c.r[i]-c.tw)*k; }
@@ -1880,9 +1907,9 @@ function clayGeo(c){
 }
 function ensureClay(w){
   if(!w.clay){ w.clay=newClay(); }
-  if(!w.mesh){ w.mesh=new THREE.Mesh(clayGeo(w.clay),M.clay); w.mesh.castShadow=w.mesh.receiveShadow=true; w.mesh.position.y=.015; w.head.add(w.mesh); }
+  if(!w.mesh){ w.mesh=new THREE.Mesh(clayGeo(w.clay),clayMats[w.clay.k||0]); w.mesh.castShadow=w.mesh.receiveShadow=true; w.mesh.position.y=.015; w.head.add(w.mesh); }
 }
-function rebuild(w){ w.mesh.geometry.dispose(); w.mesh.geometry=clayGeo(w.clay); }
+function rebuild(w){ w.mesh.geometry.dispose(); w.mesh.geometry=clayGeo(w.clay); w.mesh.material=clayMats[w.clay.k||0]; }
 wheels.forEach(ensureClay);
 
 /* ---------- avatar (chibi potter) ---------- */
@@ -2159,10 +2186,10 @@ $('saveBtn').addEventListener('click',()=>{
   if(c.open<.95){ warn('구멍을 뚫고 벽을 세워야 선반에 올릴 수 있어요'); return; }
   // celebrate: show the finished pot on a ware board with confetti and a fanfare
   fanfare();
-  openViewer({geometry:active.mesh.geometry.clone(),material:M.clay},'내 작품',true);
+  openViewer({geometry:active.mesh.geometry.clone(),material:clayMats[c.k||0]},'내 작품',true);
   if(sharedDb&&myId){ saveShared(c); }
   else {
-    const m=new THREE.Mesh(active.mesh.geometry.clone(),M.clay); m.castShadow=m.receiveShadow=true; m.userData.t=Date.now();
+    const m=new THREE.Mesh(active.mesh.geometry.clone(),clayMats[c.k||0]); m.castShadow=m.receiveShadow=true; m.userData.t=Date.now();
     const slot=shelfSlots[saveIndex%shelfSlots.length];
     if(savedPots[saveIndex%shelfSlots.length]) scene.remove(savedPots[saveIndex%shelfSlots.length]);
     m.position.copy(slot); m.position.y+=.018; m.rotation.y=rnd(0,6.28); scene.add(m);
@@ -2193,7 +2220,9 @@ function trySit(){
   $('sub').textContent=`물레 ${wheels.indexOf(w)+1}번 · 앉는 중`;
 }
 function beginThrow(){
-  const w=active; mode='throw'; document.body.classList.add('throwing');
+  const w=active;
+  if(w.clay&&w.clay.open<.02&&w.clay.center<.05){ w.clay.k=clayKind; if(w.mesh) w.mesh.material=clayMats[clayKind]; }
+  document.querySelectorAll('#clayPick button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.clay===(w.clay.k||0))); mode='throw'; document.body.classList.add('throwing');
   avatar.position.set(w.seat.x,0,w.seat.z); avatar.rotation.y=Math.PI; avatar.visible=false;
   $('throwHud').hidden=false;
   $('sub').textContent=`물레 ${wheels.indexOf(w)+1}번 · 작업 중`;
@@ -2220,7 +2249,7 @@ function finishStand(){
   hideHands();
   const S=active.seat; resetPose();
   mode='walk'; avatar.visible=true; avatar.position.set(S.x,0,S.z+.28); avatar.rotation.y=0; yaw=0;
-  $('chat').hidden=!room; $('help').style.visibility='';
+  $('chat').hidden=true; $('help').style.visibility='';
   $('sub').textContent='물레실 · 산책 중'; active=null;
 }
 
@@ -2680,7 +2709,7 @@ function renderShelf(docs){
   sharedPots.forEach((v,k)=>{ if(!keep.has(k)){ scene.remove(v.mesh); scene.remove(v.label); if(v.board) scene.remove(v.board); v.mesh.geometry.dispose(); sharedPots.delete(k); } });
   shown.forEach((p,i)=>{
     let v=sharedPots.get(p.key);
-    if(!v){ const mesh=new THREE.Mesh(clayGeo(p.clay),M.clay); mesh.castShadow=mesh.receiveShadow=true; mesh.rotation.y=rnd(0,6.28); scene.add(mesh);
+    if(!v){ const mesh=new THREE.Mesh(clayGeo(p.clay),clayMats[p.clay.k||0]); mesh.castShadow=mesh.receiveShadow=true; mesh.rotation.y=rnd(0,6.28); scene.add(mesh);
       v={mesh,label:potLabel(),owner:p.owner,t:p.t,id:p.id,board:wareBoardFor(mesh)}; sharedPots.set(p.key,v); }
     const by=SBOARDS[Math.floor(i/SPER)], x=-2.75+(i%SPER)*.61;
     v.board.position.set(x,by+.029,SZ+.02); v.board.rotation.y=(p.l||0)*.5; v.mesh.position.set(x,by+.038,SZ+.02); v.label.position.set(x,by-.035,SZ-.192);
@@ -2956,9 +2985,9 @@ async function resolveName(r,p){
 function decodeClay(c){
   if(!c||typeof c!=='object'||!Array.isArray(c.r)||c.r.length!==N) return null;
   const r=new Float32Array(N); for(let i=0;i<N;i++) r[i]=numIn(c.r[i]/1e4,.002,.17,.05);
-  return {r,H:numIn(c.H/1e4,.03,.38,.1),tw:numIn(c.t/1e4,.004,.03,.02),open:numIn(c.o,0,1,0),center:numIn(c.c,0,1,0)};
+  return {r,H:numIn(c.H/1e4,.03,.38,.1),tw:numIn(c.t/1e4,.004,.03,.02),open:numIn(c.o,0,1,0),center:numIn(c.c,0,1,0),k:Math.round(numIn(c.k,0,3,0))};
 }
-function encodeClay(c){ return {H:Math.round(c.H*1e4),t:Math.round(c.tw*1e4),o:Math.round(c.open*100)/100,c:Math.round(c.center*100)/100,r:Array.from(c.r,v=>Math.round(v*1e4))}; }
+function encodeClay(c){ return {k:c.k||0,H:Math.round(c.H*1e4),t:Math.round(c.tw*1e4),o:Math.round(c.open*100)/100,c:Math.round(c.center*100)/100,r:Array.from(c.r,v=>Math.round(v*1e4))}; }
 function upsertRemote(p){
   const pr=p.presence||{}; if(typeof pr.x!=='number') return;
   let r=remotes.get(p.peer);
@@ -3051,7 +3080,7 @@ async function supabaseCaps(){
   if(sharedDb&&myId) startShelf(); else sharedDb=null;
   try{ room=await use('room'); }catch(e){ room=null; }
   if(!room){ $('who').textContent='혼자 작업 중'; return; }
-  $('chat').hidden=mode!=='walk';
+  $('chat').hidden=true;
   room.onPeers(ch=>{
     ch.left.forEach(p=>removeRemote(p.peer));
     // one character per person: skip my own other devices, and for anyone on several
@@ -3196,7 +3225,7 @@ function frame(){
     let rpm=w.rpm, center=w.clay.center;
     if(w.remote && w!==active){
       const t=w.remote.t; rpm=t.rpm;
-      if(t.clayObj){ center=t.clayObj.center; if(t.clayKey!==w.remoteKey){ w.remoteKey=t.clayKey; w.mesh.geometry.dispose(); w.mesh.geometry=clayGeo(t.clayObj); } }
+      if(t.clayObj){ center=t.clayObj.center; if(t.clayKey!==w.remoteKey){ w.remoteKey=t.clayKey; w.mesh.geometry.dispose(); w.mesh.geometry=clayGeo(t.clayObj); w.mesh.material=clayMats[t.clayObj.k||0]; } }
     } else if(w.remoteKey){ w.remoteKey=null; rebuild(w); }
     w.angle+=rpm/60*Math.PI*2*dt; w.head.rotation.y=w.angle;
     if(w.mesh){ const wob=(1-center)*.007*Math.min(1,rpm/60); w.mesh.position.x=Math.cos(w.angle)*wob; w.mesh.position.z=Math.sin(w.angle)*wob; }
