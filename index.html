@@ -106,6 +106,43 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 #vHint{font-size:12px;color:var(--muted);}
 #vSave{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:calc(12px + env(safe-area-inset-left,0px));height:44px;padding:0 16px;border-radius:999px;background:var(--celadon-deep);border:1px solid var(--celadon);font-size:14px;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3);}
 #vSave:disabled{opacity:.6;}
+#vPaint{position:absolute;top:calc(64px + env(safe-area-inset-top,0px));left:calc(12px + env(safe-area-inset-left,0px));height:44px;padding:0 16px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:14px;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3);}
+#paintScr{position:fixed;inset:0;z-index:40;background:#fff;color:#26302c;font-family:var(--body);-webkit-user-select:none;user-select:none;}
+#paintScr button{color:#26302c;font-family:var(--body);-webkit-tap-highlight-color:transparent;}
+#ptc{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;}
+#paintScr .ptRound{width:46px;height:46px;border-radius:50%;border:1px solid #e3e1dc;background:#fff;display:grid;place-items:center;box-shadow:0 2px 10px rgba(0,0,0,.06);padding:0;}
+#paintScr .ptRound svg{width:22px;height:22px;}
+#ptTop{position:absolute;left:0;right:0;top:calc(12px + env(safe-area-inset-top,0px));padding:0 14px;display:flex;align-items:center;gap:10px;pointer-events:none;}
+#ptTop>*{pointer-events:auto;} #ptTop .sp{flex:1;}
+#paintScr #ptDone{background:#4f7f70;border-color:#4f7f70;color:#fff;}
+#ptTitle{position:absolute;left:50%;transform:translateX(-50%);top:calc(70px + env(safe-area-inset-top,0px));font-size:13px;color:#7a817d;white-space:nowrap;pointer-events:none;transition:opacity .4s;}
+#ptTray{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));width:min(440px,calc(100vw - 24px));box-sizing:border-box;background:#f5f4f1;border:1px solid #e3e1dc;border-radius:26px;padding:10px 14px 0;display:flex;align-items:flex-end;gap:2px;box-shadow:0 8px 30px rgba(0,0,0,.08);height:96px;overflow:hidden;}
+#paintScr .ptTool{flex:1;height:100%;border:0;background:none;padding:0;display:flex;align-items:flex-end;justify-content:center;transition:transform .2s;transform:translateY(16px);}
+#paintScr .ptTool[aria-pressed=true]{transform:translateY(2px);}
+#paintScr .ptTool svg{width:34px;height:86px;display:block;}
+#ptColorBtn{flex:0 0 52px;align-self:center;margin-bottom:10px;width:46px;height:46px;border-radius:50%;border:0;padding:4px;background:conic-gradient(#e94b3c,#f5c33b,#62c26a,#3fb6e8,#3b62f0,#b24be8,#e94b3c);}
+#ptColorBtn i{display:block;width:100%;height:100%;border-radius:50%;border:3px solid #fff;box-sizing:border-box;}
+#paintScr .ptPop{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(122px + env(safe-area-inset-bottom,0px));width:min(420px,calc(100vw - 24px));box-sizing:border-box;background:#fff;border:1px solid #e3e1dc;border-radius:22px;padding:14px;box-shadow:0 10px 36px rgba(0,0,0,.12);}
+#ptWs{display:flex;gap:6px;}
+#ptWs button{flex:1;height:54px;border-radius:12px;border:1px solid transparent;background:none;display:grid;place-items:center;padding:0;}
+#ptWs button[aria-pressed=true]{background:#f1efea;border-color:#e3e1dc;}
+#ptWs svg{width:46px;height:40px;}
+#paintScr .ptLbl{font-size:12px;color:#7a817d;margin:12px 2px 6px;display:flex;justify-content:space-between;}
+#ptOp{position:relative;height:34px;border-radius:17px;overflow:hidden;background-image:linear-gradient(45deg,#ddd 25%,transparent 25%,transparent 75%,#ddd 75%),linear-gradient(45deg,#ddd 25%,#fff 25%,#fff 75%,#ddd 75%);background-size:14px 14px;background-position:0 0,7px 7px;touch-action:none;}
+#ptFill{position:absolute;inset:0;}
+#ptKnob{position:absolute;top:2px;width:30px;height:30px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.35);box-sizing:border-box;transform:translateX(-50%);}
+#ptColor{padding:12px;}
+#ptColor h3{margin:0 0 10px;text-align:center;font-size:15px;font-weight:400;}
+#ptGrid{display:grid;grid-template-columns:repeat(12,1fr);border-radius:12px;overflow:hidden;}
+#ptGrid button{aspect-ratio:1;border:0;padding:0;border-radius:0;}
+#ptGrid button:first-child{box-shadow:inset 0 0 0 1px #ddd;border-top-left-radius:12px;}
+#ptGrid button[aria-pressed=true]{outline:3px solid #fff;outline-offset:-5px;box-shadow:inset 0 0 0 2px #222;}
+#ptPig{display:flex;gap:8px;flex-wrap:wrap;}
+#ptPig button{display:flex;align-items:center;gap:6px;padding:5px 10px 5px 5px;border-radius:999px;border:1px solid #e3e1dc;background:#fff;font-size:12px;}
+#ptPig i{width:20px;height:20px;border-radius:50%;display:block;}
+#ptToast{position:absolute;left:50%;top:calc(120px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:rgba(38,48,44,.88);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+#ptToast.show{opacity:1;}
+
 #goWork{left:50%;transform:translateX(-50%);top:calc(64px + env(safe-area-inset-top,0px));}
 #goWork button{padding:11px 18px;font-size:15px;background:var(--celadon-deep);border:1px solid var(--celadon);border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.35);white-space:nowrap;}
 #chat{right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;padding:6px;}
@@ -200,6 +237,33 @@ body.throwing #brand{display:none;}
   <button id="vClose" type="button" aria-label="닫기">✕</button>
   <button id="vSave" type="button">📷 사진첩에 저장</button>
   <div class="panel" id="vBar"><div id="vInfo">작품</div><div id="vHint">드래그해서 돌려 보기 · 두 손가락이나 휠로 확대</div></div>
+  <button id="vPaint" type="button" hidden>🎨 그림 그리기</button>
+</div>
+<div id="paintScr" hidden>
+  <canvas id="ptc" aria-label="작품에 그림 그리기"></canvas>
+  <div id="ptTop">
+    <button class="ptRound" id="ptClose" type="button" aria-label="그리지 않고 닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <span class="sp"></span>
+    <button class="ptRound" id="ptUndo" type="button" aria-label="되돌리기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12h-2" transform="translate(0,-6)"/></svg></button>
+    <button class="ptRound" id="ptRedo" type="button" aria-label="다시 하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="matrix(-1 0 0 1 24 0)"><path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12h-2" transform="translate(0,-6)"/></g></svg></button>
+    <button class="ptRound" id="ptDone" type="button" aria-label="그림 입히기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+  </div>
+  <div id="ptTitle">흙 위에만 그려져요 · 바깥을 드래그하면 돌아가요</div>
+  <div class="ptPop" id="ptWidth" hidden>
+    <div id="ptWs"></div>
+    <div class="ptLbl" id="ptOpL"><span>불투명도</span><span id="ptOpV">100%</span></div>
+    <div id="ptOp"><div id="ptFill"></div><div id="ptKnob"></div></div>
+  </div>
+  <div class="ptPop" id="ptColor" hidden><h3>색상</h3><div id="ptGrid"></div><div class="ptLbl"><span>도자기 안료</span></div><div id="ptPig"></div></div>
+  <div id="ptTray">
+    <button class="ptTool" type="button" data-tool="pen" aria-label="펜"></button>
+    <button class="ptTool" type="button" data-tool="brush" aria-label="붓펜"></button>
+    <button class="ptTool" type="button" data-tool="marker" aria-label="마커"></button>
+    <button class="ptTool" type="button" data-tool="pencil" aria-label="연필"></button>
+    <button class="ptTool" type="button" data-tool="eraser" aria-label="지우개"></button>
+    <button id="ptColorBtn" type="button" aria-label="색상"><i id="ptDot"></i></button>
+  </div>
+  <div id="ptToast"></div>
 </div>
 <div class="hud" id="goWork" hidden><button id="goWorkBtn" type="button">내 작품 보러 가기 →</button></div>
 <div class="hud panel" id="deskHud" hidden><span>작업대에 앉았어요 · 드래그로 둘러보기</span><button id="deskUp" type="button">일어나기 <kbd>E</kbd></button></div>
@@ -2008,6 +2072,7 @@ $('joy').hidden=true; // phones move by tapping the floor; the joystick is never
 addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT') return;
   keys[e.code]=true;
+  if(PT.s.open){ if(e.code==='Escape') PT.close(false); return; }
   if(viewer.open){ if(e.code==='Escape') closeViewer(); return; }
   if(e.code==='Enter' && !$('chat').hidden){ e.preventDefault(); $('chatIn').focus(); return; }
   if(e.code==='KeyE'){ mode==='walk'?trySit():mode==='desk'?leaveDesk():stand(); }
@@ -2204,6 +2269,7 @@ $('saveBtn').addEventListener('click',()=>{
   if(c.open<.95){ warn('구멍을 뚫고 벽을 세워야 선반에 올릴 수 있어요'); return; }
   // celebrate: show the finished pot on a ware board with confetti and a fanfare
   fanfare();
+  lastFinished={geo:active.mesh.geometry.clone(),mat:clayMats[c.k||0],paint:null,local:null};
   openViewer({geometry:active.mesh.geometry.clone(),material:clayMats[c.k||0]},'내 작품',true);
   if(sharedDb&&myId){ saveShared(c); }
   else {
@@ -2212,7 +2278,7 @@ $('saveBtn').addEventListener('click',()=>{
     if(savedPots[saveIndex%shelfSlots.length]) scene.remove(savedPots[saveIndex%shelfSlots.length]);
     m.position.copy(slot); m.position.y+=.018; m.rotation.y=rnd(0,6.28); scene.add(m);
     { const bd=wareBoardFor(m); scene.remove(bd); bd.position.y=-.009; m.add(bd); }   // on its own square ware board
-    savedPots[saveIndex%shelfSlots.length]=m; saveIndex++;
+    savedPots[saveIndex%shelfSlots.length]=m; saveIndex++; lastFinished.local=m;
     toast(`선반에 올렸어요 · ${saveIndex}번째 작품 (높이 ${(c.H*100).toFixed(1)}cm)`); updateMyWorkBtn(); offerGoWork();
   }
   active.clay=newClay(); rebuild(active); setTool('center');
@@ -2956,6 +3022,7 @@ function openViewer(mesh,title,celebrate){
   if(shelfBg){ vDist=Math.max(h*1.3,B)*2.3; vTarget=h*.38; vTilt=.42; }   // step back so the whole square board shows
   $('vInfo').textContent=celebrate?`완성했어요! · 높이 ${(h*100).toFixed(1)}cm · 지름 ${(r*200).toFixed(1)}cm`:`${title} · 높이 ${(h*100).toFixed(1)}cm · 지름 ${(r*200).toFixed(1)}cm`;
   $('vHint').textContent=celebrate?'나무판에 올려 선반으로 옮겨요 · 닫으면 계속 빚을 수 있어요':'드래그해서 돌려 보기 · 두 손가락이나 휠로 확대';
+  $('vPaint').hidden=!celebrate;
   $('viewer').hidden=false; viewer.open=true; resizeViewer();
   // on a tall phone screen the sides are the tight edge: step back so the whole pot (and board) fits
   if(vCam.aspect<1) vDist*=celebrate?Math.min(2.8,1.12/vCam.aspect):Math.min(2.2,.85/vCam.aspect);
@@ -2976,6 +3043,189 @@ function renderViewer(dt){
 }
 addEventListener('resize',resizeViewer);
 $('vClose').addEventListener('click',closeViewer);
+/* ---------- painting on the finished pot (white room: just the pot and the drawing tools) ----------
+   The pot's surface becomes one canvas: u runs once round the pot, v runs along the profile (outside, over
+   the rim, down the inside) by real surface length, so a stroke keeps its width wherever it goes. */
+const PT=(()=>{
+  const TW=2048, TH=1024;
+  const TOOLS={pen:{w:[1.2,2.2,3.5,5.5,8]},brush:{w:[2,3.5,5.5,8,12]},marker:{w:[4,6,9,13,18]},pencil:{w:[1.5,2.5,4,6,9]},eraser:{w:[4,7,11,16,24]}};
+  const s={open:false,tool:'pen',color:'#1f3f8f',op:{pen:1,brush:1,marker:.55,pencil:.85},wi:{pen:1,brush:2,marker:2,pencil:1,eraser:2}};
+  let R=null, scene, cam, pot=null, tex, base, paint, pg, stroke, sg, disp, dg, PLEN=.3, dirty=true, strokeOn=false, strokeAlpha=1, onDone=null;
+  let yaw=.4, tilt=.55, dist=1, target=new THREE.Vector3(0,.06,0), H=.12;
+  const undoS=[], redoS=[];
+  const tst=m=>{ const t=$('ptToast'); t.textContent=m; t.classList.add('show'); clearTimeout(tst.t); tst.t=setTimeout(()=>t.classList.remove('show'),1800); };
+
+  function toolSVG(t,col){
+    const tips={
+      pen:`<path d="M10 30 L17 6 L24 30Z" fill="#e8e3da"/><path d="M14.3 16 L17 6 L19.7 16Z" fill="${col}"/>`,
+      brush:`<path d="M10 30 Q11 14 17 4 Q23 14 24 30Z" fill="${col}"/>`,
+      marker:`<path d="M10 30 L10 16 L22 8 L24 8 L24 30Z" fill="${col}"/>`,
+      pencil:`<path d="M10 30 L17 7 L24 30Z" fill="#e7cfa6"/><path d="M14.8 14 L17 7 L19.2 14Z" fill="${col}"/>`,
+      eraser:`<rect x="9" y="8" width="16" height="24" rx="6" fill="#e9a3a0"/>`};
+    const shaft=t==='pencil'?`<rect x="10" y="30" width="14" height="60" fill="#3a3d3b"/><path d="M10 30h14v60H10z" fill="url(#ptHatch)"/>`:t==='eraser'?`<rect x="9" y="30" width="16" height="60" fill="#33363a"/>`:`<rect x="10" y="30" width="14" height="60" fill="#2b2f2d"/>`;
+    const ring=t==='eraser'?'':`<rect x="10" y="${t==='pencil'?44:40}" width="14" height="3.5" fill="${col}"/>`;
+    return `<svg viewBox="0 0 34 90"><defs><pattern id="ptHatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><rect width="2" height="4" fill="#4a4d4b"/></pattern></defs>${shaft}${tips[t]}${ring}</svg>`;
+  }
+  function drawTools(){ document.querySelectorAll('#paintScr .ptTool').forEach(b=>{ b.innerHTML=toolSVG(b.dataset.tool,s.color); b.setAttribute('aria-pressed',b.dataset.tool===s.tool); }); $('ptDot').style.background=s.color; }
+  function drawWidths(){
+    const ws=$('ptWs'); ws.innerHTML='';
+    TOOLS[s.tool].w.forEach((w,i)=>{ const b=document.createElement('button'); b.type='button'; b.setAttribute('aria-pressed',i===s.wi[s.tool]); b.setAttribute('aria-label',`굵기 ${i+1}`);
+      const col=s.tool==='eraser'?'#b9b5ae':s.color;
+      b.innerHTML=`<svg viewBox="0 0 46 40"><path d="M7 28 C12 6 20 8 22 22 S32 34 39 12" fill="none" stroke="${col}" stroke-width="${Math.max(1.4,w*.55)}" stroke-linecap="round" opacity="${s.tool==='eraser'?1:s.op[s.tool]}"/></svg>`;
+      b.onclick=()=>{ s.wi[s.tool]=i; drawWidths(); }; ws.appendChild(b); });
+    const has=s.tool!=='eraser'; $('ptOp').hidden=!has; $('ptOpL').hidden=!has;
+    if(has){ const o=s.op[s.tool]; $('ptOpV').textContent=Math.round(o*100)+'%'; $('ptKnob').style.left=`calc(15px + ${o} * (100% - 30px))`; $('ptKnob').style.background=s.color; $('ptFill').style.background=`linear-gradient(90deg,transparent,${s.color})`; }
+  }
+  const hsl=(h,S,l)=>{ S/=100; l/=100; const k=n=>(n+h/30)%12, a=S*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)); return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); };
+  const GRID=[]; for(let i=0;i<12;i++){ const v=Math.round(255*(1-i/11)); GRID.push('#'+v.toString(16).padStart(2,'0').repeat(3)); }
+  [[60,16],[62,24],[64,32],[66,42],[72,52],[80,62],[78,71],[74,80],[70,88]].forEach(([S,l])=>[198,222,252,282,330,4,20,36,46,58,72,100].forEach(h=>GRID.push(hsl(h,S,l))));
+  const PIG=[['코발트','#1f3f8f'],['청화','#3b62b0'],['철화','#6b3a1e'],['진사','#9b2b2b'],['녹유','#3c6e4f'],['흑유','#222222'],['백토','#f4efe6']];
+  function drawGrid(){ const g=$('ptGrid'); g.innerHTML=''; GRID.forEach(c=>{ const b=document.createElement('button'); b.type='button'; b.style.background=c; b.setAttribute('aria-label',c); b.setAttribute('aria-pressed',c===s.color); b.onclick=()=>pick(c); g.appendChild(b); });
+    const p=$('ptPig'); p.innerHTML=''; PIG.forEach(([n,c])=>{ const b=document.createElement('button'); b.type='button'; b.innerHTML=`<i style="background:${c};${c==='#f4efe6'?'box-shadow:inset 0 0 0 1px #ccc':''}"></i>${n}`; b.onclick=()=>pick(c); p.appendChild(b); }); }
+  function pick(c){ s.color=c; if(s.tool==='eraser') s.tool='pen'; drawTools(); drawGrid(); drawWidths(); }
+  const closePops=()=>{ $('ptWidth').hidden=true; $('ptColor').hidden=true; };
+
+  function init(){
+    R=new THREE.WebGLRenderer({canvas:$('ptc'),antialias:true}); R.setPixelRatio(Math.min(devicePixelRatio,2));
+    R.outputEncoding=THREE.sRGBEncoding; R.toneMapping=THREE.ACESFilmicToneMapping; R.toneMappingExposure=.92;
+    R.shadowMap.enabled=true; R.shadowMap.type=THREE.PCFSoftShadowMap;
+    scene=new THREE.Scene(); scene.background=new THREE.Color('#ffffff');
+    cam=new THREE.PerspectiveCamera(32,1,.01,20);
+    scene.add(new THREE.HemisphereLight('#ffffff','#d9d3ca',.95));
+    const key=new THREE.DirectionalLight('#fff6ea',1.0); key.position.set(1.2,2.2,1.6); key.castShadow=true; key.shadow.mapSize.set(1024,1024);
+    Object.assign(key.shadow.camera,{left:-.4,right:.4,top:.4,bottom:-.4,near:.5,far:6}); key.shadow.radius=6; key.shadow.bias=-.0006; scene.add(key);
+    const fl=new THREE.DirectionalLight('#eef3ff',.35); fl.position.set(-1.5,.8,-1); scene.add(fl);
+    const ground=new THREE.Mesh(new THREE.PlaneGeometry(4,4),new THREE.ShadowMaterial({opacity:.1})); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+    const mk=()=>{ const c=document.createElement('canvas'); c.width=TW; c.height=TH; return c; };
+    base=mk(); paint=mk(); pg=paint.getContext('2d'); stroke=mk(); sg=stroke.getContext('2d'); disp=mk(); dg=disp.getContext('2d');
+    tex=new THREE.CanvasTexture(disp); tex.encoding=THREE.sRGBEncoding; tex.anisotropy=R.capabilities.getMaxAnisotropy(); tex.wrapS=THREE.RepeatWrapping;
+    // UI
+    document.querySelectorAll('#paintScr .ptTool').forEach(b=>b.addEventListener('click',()=>{ const t=b.dataset.tool; $('ptColor').hidden=true;
+      if(s.tool===t) $('ptWidth').hidden=!$('ptWidth').hidden; else { s.tool=t; $('ptWidth').hidden=false; } drawTools(); drawWidths(); }));
+    $('ptColorBtn').addEventListener('click',()=>{ $('ptWidth').hidden=true; $('ptColor').hidden=!$('ptColor').hidden; drawGrid(); });
+    { const sl=$('ptOp'); let on=false; const set=e=>{ const r=sl.getBoundingClientRect(); s.op[s.tool]=Math.max(.05,Math.min(1,(e.clientX-r.left-15)/(r.width-30))); drawWidths(); };
+      sl.addEventListener('pointerdown',e=>{ on=true; sl.setPointerCapture(e.pointerId); set(e); }); sl.addEventListener('pointermove',e=>on&&set(e)); sl.addEventListener('pointerup',()=>on=false); }
+    $('ptUndo').onclick=()=>{ if(!undoS.length) return tst('되돌릴 그림이 없어요'); redoS.push(snap()); restore(undoS.pop()); };
+    $('ptRedo').onclick=()=>{ if(!redoS.length) return; undoS.push(snap()); restore(redoS.pop()); };
+    $('ptClose').onclick=()=>close(false);
+    $('ptDone').onclick=()=>close(true);
+    // one finger on the clay draws; anywhere else turns the pot; two fingers zoom
+    const cv=$('ptc'), ptrs=new Map(); let mode=null, pinch=0;
+    cv.addEventListener('pointerdown',e=>{ closePops(); cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); $('ptTitle').style.opacity=0;
+      if(ptrs.size===2){ if(mode==='draw') endStroke(false); mode='zoom'; pinch=0; return; }
+      if(ptrs.size>2) return;
+      const h=hitAt(e.clientX,e.clientY); if(h){ mode='draw'; beginStroke(); strokeTo(h,e.timeStamp); } else mode='turn'; });
+    cv.addEventListener('pointermove',e=>{ const prev=ptrs.get(e.pointerId); if(!prev) return; const p={x:e.clientX,y:e.clientY};
+      if(mode==='zoom'&&ptrs.size>=2){ ptrs.set(e.pointerId,p); const [a,b]=[...ptrs.values()], d=Math.hypot(a.x-b.x,a.y-b.y); if(pinch) dist=Math.max(H*2,Math.min(dist0*2.2,dist*pinch/d)); pinch=d; return; }
+      if(mode==='turn'){ yaw+=(p.x-prev.x)*.008; tilt=Math.max(-.2,Math.min(1.35,tilt+(p.y-prev.y)*.006)); }
+      if(mode==='draw'){ const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e]; for(const ce of evs){ const h=hitAt(ce.clientX,ce.clientY); if(h) strokeTo(h,ce.timeStamp); else if(cur) cur.last=null; } }
+      ptrs.set(e.pointerId,p); });
+    const up=e=>{ if(!ptrs.has(e.pointerId)) return; ptrs.delete(e.pointerId); if(mode==='draw'&&!ptrs.size) endStroke(true); if(!ptrs.size) mode=null; };
+    cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+    cv.addEventListener('wheel',e=>{ e.preventDefault(); dist=Math.max(H*2,Math.min(dist0*2.2,dist*(1+e.deltaY*.001))); },{passive:false});
+    ['touchstart','touchmove'].forEach(t=>cv.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+    addEventListener('resize',()=>{ if(s.open) resize(); });
+  }
+  let dist0=1;
+  function resize(){ const w=innerWidth,h=innerHeight; R.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); }
+
+  // a copy of the pot whose texture coordinates wrap once round and run along the profile 0..1
+  function paintGeo(src){
+    const g=src.clone(), uv=g.attributes.uv; let maxV=0;
+    for(let i=0;i<uv.count;i++) maxV=Math.max(maxV,uv.getY(i));
+    for(let i=0;i<uv.count;i++) uv.setXY(i,uv.getX(i)/2,uv.getY(i)/maxV);
+    uv.needsUpdate=true; PLEN=maxV*.3; g.computeBoundingBox(); return g;
+  }
+  function fillBase(mat){
+    const g=base.getContext('2d'), c=mat.color.clone().convertLinearToSRGB();
+    g.fillStyle='#'+c.getHexString(); g.fillRect(0,0,TW,TH);
+    const dark=c.getHSL({}).l<.3;
+    for(let i=0;i<16000;i++){ const x=Math.random()*TW, y=Math.random()*TH, r=Math.random()*1.5+.3; g.fillStyle=Math.random()<.5?`rgba(${dark?'20,16,12':'90,72,55'},${Math.random()*.3})`:`rgba(${dark?'120,110,100':'250,244,232'},${Math.random()*.25})`; g.beginPath(); g.arc(x,y,r,0,7); g.fill(); }
+    for(let x=0;x<TW;x+=3){} for(let y=0;y<TH;y+=3){ g.fillStyle=`rgba(${Math.random()<.5?'255,250,240':'60,48,38'},${Math.random()*.045})`; g.fillRect(0,y,TW,2); }
+  }
+  function compose(){ dg.globalAlpha=1; dg.globalCompositeOperation='source-over'; dg.drawImage(base,0,0); dg.drawImage(paint,0,0);
+    if(strokeOn){ dg.globalAlpha=strokeAlpha; dg.drawImage(stroke,0,0); dg.globalAlpha=1; } tex.needsUpdate=true; dirty=false; }
+
+  const ray=new THREE.Raycaster(), ndc=new THREE.Vector2(), _lp=new THREE.Vector3();
+  function hitAt(x,y){ ndc.set(x/innerWidth*2-1,-(y/innerHeight)*2+1); ray.setFromCamera(ndc,cam); const h=ray.intersectObject(pot)[0]; if(!h||!h.uv) return null;
+    pot.worldToLocal(_lp.copy(h.point)); return {u:h.uv.x*TW, v:(1-h.uv.y)*TH, r:Math.max(.008,Math.hypot(_lp.x,_lp.z))}; }
+  const mm=w=>w/1000;
+  function stamp(g,u,v,r,wmm,kind){
+    const rx=mm(wmm)/2*TW/(2*Math.PI*r), ry=mm(wmm)/2*TH/PLEN;
+    for(const du of [0,-TW,TW]){ const x=u+du; if(x<-rx*2||x>TW+rx*2) continue;
+      if(kind==='pencil'){ const n=Math.max(4,Math.round(rx*ry*.5)); for(let i=0;i<n;i++){ const t=Math.random()*6.283, q=Math.sqrt(Math.random()); g.globalAlpha=Math.random()*.7; g.fillRect(x+Math.cos(t)*rx*q,v+Math.sin(t)*ry*q,1.3,1.3); } g.globalAlpha=1; }
+      else if(kind==='marker'){ g.beginPath(); g.ellipse(x,v,rx,ry*.42,-.5,0,6.284); g.fill(); }
+      else { g.beginPath(); g.ellipse(x,v,rx,ry,0,0,6.284); g.fill(); } }
+  }
+  let cur=null;
+  function strokeTo(p,t){
+    const kind=s.tool, g=kind==='eraser'?pg:sg, w0=TOOLS[kind].w[s.wi[kind]];
+    g.globalCompositeOperation=kind==='eraser'?'destination-out':'source-over'; g.fillStyle=kind==='eraser'?'#000':s.color;
+    if(!cur.last){ stamp(g,p.u,p.v,p.r,w0*(kind==='brush'?.4:1),kind); cur.last=p; cur.t=t; cur.wf=kind==='brush'?.4:1; g.globalCompositeOperation='source-over'; dirty=true; return; }
+    let du=p.u-cur.last.u; if(du>TW/2) du-=TW; if(du<-TW/2) du+=TW;
+    const dv=p.v-cur.last.v, len=Math.hypot(du,dv); if(len<.5){ g.globalCompositeOperation='source-over'; return; }
+    if(len>TW*.25){ cur.last=p; g.globalCompositeOperation='source-over'; return; }
+    let wf=1; if(kind==='brush'){ const sp=len/Math.max(8,t-cur.t); wf=Math.max(.35,Math.min(1.3,1.35-sp*.05)); }
+    const pxr=Math.min(mm(w0)/2*TW/(2*Math.PI*p.r),mm(w0)/2*TH/PLEN), steps=Math.min(4000,Math.ceil(len/Math.max(.6,pxr*.22*Math.min(1,wf))));
+    for(let i=1;i<=steps;i++){ const k=i/steps, u=((cur.last.u+du*k)%TW+TW)%TW, v=cur.last.v+dv*k, r=cur.last.r+(p.r-cur.last.r)*k, f=cur.wf+(wf-cur.wf)*k; stamp(g,u,v,r,w0*f,kind); }
+    cur.last=p; cur.t=t; cur.wf=wf; g.globalCompositeOperation='source-over'; dirty=true;
+  }
+  function snap(){ const c=document.createElement('canvas'); c.width=TW; c.height=TH; c.getContext('2d').drawImage(paint,0,0); return c; }
+  function restore(c){ pg.globalCompositeOperation='copy'; pg.drawImage(c,0,0); pg.globalCompositeOperation='source-over'; dirty=true; }
+  function beginStroke(){ undoS.push(snap()); if(undoS.length>15) undoS.shift(); redoS.length=0; cur={last:null}; sg.clearRect(0,0,TW,TH); strokeOn=s.tool!=='eraser'; strokeAlpha=s.op[s.tool]||1; }
+  function endStroke(commit){ if(!cur) return; if(strokeOn&&commit){ pg.globalAlpha=strokeAlpha; pg.drawImage(stroke,0,0); pg.globalAlpha=1; }
+    if(!commit) restore(undoS.pop()); strokeOn=false; cur=null; dirty=true; }
+
+  // open with the finished pot; `done(canvas)` gets the painted surface (or nothing if the person cancelled)
+  function open(srcGeo,mat,prevPaint,done){
+    if(!R) init();
+    if(pot){ scene.remove(pot); pot.geometry.dispose(); }
+    const geo=paintGeo(srcGeo); H=geo.boundingBox.max.y; const rad=Math.max(geo.boundingBox.max.x,geo.boundingBox.max.z);
+    fillBase(mat); pg.clearRect(0,0,TW,TH); if(prevPaint) pg.drawImage(prevPaint,0,0);
+    undoS.length=0; redoS.length=0; dirty=true;
+    pot=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({map:tex,roughness:.75,metalness:0,side:THREE.DoubleSide})); pot.castShadow=pot.receiveShadow=true; scene.add(pot);
+    onDone=done; s.open=true; $('paintScr').hidden=false; $('ptTitle').style.opacity=1; closePops(); drawTools(); drawWidths(); resize();
+    target.set(0,H*.5,0); yaw=.4; tilt=.55;
+    const tv=Math.tan(16*Math.PI/180); dist=Math.max(H*.85/tv,rad*1.55/(tv*Math.min(1,cam.aspect))); dist0=dist;   // fit the whole pot, width-limited on a tall phone
+  }
+  function close(keep){
+    if(cur) endStroke(true);
+    s.open=false; $('paintScr').hidden=true;
+    if(onDone) onDone(keep?(()=>{ const c=document.createElement('canvas'); c.width=TW; c.height=TH; const g=c.getContext('2d'); g.drawImage(paint,0,0); return c; })():null);
+    onDone=null;
+  }
+  function render(){ if(dirty) compose(); pot.rotation.y=yaw; cam.position.set(0,target.y+Math.sin(tilt)*dist,Math.cos(tilt)*dist); cam.lookAt(target); R.render(scene,cam); }
+  // the painted look for any copy of the pot: clay colour + speckle + the painting, on the once-round coordinates
+  function bakeMaterial(mat,paintCv){
+    if(!R) init();
+    fillBase(mat); const c=document.createElement('canvas'); c.width=TW; c.height=TH; const g=c.getContext('2d'); g.drawImage(base,0,0); g.drawImage(paintCv,0,0);
+    const t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; t.wrapS=THREE.RepeatWrapping; t.anisotropy=8;
+    return new THREE.MeshStandardMaterial({map:t,roughness:.6,metalness:0,side:THREE.DoubleSide});
+  }
+  return {s,open,close,render,paintGeo,bakeMaterial};
+})();
+// the finished pot that was just celebrated, so its painting can follow it onto the shelf
+let lastFinished=null;
+function applyPaintTo(mesh,paintCv,clayMat){
+  if(!mesh) return;
+  if(!mesh.userData.paintGeo){ mesh.geometry=PT.paintGeo(mesh.geometry); mesh.userData.paintGeo=true; }
+  mesh.material=PT.bakeMaterial(clayMat,paintCv);
+}
+$('vPaint').addEventListener('click',()=>{
+  if(!lastFinished) return;
+  const lf=lastFinished;
+  PT.open(lf.geo,lf.mat,lf.paint,cv=>{
+    if(!cv) return;
+    lf.paint=cv;
+    applyPaintTo(vPot,cv,lf.mat);
+    // the same pot on the shelf (mine, the newest)
+    let shelfMesh=lf.local||null;
+    if(!shelfMesh&&typeof sharedPots!=='undefined'){ let best=null; sharedPots.forEach(v=>{ if(v.owner===myId&&(!best||v.t>best.t)) best=v; }); if(best) shelfMesh=best.mesh; }
+    applyPaintTo(shelfMesh,cv,lf.mat);
+    $('vHint').textContent='그림을 입혔어요 · 사진첩에 저장해 보세요';
+  });
+});
+
 /* save the piece as a photo: the 3D view plus a small caption strip with the studio name and size */
 function viewerPhoto(){
   renderViewer(0);   // draw now, so the WebGL buffer is still filled when it is copied
@@ -3429,7 +3679,7 @@ function frame(){
     if(key!==lastPres){ lastPres=key; room.presence(st).catch(()=>{}); }
   }
   if(sinkEnvDone<3 && ++sinkEnvDone===3) bakeSinkEnv();
-  if(viewer.open) renderViewer(dt); else renderer.render(scene,camera);
+  if(PT.s.open) PT.render(); else if(viewer.open) renderViewer(dt); else renderer.render(scene,camera);
   requestAnimationFrame(frame);
 }
 // shadow audit: the sun comes in from outside the window wall, so nothing fixed to that wall (door, shelf
