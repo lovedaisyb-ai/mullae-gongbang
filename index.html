@@ -346,7 +346,8 @@ const colliders=[];
 function collide(minX,maxX,minZ,maxZ){ colliders.push({minX,maxX,minZ,maxZ}); }
 
 /* ---------- room ---------- */
-const RX=6, RZ=4.5, RH=3.2;
+const RX=6, RZ=4.5, RH=3.75;   // ceiling raised so the beams clear the tall back-wall shelving
+const LAMP_Y=3.2;              // pendants keep hanging at the height they were designed for
 const floor=new THREE.Mesh(new THREE.PlaneGeometry(RX*2,RZ*2),M.floor);
 floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor);
 const ceil=new THREE.Mesh(new THREE.PlaneGeometry(RX*2,RZ*2),M.plaster); ceil.rotation.x=Math.PI/2; ceil.position.y=RH; scene.add(ceil);
@@ -1364,6 +1365,7 @@ const LAMP={
 function lampPart(parent,geo,mat,x,y,z){ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); parent.add(m); return m; }
 // big = the wide oval lantern; otherwise a smaller one
 function vintagePendant(parent,x,z,drop,big){
+  drop+=RH-LAMP_Y;   // longer cord from the higher ceiling, same lamp height
   const r=big?.27:.18, sy=.6, cy=RH-drop-r*sy;
   lampPart(parent,new THREE.CylinderGeometry(.04,.04,.02,16),LAMP.cap,x,RH-.01,z);
   lampPart(parent,new THREE.CylinderGeometry(.003,.003,drop,6),LAMP.cord,x,RH-drop/2,z);
@@ -1414,7 +1416,7 @@ function makeWheel(x,z){
   [[.12,.12],[-.12,.12],[.12,-.12],[-.12,-.12]].forEach(([dx,dz])=>{const l=add(new THREE.CylinderGeometry(.018,.022,.44,8),M.woodDark,dx,.22,.66+dz);});
   // paper lantern pendant
   vintagePendant(g,0,0,1.0,true);
-  const pl=new THREE.PointLight('#ffc27a',.7,3.6,2); pl.position.set(0,RH-1.16,0); g.add(pl);
+  const pl=new THREE.PointLight('#ffc27a',.7,3.6,2); pl.position.set(0,LAMP_Y-1.16,0); g.add(pl);
   collide(x-.42,x+.42,z-.45,z+.3);
   return {group:g,head,rpm:0,angle:0,clay:null,mesh:null,seat:new THREE.Vector3(x,0,z+.66)};
 }
@@ -1422,7 +1424,7 @@ const wheels=[makeWheel(-2.6,-.6),makeWheel(0,-.6),makeWheel(2.6,-.6)];
 // bare Edison bulbs over the wedging table, enamel pendants over the shared shelf
 vintagePendant(scene,4.4,2.4,.95,true);
 { const l=new THREE.PointLight('#ffc27a',.55,3.2,2); l.position.set(4.4,2.0,2.4); scene.add(l); }
-[[-1.6,3.5],[1.6,3.5]].forEach(([x,z])=>{ vintagePendant(scene,x,z,.85,true); const l=new THREE.PointLight('#ffc27a',.5,3.2,2); l.position.set(x,RH-1.0,z); scene.add(l); });
+[[-1.6,3.5],[1.6,3.5]].forEach(([x,z])=>{ vintagePendant(scene,x,z,.85,true); const l=new THREE.PointLight('#ffc27a',.5,3.2,2); l.position.set(x,LAMP_Y-1.0,z); scene.add(l); });
 
 /* ---------- wall clock (live time) ---------- */
 const wallClock=new THREE.Group(); wallClock.position.set(3.95,1.6,-RZ+.03); scene.add(wallClock);   // back wall, to the right of the day calendar
