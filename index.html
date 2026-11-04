@@ -289,7 +289,7 @@ body.throwing #brand{display:none;}
   <button id="vClose" type="button" aria-label="닫기">✕</button>
   <button id="vSave" type="button"><i class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c0604a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.3-2h5.2l1.3 2h1.6A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z" fill="#ffe9e3"/><circle cx="12" cy="12.4" r="3.4" fill="#fff"/><circle cx="16.9" cy="9" r=".6" fill="#c0604a" stroke="none"/></svg></i><span>사진첩에 저장</span></button>
   <div class="panel" id="vBar"><div id="vInfo">작품</div><div id="vHint">드래그해서 돌려 보기 · 두 손가락이나 휠로 확대</div></div>
-  <button id="vStar" type="button" aria-pressed="false" hidden><i class="ic" aria-hidden="true">⭐</i><span>선생님 추천</span></button>
+  <button id="vStar" type="button" aria-pressed="false" hidden><i class="ic" aria-hidden="true">⭐</i><span>선아씨 추천</span></button>
   <button id="vPaint" type="button" hidden><i class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#6a57c4" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5c-4.9 0-8.5 3.6-8.5 8.1 0 4.4 3.6 8.9 7.6 8.9 1.5 0 2-1 1.6-2.2-.4-1.2.3-2.3 1.6-2.3h2.2c2.4 0 4-1.9 4-4.3 0-4.6-3.8-8.2-8.5-8.2z" fill="#f1edff"/><circle cx="8" cy="11" r="1.4" fill="#ff8a7a" stroke="none"/><circle cx="10.6" cy="7.4" r="1.4" fill="#ffc94d" stroke="none"/><circle cx="15" cy="7.6" r="1.4" fill="#6fd08f" stroke="none"/><circle cx="17.2" cy="11.2" r="1.4" fill="#6fa8ff" stroke="none"/></svg></i><span>그림 그리기</span></button>
 </div>
 <div id="paintScr" hidden>
@@ -359,7 +359,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261105-0040';
+(function(){ const BUILD='20261105-0010';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -2861,7 +2861,7 @@ function arriveTarget(){
 let sharedDb=null, myPots=[], saveChain=Promise.resolve();
 /* each person shows at most SHELF_MAX pots on the shared shelf (s:1); the rest wait in their 작품함 (s:0).
    The teacher's ⭐ picks always stay on the shelf and don't count toward anyone's limit. */
-const SHELF_MAX=2, BOX_MAX=12, TEACHER_IDS=[];   // ← GitHub 판에서 선생님 기기 번호를 여기에 넣어요
+const SHELF_MAX=2, BOX_MAX=12, TEACHER_IDS=[];   // ← GitHub 판에서 선아씨 기기 번호를 여기에 넣어요
 let picks=new Set(), isTeacher=false;
 const starKey=(owner,id)=>owner+'/'+id;
 const isStar=p=>picks.has(starKey(myId,p.id));
@@ -2977,12 +2977,12 @@ function closeBox(){ $('boxPanel').hidden=true; }
 function drawBox(){
   const grid=$('boxGrid'); grid.innerHTML='';
   const pots=explicit(myPots).sort((a,b)=>(b.t||0)-(a.t||0)), onN=pots.filter(p=>p.s===1&&!isStar(p)).length;
-  $('boxSub').innerHTML=`모두의 선반에는 한 사람당 <b>${SHELF_MAX}점</b>까지 올라가요 · 지금 <b>${onN}/${SHELF_MAX}</b><br>⭐ 선생님 추천 작품은 개수와 상관없이 선반에 남아요`;
+  $('boxSub').innerHTML=`모두의 선반에는 한 사람당 <b>${SHELF_MAX}점</b>까지 올라가요 · 지금 <b>${onN}/${SHELF_MAX}</b><br>⭐ 선아씨 추천 작품은 개수와 상관없이 선반에 남아요`;
   if(!pots.length){ grid.innerHTML='<div id="boxEmpty">아직 작품이 없어요. 물레에서 빚어 선반에 올려 보세요</div>'; return; }
   pots.forEach(p=>{ const cl=decodeClay(p.c); if(!cl) return; const star=isStar(p), on=p.s===1||star;
     const card=document.createElement('div'); card.className='boxCard'+(on?' on':'');
     const cv=document.createElement('canvas'); cv.width=240; cv.height=184; potSilhouette(cv,cl,!!p.pt); card.appendChild(cv);
-    card.insertAdjacentHTML('beforeend',`<span class="chip">${on?'선반 위':'작품함'}</span>${star?'<span class="star" title="선생님 추천">⭐</span>':''}<div class="meta">높이 ${(cl.H*100).toFixed(1)}cm · ${new Date(p.t||0).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})}</div>`);
+    card.insertAdjacentHTML('beforeend',`<span class="chip">${on?'선반 위':'작품함'}</span>${star?'<span class="star" title="선아씨 추천">⭐</span>':''}<div class="meta">높이 ${(cl.H*100).toFixed(1)}cm · ${new Date(p.t||0).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})}</div>`);
     const acts=document.createElement('div'); acts.className='acts';
     const mk=(txt,cls,fn)=>{ const b=document.createElement('button'); b.type='button'; b.className=cls; b.textContent=txt; b.addEventListener('click',fn); acts.appendChild(b); return b; };
     if(!star) mk(p.s===1?'내리기':'올리기',p.s===1?'ghost':'primary',()=>setShown(p.id,p.s!==1));
@@ -3009,7 +3009,7 @@ function viewBoxPot(p){
 }
 $('boxClose').addEventListener('click',closeBox);
 
-/* ---------- 선생님 추천 ⭐ (only the teacher sees the button) ---------- */
+/* ---------- 선아씨 추천 ⭐ (only the teacher sees the button) ---------- */
 function savePicks(next){
   return sharedDb.doc('shelf/_picks').set({picks:[...next]}).then(()=>{ picks=next; });
 }
@@ -3567,7 +3567,7 @@ async function supabaseCaps(){
   const names={[id]:name}, clean=v=>String(v||'').replace(/[\u0000-\u001f\u007f-\u009f]/g,'').slice(0,12);
   // the teacher on this device: open the page with #teacher to see this device's number and send it to Claude
   if(/teacher/.test(location.hash)){ const tb=document.createElement('div'); tb.className='hud panel'; tb.id='teachBox';
-    tb.innerHTML='<strong style="font-family:Jua,var(--display);font-size:18px">선생님 기기 번호</strong><span style="font-size:13px;color:var(--muted)">이 번호를 Claude에게 보내 주면 이 기기에서 ⭐ 추천을 할 수 있어요</span><code></code><button type="button" class="primary" style="padding:10px">닫기</button>';
+    tb.innerHTML='<strong style="font-family:Jua,var(--display);font-size:18px">선아씨 기기 번호</strong><span style="font-size:13px;color:var(--muted)">이 번호를 Claude에게 보내 주면 이 기기에서 ⭐ 추천을 할 수 있어요</span><code></code><button type="button" class="primary" style="padding:10px">닫기</button>';
     tb.querySelector('code').textContent=id; tb.querySelector('button').onclick=()=>tb.remove(); document.body.appendChild(tb); }
   const user={ isOwner:async()=>TEACHER_IDS.includes(id), id:async()=>id, profiles:async ids=>{ const o={}; ids.forEach(k=>{ if(names[k]) o[k]={name:names[k]}; }); return o; } };
   // room: presence says who is here (with their name); broadcast carries where they are and what they're doing
