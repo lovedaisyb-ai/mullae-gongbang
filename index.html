@@ -492,7 +492,7 @@ const glassMat=new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,
 // coat rack on the front wall near the door: walnut board with four chrome hooks tipped with cream balls, and a butter
 // coloured coat with brown polka dots hanging from one of them
 {
-  const rg=new THREE.Group(); rg.position.set(-4.55,1.68,RZ); rg.rotation.y=Math.PI; scene.add(rg);   // front wall, right of the shared shelf, by the door; local +z = into the room
+  const rg=new THREE.Group(); rg.position.set(-4.55,1.98,RZ); rg.rotation.y=Math.PI; scene.add(rg);   // front wall, right of the shared shelf, by the door; local +z = into the room
   const walnut=new THREE.MeshStandardMaterial({roughness:.6,map:canvasTex(256,64,(g,w,h)=>{ g.fillStyle='#7a5134'; g.fillRect(0,0,w,h);
     for(let i=0;i<40;i++){ const y=rnd(0,h); g.strokeStyle=Math.random()<.5?'rgba(50,28,14,.3)':'rgba(170,120,80,.25)'; g.lineWidth=rnd(.5,2); g.beginPath(); g.moveTo(0,y); g.bezierCurveTo(w*.3,y+rnd(-5,5),w*.7,y+rnd(-5,5),w,y+rnd(-3,3)); g.stroke(); } })});
   const chrome=new THREE.MeshStandardMaterial({color:'#d5d9dc',roughness:.22,metalness:.6});
@@ -578,7 +578,48 @@ const glassMat=new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,
       ba(new THREE.BoxGeometry(.03,.018,.006),brass,px+sd*.03,top-BH+.155,BD+.035); });
     ba(new THREE.BoxGeometry(.004,.17,.004),darkL,0,top-BH+.09,BD+.02);   // centre seam between the pockets
   }
-  collide(-4.95,-4.15,RZ-.3,RZ);
+  collide(-5.08,-4.02,RZ-.42,RZ);
+  // mid-century teak bookcase under the coat rack: a sliding-door cupboard on the left, open shelves crammed with books
+  { const g=new THREE.Group(); g.position.set(-4.55,0,RZ-.19); g.rotation.y=Math.PI; scene.add(g);   // local +z faces the room
+    const teak=new THREE.MeshStandardMaterial({roughness:.55,map:canvasTex(256,128,(c,w,h)=>{ c.fillStyle='#a8662e'; c.fillRect(0,0,w,h);
+      for(let i=0;i<50;i++){ const y=rnd(0,h); c.strokeStyle=Math.random()<.5?'rgba(90,45,15,.28)':'rgba(210,150,90,.22)'; c.lineWidth=rnd(.5,2); c.beginPath(); c.moveTo(0,y); c.bezierCurveTo(w*.3,y+rnd(-5,5),w*.7,y+rnd(-5,5),w,y+rnd(-3,3)); c.stroke(); } })});
+    const inner=new THREE.MeshStandardMaterial({color:'#7a4520',roughness:.7}), black=new THREE.MeshStandardMaterial({color:'#1c1c1c',roughness:.5});
+    const add=(geo,mat,x,y,z)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=m.receiveShadow=true; g.add(m); return m; };
+    const W=1.0, D=.32, B=.2, T=.92, t=.022;
+    add(new THREE.BoxGeometry(W,t,D),teak,0,T-t/2,0); add(new THREE.BoxGeometry(W,t,D),teak,0,B+t/2,0);
+    [-1,1].forEach(sd=>add(new THREE.BoxGeometry(t,T-B,D),teak,sd*(W/2-t/2),(B+T)/2,0));
+    add(new THREE.BoxGeometry(W,T-B,.01),inner,0,(B+T)/2,-D/2+.005);
+    const DX=-.11; add(new THREE.BoxGeometry(t,T-B,D),teak,DX,(B+T)/2,0);                         // divider
+    add(new THREE.BoxGeometry(DX+W/2-t,T-B-2*t,.018),teak,(DX-W/2)/2,(B+T)/2,D/2-.012);          // cupboard door
+    add(new THREE.BoxGeometry(.012,.22,.012),inner,DX-.03,(B+T)/2,D/2);                          // finger pull
+    const L=[B+t, B+t+.24, B+t+.48]; L.slice(1).forEach(y=>add(new THREE.BoxGeometry(W/2-DX-t*1.5,.018,D-.02),teak,(DX+W/2)/2,y-.009,0));
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>{ const l=add(new THREE.CylinderGeometry(.012,.02,B+.02,10),black,sx*(W/2-.07),B/2,sz*(D/2-.06)); l.rotation.z=-sx*.12; l.rotation.x=sz*.12; });
+    // books
+    const COL=['#b8322a','#d9622b','#e3a72f','#e8d36a','#7fae4f','#3f8f5a','#2f7f86','#2f5f9e','#4a3f8c','#7a3e7a','#2b2b2b','#f1ece0','#c9b79c','#d88aa0','#5b6f7a','#9a5b34'];
+    const bm=COL.map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.75}));
+    const pageM=new THREE.MeshStandardMaterial({color:'#efe8d8',roughness:.9});
+    const book=(x,y,z,w,h,dd,rz,ry)=>{ const m=add(new THREE.BoxGeometry(w,h,dd),bm[Math.floor(Math.random()*bm.length)],x,y,z); if(rz) m.rotation.z=rz; if(ry) m.rotation.y=ry; return m; };
+    const x0=DX+t/2+.01, x1=W/2-t-.005;
+    L.forEach((y,li)=>{ let x=x0;
+      while(x<x1-.03){
+        if(Math.random()<.22 && x1-x>.2){                 // a pile of books lying flat
+          const w=rnd(.15,.2), n=Math.floor(rnd(3,7)); let yy=y+.002;
+          for(let k=0;k<n;k++){ const hh=rnd(.022,.04); book(x+w/2+rnd(-.008,.008),yy+hh/2,rnd(-.02,.02),w-rnd(0,.03),hh,rnd(.17,.23),0,rnd(-.08,.08)); yy+=hh; if(yy>y+.21) break; }
+          x+=w+.012;
+        } else {                                           // books standing upright, a few leaning
+          const n=Math.floor(rnd(4,9));
+          for(let k=0;k<n&&x<x1-.03;k++){ const w=rnd(.018,.04), h=rnd(.15,.215), dd=rnd(.15,.22); book(x+w/2,y+h/2,(D-.02-dd)/-2+.02,w,h,dd); x+=w+.001; }
+          if(x<x1-.08 && Math.random()<.5){ const w=.028,h=.19; book(x+.05,y+h/2*Math.cos(.35)+.004,0,w,h,.19,-.35); x+=.1; }
+          x+=.01;
+        }
+      } });
+    // on top: two stacks of books and a little pilea in a pot
+    [[-.32,6],[.28,4]].forEach(([sx,n])=>{ let yy=T; for(let k=0;k<n;k++){ const hh=rnd(.024,.038); book(sx+rnd(-.01,.01),yy+hh/2,rnd(-.02,.02),rnd(.17,.22),hh,rnd(.18,.24),0,rnd(-.12,.12)); yy+=hh; } });
+    { const pot=add(new THREE.CylinderGeometry(.055,.045,.09,18),new THREE.MeshStandardMaterial({color:'#efeae2',roughness:.6}),.05,T+.045,.02);
+      const leaf=new THREE.MeshStandardMaterial({color:'#4f8a3c',roughness:.6,side:THREE.DoubleSide});
+      for(let k=0;k<9;k++){ const a=k/9*Math.PI*2, r=rnd(.03,.08); const st=add(new THREE.CylinderGeometry(.002,.002,.1,4),leaf,.05+Math.cos(a)*r/2,T+.12,.02+Math.sin(a)*r/2); st.rotation.set(Math.sin(a)*.6,0,-Math.cos(a)*.6);
+        const lf=add(new THREE.CircleGeometry(rnd(.025,.035),16),leaf,.05+Math.cos(a)*r,T+.16+rnd(-.02,.03),.02+Math.sin(a)*r); lf.rotation.set(-Math.PI/2+rnd(-.5,.5),0,rnd(0,3)); } }
+  }
 }
 // a little plant on the first sill
 { const pot=new THREE.Mesh(new THREE.CylinderGeometry(.07,.055,.12,20),new THREE.MeshStandardMaterial({color:'#b5643f',roughness:.85})); pot.position.set(-RX+.17,.97+.06,-2.3); pot.castShadow=true; scene.add(pot);
