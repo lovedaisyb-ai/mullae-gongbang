@@ -223,9 +223,18 @@ body.throwing #brand{display:none;}
 #knob{background:rgba(244,139,52,.55);border-color:#f48b34;}
 #chat input{background:rgba(255,255,255,.6);}
 #workPanel .danger{color:#fff;}
-@keyframes nudge{0%,100%{box-shadow:0 0 0 0 rgba(0,0,0,0);}50%{box-shadow:0 0 0 3px #f48b34,0 0 14px 2px rgba(244,139,52,.6);}}
-@keyframes rpmBlink{0%,100%{box-shadow:0 0 0 0 rgba(0,0,0,0);background:transparent;}50%{box-shadow:0 0 0 2px #f48b34;background:rgba(244,139,52,.15);}}
-@media (prefers-reduced-motion:reduce){ .nudge{box-shadow:0 0 0 3px #f48b34;} #rpmWrap.blink{box-shadow:0 0 0 2px #f48b34;} }
+/* the button to press next: it always keeps a thin orange ring, breathes a soft warm glow and lifts a hair,
+   and a faint ring ripples outward from it, so it is easy to spot without flashing */
+.nudge{position:relative;animation:nudge 1.6s ease-in-out infinite;}
+.nudge::after{content:"";position:absolute;inset:-6px;border-radius:inherit;border:2px solid rgba(244,139,52,.9);pointer-events:none;animation:nudgeRing 1.6s ease-out infinite;}
+@keyframes nudge{0%,100%{box-shadow:0 0 0 2px #fff,0 0 0 4px #f48b34,0 0 0 0 rgba(244,139,52,0);transform:translateY(0);}
+  50%{box-shadow:0 0 0 2px #fff,0 0 0 4.5px #f48b34,0 0 24px 7px rgba(244,139,52,.6);transform:translateY(-2px) scale(1.04);}}
+@keyframes nudgeRing{0%{opacity:.85;transform:scale(1);}65%,100%{opacity:0;transform:scale(1.14,1.3);}}
+#rpmWrap.blink{position:relative;}
+@keyframes rpmBlink{0%,100%{box-shadow:0 0 0 2px #fff,0 0 0 4px #f48b34,0 0 0 0 rgba(244,139,52,0);background:rgba(244,139,52,.06);}
+  50%{box-shadow:0 0 0 2px #fff,0 0 0 4.5px #f48b34,0 0 22px 6px rgba(244,139,52,.55);background:rgba(244,139,52,.22);}}
+#rpmWrap.blink{animation:rpmBlink 1.6s ease-in-out infinite;}
+@media (prefers-reduced-motion:reduce){ .nudge{animation:none;box-shadow:0 0 0 3px #f48b34,0 0 14px 3px rgba(244,139,52,.45);} .nudge::after{display:none;} #rpmWrap.blink{animation:none;box-shadow:0 0 0 3px #f48b34;} }
 </style>
 
 <div id="loading">공방 문을 여는 중…</div>
@@ -319,7 +328,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261104-2330';
+(function(){ const BUILD='20261104-2340';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
