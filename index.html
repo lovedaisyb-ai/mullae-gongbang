@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><meta name="description" content="서나네 물레 공방 - 걸어 다니며 물레를 차고 그릇을 빚어 보세요"><style>*,*::before,*::after{box-sizing:border-box}:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>서나네 물레 공방</title>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><meta name="description" content="선아씨 물레 공방 - 걸어 다니며 물레를 차고 그릇을 빚어 보세요"><style>*,*::before,*::after{box-sizing:border-box}:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>선아씨 물레 공방</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Batang:wght@700&family=Gowun+Dodum&display=swap">
 <style>
@@ -179,7 +179,7 @@ body.throwing #brand{display:none;}
 <div id="loading">공방 문을 여는 중…</div>
 <canvas id="c" tabindex="0" aria-label="도자기 공방 3D 공간"></canvas>
 
-<div class="hud panel" id="brand"><h1>서나네 물레 공방</h1><p id="sub">물레실 · 산책 중</p><p id="who">공방 연결 중…</p><div class="brandBtns"><button id="myWorkBtn" type="button" hidden>내 작품 보기</button></div></div>
+<div class="hud panel" id="brand"><h1>선아씨 물레 공방</h1><p id="sub">물레실 · 산책 중</p><p id="who">공방 연결 중…</p><div class="brandBtns"><button id="myWorkBtn" type="button" hidden>내 작품 보기</button></div></div>
 
 <div class="hud panel" id="help">
   <div><b>클릭</b>한 곳으로 걷기 · 드래그로 시점</div>
@@ -1544,7 +1544,7 @@ const wallClock=new THREE.Group(); wallClock.position.set(3.95,1.6,-RZ+.03); sce
     for(let i=0;i<60;i++){ const a=i/60*Math.PI*2, r1=i%5?226:206, r2=242; g.lineWidth=i%5?3:8; g.beginPath(); g.moveTo(256+Math.sin(a)*r1,256-Math.cos(a)*r1); g.lineTo(256+Math.sin(a)*r2,256-Math.cos(a)*r2); g.stroke(); }
     g.fillStyle='#2b2420'; g.font='bold 56px "Gowun Batang", serif'; g.textAlign='center'; g.textBaseline='middle';
     for(let n=1;n<=12;n++){ const a=n/12*Math.PI*2; g.fillText(String(n),256+Math.sin(a)*166,256-Math.cos(a)*166+4); }
-    g.font='24px "Gowun Dodum", sans-serif'; g.fillStyle='#7a6652'; g.fillText('서나네 물레 공방',256,340);
+    g.font='24px "Gowun Dodum", sans-serif'; g.fillStyle='#7a6652'; g.fillText('선아씨 물레 공방',256,340);
   });
   const face=new THREE.Mesh(new THREE.CircleGeometry(.24,48),new THREE.MeshStandardMaterial({map:faceTex,roughness:.7})); face.position.z=.022; wallClock.add(face);
   const rim=new THREE.Mesh(new THREE.TorusGeometry(.25,.026,12,48),new THREE.MeshStandardMaterial({color:'#b3261e',roughness:.35,metalness:.1})); rim.position.z=.026; wallClock.add(rim);
@@ -3077,7 +3077,7 @@ function askName(){
   return new Promise(res=>{
     const box=document.createElement('form'); box.className='hud panel'; box.id='nameBox';
     box.style.cssText='left:50%;top:50%;transform:translate(-50%,-50%);padding:18px;display:grid;gap:10px;width:min(320px,calc(100vw - 32px));z-index:30;text-align:center;';
-    box.innerHTML='<strong style="font-family:var(--display);font-size:18px">서나네 물레 공방에 오신 걸 환영해요</strong><span style="font-size:13px;color:var(--muted)">공방에서 쓸 이름을 알려 주세요</span><input maxlength="12" placeholder="이름" style="padding:9px 10px;font:16px var(--body);border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.7);color:var(--ink)"><button type="submit" class="primary" style="padding:10px">들어가기</button>';
+    box.innerHTML='<strong style="font-family:var(--display);font-size:18px">선아씨 물레 공방에 오신 걸 환영해요</strong><span style="font-size:13px;color:var(--muted)">공방에서 쓸 이름을 알려 주세요</span><input maxlength="12" placeholder="이름" style="padding:9px 10px;font:16px var(--body);border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.7);color:var(--ink)"><button type="submit" class="primary" style="padding:10px">들어가기</button>';
     document.body.appendChild(box); const inp=box.querySelector('input'); setTimeout(()=>inp.focus(),50);
     box.addEventListener('submit',e=>{ e.preventDefault(); const v=inp.value.replace(/[\u0000-\u001f\u007f-\u009f]/g,'').trim().slice(0,12)||'도예가'; box.remove(); res(v); });
   });
