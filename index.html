@@ -359,7 +359,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261105-0110';
+(function(){ const BUILD='20261105-0115';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -3808,20 +3808,27 @@ camera.position.set(.4,2.2,4.6);
    1) shadows: redrawn every other frame while anything moves, rarely when the room is still
    2) resolution: if frames get slow the drawing resolution steps down a little (and back up when there is room) */
 let lastNearTxt=null, frameN=0, perfAcc=0, perfN=0, perfT=0, pixR=Math.min(devicePixelRatio,2);
-const PIX_MAX=Math.min(devicePixelRatio,2), PIX_MIN=Math.min(1,PIX_MAX);
+// sharpness first: only a phone that is really struggling (under ~30 frames a second for 4 seconds in a row,
+// after the first 8 seconds of loading) gives up a little resolution, never below 1.5x on a sharp screen,
+// and it climbs straight back once things run smoothly again
+const PIX_MAX=Math.min(devicePixelRatio,2), PIX_MIN=PIX_MAX>=2?1.5:Math.min(1,PIX_MAX);
+let perfSlow=0, perfStart=performance.now();
 renderer.shadowMap.autoUpdate=false; renderer.shadowMap.needsUpdate=true;
 function tunePerf(raw){
+  if(performance.now()-perfStart<8000) return;
   perfAcc+=raw; perfN++; perfT+=raw;
-  if(perfT<1.5) return;
+  if(perfT<2) return;
   const avg=perfAcc/perfN; perfAcc=0; perfN=0; perfT=0;
   let next=pixR;
-  if(avg>1/38&&pixR>PIX_MIN) next=Math.max(PIX_MIN,pixR-.25);
-  else if(avg<1/56&&pixR<PIX_MAX) next=Math.min(PIX_MAX,pixR+.25);
+  if(avg>1/30){ perfSlow++; if(perfSlow>=2&&pixR>PIX_MIN){ next=Math.max(PIX_MIN,pixR-.25); perfSlow=0; } }
+  else { perfSlow=0; if(avg<1/45&&pixR<PIX_MAX) next=Math.min(PIX_MAX,pixR+.25); }
   if(next!==pixR){ pixR=next; renderer.setPixelRatio(pixR); resize(); }
 }
+// coming back to the tab or out of the viewer is not "slow": restart the measurement
+document.addEventListener('visibilitychange',()=>{ perfAcc=perfN=perfT=perfSlow=0; perfStart=performance.now()-6000; });
 function frame(){
   const raw=clock.getDelta(), dt=Math.min(.05,raw); frameN++;
-  if(!document.hidden&&raw<.5) tunePerf(raw);
+  if(!document.hidden&&raw<.5&&!viewer.open&&!PT.s.open) tunePerf(raw);
   { const busy=mode!=='walk'||moving||danceT>0||remotes.size>0||!!focus;
     if(frameN%(busy?2:30)===0) renderer.shadowMap.needsUpdate=true; }
 
