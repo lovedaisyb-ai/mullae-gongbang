@@ -3008,6 +3008,27 @@ async function supabaseCaps(){
   const cord=new THREE.MeshStandardMaterial({color:'#2a2a2a'});
   [[-2.6,-.6],[0,-.6],[2.6,-.6],[4.4,2.4],[-1.6,3.5],[1.6,3.5]].forEach(([x,z])=>{ const top=yAt(z); add(new THREE.CylinderGeometry(.003,.003,top-RH,6),cord,x,(top+RH)/2,z); });
 }
+
+// vintage white-painted brick walls (running bond, a few chips showing the old brick)
+{ const TW=.9, TH=.6, PX=512, BW=PX/4, BH=PX/8;
+  const col=document.createElement('canvas'); col.width=col.height=PX; const g=col.getContext('2d');
+  const bmp=document.createElement('canvas'); bmp.width=bmp.height=PX; const b=bmp.getContext('2d');
+  g.fillStyle='#cfc9bf'; g.fillRect(0,0,PX,PX); b.fillStyle='#202020'; b.fillRect(0,0,PX,PX);   // mortar
+  const M_=5;
+  for(let r=0;r<8;r++){ const off=(r%2)*BW/2;
+    for(let c=-1;c<5;c++){ const x=c*BW+off+M_/2, y=r*BH+M_/2, w=BW-M_, h=BH-M_;
+      const L=rnd(238,250)|0; g.fillStyle=`rgb(${L},${L-3},${L-9})`; g.fillRect(x,y,w,h);
+      for(let k=0;k<40;k++){ const v=rnd(-1,1); g.fillStyle=v>0?`rgba(255,255,255,${v*.25})`:`rgba(150,140,125,${-v*.18})`; g.fillRect(x+rnd(0,w),y+rnd(0,h),rnd(1,4),rnd(1,3)); }
+      if(Math.random()<.18){ g.fillStyle=`rgba(${rnd(150,180)|0},${rnd(95,115)|0},${rnd(75,90)|0},${rnd(.25,.5)})`; g.beginPath(); g.ellipse(x+rnd(8,w-8),y+rnd(4,h-4),rnd(4,16),rnd(2,6),rnd(0,3),0,7); g.fill(); }   // paint worn off, old brick showing
+      const bl=rnd(170,215)|0; b.fillStyle=`rgb(${bl},${bl},${bl})`; b.fillRect(x+1,y+1,w-2,h-2);
+      for(let k=0;k<25;k++){ const q=rnd(140,230)|0; b.fillStyle=`rgb(${q},${q},${q})`; b.fillRect(x+rnd(0,w),y+rnd(0,h),rnd(1,3),rnd(1,3)); } } }
+  const mk=(rx,ry)=>{ const t=new THREE.CanvasTexture(col); t.encoding=THREE.sRGBEncoding; t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(rx,ry); t.anisotropy=8;
+    const bt=new THREE.CanvasTexture(bmp); bt.wrapS=bt.wrapT=THREE.RepeatWrapping; bt.repeat.set(rx,ry);
+    return new THREE.MeshStandardMaterial({map:t,bumpMap:bt,bumpScale:.012,roughness:.92,side:THREE.DoubleSide}); };
+  scene.traverse(o=>{ if(!o.isMesh||o.material!==M.wall) return; const p=o.geometry.parameters||{};
+    if(o.geometry.type==='BoxGeometry'){ const w=Math.max(p.width,p.depth); o.material=mk(w/TW,p.height/TH); }
+    else o.material=mk(1/TW,1/TH); });
+}
 const clock=new THREE.Clock(); let walkPhase=0, statT=0;
 const camTarget=new THREE.Vector3(), camPos=new THREE.Vector3();
 camera.position.set(.4,2.2,4.6);
