@@ -492,7 +492,7 @@ const glassMat=new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,
 // coat rack on the front wall near the door: walnut board with four chrome hooks tipped with cream balls, and a butter
 // coloured coat with brown polka dots hanging from one of them
 {
-  const rg=new THREE.Group(); rg.position.set(-4.55,1.98,RZ); rg.rotation.y=Math.PI; scene.add(rg);   // front wall, right of the shared shelf, by the door; local +z = into the room
+  const rg=new THREE.Group(); rg.position.set(-3.95,1.98,RZ); rg.rotation.y=Math.PI; scene.add(rg);   // front wall, right of the shared shelf, by the door; local +z = into the room
   const walnut=new THREE.MeshStandardMaterial({roughness:.6,map:canvasTex(256,64,(g,w,h)=>{ g.fillStyle='#7a5134'; g.fillRect(0,0,w,h);
     for(let i=0;i<40;i++){ const y=rnd(0,h); g.strokeStyle=Math.random()<.5?'rgba(50,28,14,.3)':'rgba(170,120,80,.25)'; g.lineWidth=rnd(.5,2); g.beginPath(); g.moveTo(0,y); g.bezierCurveTo(w*.3,y+rnd(-5,5),w*.7,y+rnd(-5,5),w,y+rnd(-3,3)); g.stroke(); } })});
   const chrome=new THREE.MeshStandardMaterial({color:'#d5d9dc',roughness:.22,metalness:.6});
@@ -578,9 +578,9 @@ const glassMat=new THREE.MeshStandardMaterial({color:'#ffffff',transparent:true,
       ba(new THREE.BoxGeometry(.03,.018,.006),brass,px+sd*.03,top-BH+.155,BD+.035); });
     ba(new THREE.BoxGeometry(.004,.17,.004),darkL,0,top-BH+.09,BD+.02);   // centre seam between the pockets
   }
-  collide(-5.08,-4.02,RZ-.42,RZ);
+  collide(-4.48,-3.42,RZ-.42,RZ);
   // mid-century teak bookcase under the coat rack: a sliding-door cupboard on the left, open shelves crammed with books
-  { const g=new THREE.Group(); g.position.set(-4.55,0,RZ-.19); g.rotation.y=Math.PI; scene.add(g);   // local +z faces the room
+  { const g=new THREE.Group(); g.position.set(-3.95,0,RZ-.19); g.rotation.y=Math.PI; scene.add(g);   // local +z faces the room
     const teak=new THREE.MeshStandardMaterial({roughness:.55,map:canvasTex(256,128,(c,w,h)=>{ c.fillStyle='#a8662e'; c.fillRect(0,0,w,h);
       for(let i=0;i<50;i++){ const y=rnd(0,h); c.strokeStyle=Math.random()<.5?'rgba(90,45,15,.28)':'rgba(210,150,90,.22)'; c.lineWidth=rnd(.5,2); c.beginPath(); c.moveTo(0,y); c.bezierCurveTo(w*.3,y+rnd(-5,5),w*.7,y+rnd(-5,5),w,y+rnd(-3,3)); c.stroke(); } })});
     const inner=new THREE.MeshStandardMaterial({color:'#7a4520',roughness:.7}), black=new THREE.MeshStandardMaterial({color:'#1c1c1c',roughness:.5});
@@ -878,7 +878,8 @@ const dayCal=(()=>{
   plant(2.98,-4.12,'willow');     // right speaker: narrow-leaf plant
   plant(-5.5,-2.45,'coffee');     // moved from the kiln: on the floor in front of the garden window
   plant(-RX+.34,2.92,'olive');     // by the entrance door, on its right as you face it
-  collide(-RX,-RX+.55,2.7,3.14);
+  plant(-RX+.34,2.42,'olive');     // and a second olive just to its right
+  collide(-RX,-RX+.55,2.2,3.14);
 }
 
 // local fallback slots (used only when the shared shelf is unavailable): the shared shelf by the door
@@ -2117,7 +2118,6 @@ function sitIntro(dt){
   sitT+=dt; const T=sitT, w=active, S=w.seat, seg=(a,b)=>ease((T-a)/(b-a));
   // "화이팅!": fists up in front, two pumps with a little hop, happy closed eyes
   const fist=seg(.1,.4)*(1-seg(1.25,1.55)), turn=seg(1.45,1.9), sit=seg(1.8,2.25);
-  if(T-dt<.3&&T>=.3) cheerSound();
   const pump=(T>.45&&T<1.21)?Math.max(0,Math.sin((T-.45)*Math.PI*2/.38)):0;
   armL.rotation.x=armR.rotation.x=-(1.45+.55*pump)*fist-1.1*sit;
   armL.rotation.z=-(.55*(1-fist)+.18*fist); armR.rotation.z=.55*(1-fist)+.18*fist;
@@ -2142,7 +2142,6 @@ function riseOutro(dt){
   riseT+=dt; const T=riseT, S=active.seat, seg=(a,b)=>ease((T-a)/(b-a));
   // get up, turn to the camera, then a big stretch
   const up=seg(.1,.55), turn=seg(.45,.9), st=seg(1.0,1.6)*(1-seg(2.1,2.45));
-  if(T-dt<.95&&T>=.95) stretchSound();
   avatar.position.set(S.x,0,S.z+.28*up);
   avatar.rotation.y=Math.PI*(1+turn);
   rig.position.y=.24*(1-up)+.035*st;
@@ -2520,13 +2519,13 @@ function arriveTarget(){
 
 /* ---------- shared shelf on the front wall ---------- */
 let sharedDb=null, myPots=[], saveChain=Promise.resolve();
-const SZ=RZ-.2, SBOARDS=[1.05,1.55,.55,2.05], SPER=10, sharedPots=new Map();
-[.55,1.05,1.55,2.05].forEach(y=>box(6.2,.04,.38,M.wood,0,y,SZ));
-[-3.1,0,3.1].forEach(x=>box(.05,1.62,.38,M.woodDark,x,1.3,SZ));
+const SZ=RZ-.2, SBOARDS=[1.05,1.55,.55,2.05,2.55], SPER=10, sharedPots=new Map();
+[.55,1.05,1.55,2.05,2.55].forEach(y=>box(6.2,.04,.38,M.wood,0,y,SZ));
+[-3.1,0,3.1].forEach(x=>box(.05,2.12,.38,M.woodDark,x,1.55,SZ));
 collide(-3.2,3.2,RZ-.45,RZ);
 
 const sharedSign=(()=>{ const c=document.createElement('canvas'); c.width=640; c.height=96; const t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding;
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(1.6,.24),new THREE.MeshStandardMaterial({map:t,roughness:.8})); m.position.set(0,2.36,RZ-.012); m.rotation.y=Math.PI; scene.add(m); return {c,t}; })();
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(1.6,.24),new THREE.MeshStandardMaterial({map:t,roughness:.8})); m.position.set(0,2.86,RZ-.012); m.rotation.y=Math.PI; scene.add(m); return {c,t}; })();
 function drawSign(text){
   const {c,t}=sharedSign, g=c.getContext('2d');
   g.fillStyle='#2f3433'; g.fillRect(0,0,c.width,c.height); g.textBaseline='middle';
