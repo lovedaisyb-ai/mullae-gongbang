@@ -88,6 +88,31 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 #loading{position:fixed;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:18px;color:var(--muted);}
 
 #who{margin:4px 0 0;font-size:12px;color:var(--celadon);}
+#boxPanel{left:50%;top:50%;transform:translate(-50%,-50%);z-index:25;width:min(460px,calc(100vw - 24px));max-height:calc(100vh - 110px);max-height:calc(100dvh - 110px);display:flex;flex-direction:column;padding:14px 14px 12px;box-sizing:border-box;}
+#boxHead{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+#boxHead h2{margin:0;flex:1;font-family:"Jua","Gaegu",var(--body);font-size:20px;font-weight:400;}
+#boxClose{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.6);font-size:16px;padding:0;}
+#boxSub{font-size:12px;color:var(--muted);margin:0 0 10px;line-height:1.5;}
+#boxSub b{color:#e07a22;font-weight:400;}
+#boxGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;overflow:auto;padding:2px 2px 4px;-webkit-overflow-scrolling:touch;}
+.boxCard{position:relative;display:grid;gap:5px;padding:8px;border-radius:12px;background:rgba(255,255,255,.55);border:1.5px solid var(--line);}
+.boxCard.on{border-color:#f48b34;background:rgba(255,244,230,.8);}
+.boxCard canvas{width:100%;height:92px;display:block;border-radius:8px;background:linear-gradient(#f6f1e7,#ebe3d4);}
+.boxCard .chip{position:absolute;top:12px;left:12px;font-family:"Jua","Gaegu",var(--body);font-size:11.5px;padding:2px 8px;border-radius:999px;background:#fff;color:var(--muted);border:1px solid var(--line);}
+.boxCard.on .chip{background:#f48b34;color:#fff;border-color:#f48b34;}
+.boxCard .star{position:absolute;top:9px;right:11px;font-size:17px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2));}
+.boxCard .meta{font-size:11.5px;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums;}
+.boxCard .acts{display:flex;gap:4px;}
+.boxCard .acts button{flex:1;padding:7px 2px;font-size:12px;border-radius:8px;min-height:34px;}
+.boxCard .acts .del{flex:0 0 34px;}
+.boxCard .acts .del.sure{flex:1;background:var(--danger);color:#fff;border-color:var(--danger-line);}
+#boxEmpty{font-size:13px;color:var(--muted);text-align:center;padding:24px 0;}
+#vStar{position:absolute;top:calc(108px + env(safe-area-inset-top,0px));left:calc(12px + env(safe-area-inset-left,0px));display:flex;align-items:center;gap:6px;height:40px;padding:0 15px 0 6px;border-radius:999px;border:2px solid #fff;font-family:"Jua","Gaegu",var(--body);font-size:15px;background:#fff1c4;color:#8a6410;box-shadow:0 3px 0 #ecd27a,0 6px 14px rgba(120,90,10,.2);white-space:nowrap;-webkit-font-smoothing:antialiased;}
+#vStar .ic{width:30px;height:30px;border-radius:50%;background:#fff;display:grid;place-items:center;font-style:normal;font-size:17px;line-height:1;}
+#vStar[aria-pressed=true]{background:#ffd86b;color:#6b4a00;}
+#vStar:active{transform:translateY(3px);box-shadow:0 1px 0 #ecd27a;}
+#teachBox{left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;padding:18px;display:grid;gap:10px;width:min(340px,calc(100vw - 32px));text-align:center;}
+#teachBox code{font-size:12px;word-break:break-all;background:rgba(255,255,255,.7);padding:8px;border-radius:8px;user-select:all;-webkit-user-select:all;}
 #myWorkBtn{padding:6px 12px;font-size:12px;background:var(--celadon-deep);border:1px solid var(--celadon);border-radius:999px;}
 #brand .brandBtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
 #musicBtn{padding:6px 12px;font-size:12px;background:transparent;border:1px solid var(--line);border-radius:999px;}
@@ -240,7 +265,7 @@ body.throwing #brand{display:none;}
 <div id="loading">공방 문을 여는 중…</div>
 <canvas id="c" tabindex="0" aria-label="도자기 공방 3D 공간"></canvas>
 
-<div class="hud panel" id="brand"><h1>선아씨 물레 공방</h1><p id="sub">물레실 · 산책 중</p><p id="who">공방 연결 중…</p><div class="brandBtns"><button id="myWorkBtn" type="button" hidden>내 작품 보기</button></div></div>
+<div class="hud panel" id="brand"><h1>선아씨 물레 공방</h1><p id="sub">물레실 · 산책 중</p><p id="who">공방 연결 중…</p><div class="brandBtns"><button id="myWorkBtn" type="button" hidden>내 작품함</button></div></div>
 
 <div class="hud panel" id="help">
   <div><b>클릭</b>한 곳으로 걷기 · 드래그로 시점</div>
@@ -250,6 +275,11 @@ body.throwing #brand{display:none;}
   <div><b>물레 앞:</b> <kbd>1</kbd>–<kbd>5</kbd> 도구 · <kbd>Space</kbd> 물레 켜기</div>
 </div>
 
+<div class="hud panel" id="boxPanel" role="dialog" aria-labelledby="boxTitle" hidden>
+  <div id="boxHead"><h2 id="boxTitle">내 작품함</h2><button id="boxClose" type="button" aria-label="닫기">✕</button></div>
+  <p id="boxSub"></p>
+  <div id="boxGrid"></div>
+</div>
 <div class="hud panel" id="workPanel" hidden>
   <div id="wpMain"><button class="ghost sq" id="wpPrev" type="button" aria-label="이전 작품">‹</button><div id="wpInfo">내 작품</div><button class="ghost sq" id="wpNext" type="button" aria-label="다음 작품">›</button></div>
   <div class="btnrow" id="wpActs"><button class="primary" id="wpView" type="button">크게 보기</button><button class="ghost" id="wpDel" type="button">지우기</button><button class="ghost" id="wpClose" type="button">닫기</button></div>
@@ -259,6 +289,7 @@ body.throwing #brand{display:none;}
   <button id="vClose" type="button" aria-label="닫기">✕</button>
   <button id="vSave" type="button"><i class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#c0604a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.3-2h5.2l1.3 2h1.6A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z" fill="#ffe9e3"/><circle cx="12" cy="12.4" r="3.4" fill="#fff"/><circle cx="16.9" cy="9" r=".6" fill="#c0604a" stroke="none"/></svg></i><span>사진첩에 저장</span></button>
   <div class="panel" id="vBar"><div id="vInfo">작품</div><div id="vHint">드래그해서 돌려 보기 · 두 손가락이나 휠로 확대</div></div>
+  <button id="vStar" type="button" aria-pressed="false" hidden><i class="ic" aria-hidden="true">⭐</i><span>선생님 추천</span></button>
   <button id="vPaint" type="button" hidden><i class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#6a57c4" stroke-width="2" stroke-linejoin="round"><path d="M12 3.5c-4.9 0-8.5 3.6-8.5 8.1 0 4.4 3.6 8.9 7.6 8.9 1.5 0 2-1 1.6-2.2-.4-1.2.3-2.3 1.6-2.3h2.2c2.4 0 4-1.9 4-4.3 0-4.6-3.8-8.2-8.5-8.2z" fill="#f1edff"/><circle cx="8" cy="11" r="1.4" fill="#ff8a7a" stroke="none"/><circle cx="10.6" cy="7.4" r="1.4" fill="#ffc94d" stroke="none"/><circle cx="15" cy="7.6" r="1.4" fill="#6fd08f" stroke="none"/><circle cx="17.2" cy="11.2" r="1.4" fill="#6fa8ff" stroke="none"/></svg></i><span>그림 그리기</span></button>
 </div>
 <div id="paintScr" hidden>
@@ -328,7 +359,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261105-0005';
+(function(){ const BUILD='20261105-0040';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -2828,6 +2859,25 @@ function arriveTarget(){
 
 /* ---------- shared shelf on the front wall ---------- */
 let sharedDb=null, myPots=[], saveChain=Promise.resolve();
+/* each person shows at most SHELF_MAX pots on the shared shelf (s:1); the rest wait in their 작품함 (s:0).
+   The teacher's ⭐ picks always stay on the shelf and don't count toward anyone's limit. */
+const SHELF_MAX=2, BOX_MAX=12, TEACHER_IDS=[];   // ← GitHub 판에서 선생님 기기 번호를 여기에 넣어요
+let picks=new Set(), isTeacher=false;
+const starKey=(owner,id)=>owner+'/'+id;
+const isStar=p=>picks.has(starKey(myId,p.id));
+// pots saved before the limit existed have no s: the newest SHELF_MAX of them count as on the shelf
+function shownIds(pots){ if(pots.some(p=>p&&'s' in p)) return new Set(pots.filter(p=>p&&p.s===1).map(p=>p.id));
+  return new Set(pots.filter(Boolean).slice().sort((a,b)=>(b.t||0)-(a.t||0)).slice(0,SHELF_MAX).map(p=>p.id)); }
+function explicit(pots){ const on=shownIds(pots); return pots.map(p=>Object.assign({},p,{s:on.has(p.id)?1:0})); }
+// keep the shelf limit: the oldest shown (unstarred) pots other than `keep` go back to the box
+function enforce(next,keep){ let moved=0;
+  const on=next.filter(p=>p.s===1&&!isStar(p)).sort((a,b)=>(a.t||0)-(b.t||0));
+  while(on.length>SHELF_MAX){ const i=on.findIndex(p=>p.id!==keep); if(i<0) break; on[i].s=0; on.splice(i,1); moved++; }
+  // the box holds BOX_MAX at most: drop the oldest pots that are neither shown nor starred
+  while(next.length>BOX_MAX){ const cand=next.filter(p=>p.s!==1&&!isStar(p)).sort((a,b)=>(a.t||0)-(b.t||0))[0]||next.filter(p=>!isStar(p)).sort((a,b)=>(a.t||0)-(b.t||0))[0]; if(!cand) break; next.splice(next.indexOf(cand),1); }
+  return moved; }
+function writeMine(next,msg){
+  return sharedDb.doc('shelf/'+myId).set({pots:next}).then(()=>{ myPots=next; if(msg) toast(msg); updateMyWorkBtn(); if(!$('boxPanel').hidden) drawBox(); }); }
 const SZ=RZ-.2, SBOARDS=[1.05,1.55,.55,2.05,2.55,3.05], SPER=14, sharedPots=new Map();
 [.55,1.05,1.55,2.05,2.55,3.05].forEach(y=>box(6.2,.04,.38,M.wood,0,y,SZ));
 [-3.1,0,3.1].forEach(x=>box(.05,2.62,.38,M.woodDark,x,1.8,SZ));
@@ -2848,7 +2898,7 @@ function potLabel(){ const c=document.createElement('canvas'); c.width=256; c.he
 function setPotLabel(l,name){
   if(l.userData.name===name) return; l.userData.name=name;
   const {c,t}=l.userData, g=c.getContext('2d');
-  g.fillStyle='#f4efe4'; g.fillRect(0,0,c.width,c.height); g.fillStyle='#2b3a36'; g.font='30px "Gowun Dodum", sans-serif';
+  g.fillStyle=name.startsWith('⭐')?'#ffe7a3':'#f4efe4'; g.fillRect(0,0,c.width,c.height); g.fillStyle=name.startsWith('⭐')?'#6b4a00':'#2b3a36'; g.font='30px "Gowun Dodum", sans-serif';
   g.textAlign='center'; g.textBaseline='middle'; g.fillText(name,c.width/2,30,c.width-20); t.needsUpdate=true;
 }
 // every pot on a shelf sits on its own square wooden ware board
@@ -2861,16 +2911,19 @@ function wareBoardFor(mesh){ const g=mesh.geometry; if(!g.boundingBox) g.compute
 function renderShelf(docs){
   const all=[];
   docs.forEach(d=>{ const b=d.data(); if(!b||!Array.isArray(b.pots)) return;
-    b.pots.slice(-8).forEach(p=>{ if(!p||typeof p.id!=='string'||p.id.length>40) return; const cl=decodeClay(p.c); if(!cl) return;
+    const on=shownIds(b.pots.filter(p=>p&&typeof p.id==='string'));
+    b.pots.slice(-BOX_MAX).forEach(p=>{ if(!p||typeof p.id!=='string') return; const star=picks.has(starKey(d.id,p.id)); if(!on.has(p.id)&&!star) return; if(!p||typeof p.id!=='string'||p.id.length>40) return; const cl=decodeClay(p.c); if(!cl) return;
       all.push({key:d.id+'/'+p.id,id:p.id,owner:d.id,t:numIn(p.t,0,1e15,0),clay:cl,l:numIn(p.l,-.06,.06,0),
-        pt:(typeof p.pt==='string'&&p.pt.startsWith('data:image/png;base64,')&&p.pt.length<400000)?p.pt:null}); }); });
-  all.sort((a,b)=>b.t-a.t);
+        pt:(typeof p.pt==='string'&&p.pt.startsWith('data:image/png;base64,')&&p.pt.length<400000)?p.pt:null,star}); }); });
+  all.sort((a,b)=>(b.star-a.star)||(b.t-a.t));
   const shown=all.slice(0,SBOARDS.length*SPER), keep=new Set(shown.map(p=>p.key));
   sharedPots.forEach((v,k)=>{ if(!keep.has(k)){ scene.remove(v.mesh); scene.remove(v.label); if(v.board) scene.remove(v.board); v.mesh.geometry.dispose(); sharedPots.delete(k); } });
   shown.forEach((p,i)=>{
     let v=sharedPots.get(p.key);
     if(!v){ const mesh=new THREE.Mesh(clayGeo(p.clay),clayMats[p.clay.k||0]); mesh.castShadow=mesh.receiveShadow=true; mesh.rotation.y=rnd(0,6.28); scene.add(mesh);
+      mesh.userData.potId=p.id; mesh.userData.key=p.key; mesh.userData.owner=p.owner;
       v={mesh,label:potLabel(),owner:p.owner,t:p.t,id:p.id,board:wareBoardFor(mesh),pt:null}; sharedPots.set(p.key,v); }
+    v.star=p.star;
     if(p.pt&&v.pt!==p.pt&&!(v.mesh.userData.paint&&v.pt===undefined)){ v.pt=p.pt; paintFromURL(v,p.pt,clayMats[p.clay.k||0]); }
     const by=SBOARDS[Math.floor(i/SPER)], j=i%SPER, x=(j<7?-1.55:1.55)+(j%7-3)*.43; /* 7 per bay, clear of the middle post */
     v.board.position.set(x,by+.029,SZ+.02); v.board.rotation.y=(p.l||0)*.5; v.mesh.position.set(x,by+.038,SZ+.02); v.label.position.set(x,by-.035,SZ-.192);
@@ -2881,7 +2934,7 @@ function renderShelf(docs){
 async function nameLabels(){
   const owners=[...new Set([...sharedPots.values()].map(v=>v.owner))];
   let ps={}; if(userCap&&owners.length){ try{ ps=await userCap.profiles(owners); }catch(e){} }
-  sharedPots.forEach(v=>setPotLabel(v.label,(ps[v.owner]&&ps[v.owner].name)||'도예가'));
+  sharedPots.forEach(v=>setPotLabel(v.label,(v.star?'⭐ ':'')+((ps[v.owner]&&ps[v.owner].name)||'도예가')));
 }
 function startShelf(){
   drawSign('불러오는 중…');
@@ -2889,7 +2942,10 @@ function startShelf(){
   sharedDb.collection('shelf').onSnapshot(snap=>{
     if(!snap.metadata.fromCache) clearTimeout(timer);
     const mine=snap.docs.find(d=>d.id===myId), b=mine&&mine.data();
-    myPots=(b&&Array.isArray(b.pots))?b.pots.slice(-8).map(p=>Object.assign({},p)):[];
+    myPots=(b&&Array.isArray(b.pots))?b.pots.filter(p=>p&&typeof p.id==='string').map(p=>Object.assign({},p)):[];
+    const pk=snap.docs.find(d=>d.id==='_picks'), pd=pk&&pk.data();
+    picks=new Set(pd&&Array.isArray(pd.picks)?pd.picks.filter(k=>typeof k==='string'&&k.length<100).slice(0,200):[]);
+    if(!$('boxPanel').hidden) drawBox();
     renderShelf(snap.docs);
   },()=>{ clearTimeout(timer); drawSign('선반을 불러오지 못했어요'); });
 }
@@ -2897,10 +2953,73 @@ function saveShared(clay){
   const pot={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:Date.now(),l:+rnd(-.04,.03).toFixed(3),c:encodeClay(clay)}, H=clay.H;
   if(lastFinished) lastFinished.potId=pot.id;
   saveChain=saveChain.then(()=>{
-    const next=[...myPots,pot].slice(-8);
-    return sharedDb.doc('shelf/'+myId).set({pots:next}).then(()=>{ myPots=next; toast(`모두의 선반에 올렸어요 (높이 ${(H*100).toFixed(1)}cm)`); updateMyWorkBtn(); offerGoWork(); });
+    pot.s=1; const next=[...explicit(myPots),pot], moved=enforce(next,pot.id);
+    return writeMine(next,moved?`모두의 선반에 올렸어요 · 예전 작품은 내 작품함으로 옮겼어요`:`모두의 선반에 올렸어요 (높이 ${(H*100).toFixed(1)}cm)`).then(offerGoWork);
   }).catch(e=>{ toast(e&&e.code==='quota_exceeded'?'선반이 가득 찼어요':'선반에 올릴 권한이 없어요. 공방 주인에게 편집 권한을 받아 주세요'); });
 }
+
+/* ---------- 내 작품함: every pot I kept; choose which (up to SHELF_MAX) stand on the shared shelf ---------- */
+function potSilhouette(cv,cl,painted){
+  const g=cv.getContext('2d'), W=cv.width, Hh=cv.height; g.clearRect(0,0,W,Hh);
+  const maxR=Math.max(...cl.r), sc=Math.min((W*.42)/maxR,(Hh*.78)/cl.H), bx=W/2, by=Hh*.9, dh=cl.H/(N-1);
+  const col=CLAYS[cl.k||0][0];
+  g.beginPath(); g.moveTo(bx-cl.r[0]*sc,by); for(let i=0;i<N;i++) g.lineTo(bx-cl.r[i]*sc,by-i*dh*sc);
+  for(let i=N-1;i>=0;i--) g.lineTo(bx+cl.r[i]*sc,by-i*dh*sc); g.closePath();
+  const gr=g.createLinearGradient(bx-maxR*sc,0,bx+maxR*sc,0); gr.addColorStop(0,'rgba(0,0,0,.18)'); gr.addColorStop(.4,'rgba(255,255,255,.12)'); gr.addColorStop(1,'rgba(0,0,0,.22)');
+  g.fillStyle=col; g.fill(); g.fillStyle=gr; g.fill(); g.strokeStyle='rgba(60,45,30,.35)'; g.lineWidth=1.2; g.stroke();
+  if(cl.open>.02){ const rt=cl.r[N-1]*sc, inner=Math.max(2,rt-cl.tw*sc); g.beginPath(); g.ellipse(bx,by-cl.H*sc,rt,Math.max(2,rt*.18),0,0,7); g.fillStyle=col; g.fill(); g.strokeStyle='rgba(60,45,30,.35)'; g.stroke();
+    g.beginPath(); g.ellipse(bx,by-cl.H*sc,inner,Math.max(1.5,inner*.16),0,0,7); g.fillStyle='rgba(40,28,18,.45)'; g.fill(); }
+  g.beginPath(); g.ellipse(bx,by+2,maxR*sc*.9,4,0,0,7); g.fillStyle='rgba(0,0,0,.08)'; g.fill();
+  if(painted){ g.font='16px sans-serif'; g.textAlign='right'; g.fillText('🎨',W-6,Hh-8); }
+}
+function openBox(){ closeWork(); $('boxPanel').hidden=false; drawBox(); }
+function closeBox(){ $('boxPanel').hidden=true; }
+function drawBox(){
+  const grid=$('boxGrid'); grid.innerHTML='';
+  const pots=explicit(myPots).sort((a,b)=>(b.t||0)-(a.t||0)), onN=pots.filter(p=>p.s===1&&!isStar(p)).length;
+  $('boxSub').innerHTML=`모두의 선반에는 한 사람당 <b>${SHELF_MAX}점</b>까지 올라가요 · 지금 <b>${onN}/${SHELF_MAX}</b><br>⭐ 선생님 추천 작품은 개수와 상관없이 선반에 남아요`;
+  if(!pots.length){ grid.innerHTML='<div id="boxEmpty">아직 작품이 없어요. 물레에서 빚어 선반에 올려 보세요</div>'; return; }
+  pots.forEach(p=>{ const cl=decodeClay(p.c); if(!cl) return; const star=isStar(p), on=p.s===1||star;
+    const card=document.createElement('div'); card.className='boxCard'+(on?' on':'');
+    const cv=document.createElement('canvas'); cv.width=240; cv.height=184; potSilhouette(cv,cl,!!p.pt); card.appendChild(cv);
+    card.insertAdjacentHTML('beforeend',`<span class="chip">${on?'선반 위':'작품함'}</span>${star?'<span class="star" title="선생님 추천">⭐</span>':''}<div class="meta">높이 ${(cl.H*100).toFixed(1)}cm · ${new Date(p.t||0).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})}</div>`);
+    const acts=document.createElement('div'); acts.className='acts';
+    const mk=(txt,cls,fn)=>{ const b=document.createElement('button'); b.type='button'; b.className=cls; b.textContent=txt; b.addEventListener('click',fn); acts.appendChild(b); return b; };
+    if(!star) mk(p.s===1?'내리기':'올리기',p.s===1?'ghost':'primary',()=>setShown(p.id,p.s!==1));
+    mk('보기','ghost',()=>viewBoxPot(p));
+    const del=mk('🗑','ghost del',()=>{ if(!del.classList.contains('sure')){ del.classList.add('sure'); del.textContent='지우기'; return; } removePot(p.id); });
+    del.setAttribute('aria-label','지우기');
+    card.appendChild(acts); grid.appendChild(card); });
+}
+function setShown(id,on){
+  saveChain=saveChain.then(()=>{ const next=explicit(myPots), p=next.find(x=>x.id===id); if(!p) return; p.s=on?1:0;
+    const moved=on?enforce(next,id):0;
+    return writeMine(next,on?(moved?'선반에 올리고, 오래된 작품 하나를 작품함으로 옮겼어요':'모두의 선반에 올렸어요'):'작품함으로 옮겼어요'); })
+    .catch(()=>toast('바꾸지 못했어요. 잠시 후 다시 해 주세요'));
+}
+function removePot(id){
+  saveChain=saveChain.then(()=>writeMine(explicit(myPots).filter(p=>p.id!==id),'작품을 지웠어요')).catch(()=>toast('지우지 못했어요. 잠시 후 다시 해 주세요'));
+}
+function viewBoxPot(p){
+  const cl=decodeClay(p.c); if(!cl) return; const mat=clayMats[cl.k||0];
+  const mesh=new THREE.Mesh(clayGeo(cl),mat); mesh.userData.potId=p.id; mesh.userData.key=starKey(myId,p.id); mesh.userData.owner=myId;
+  const go=()=>{ closeBox(); openViewer(mesh,'내 작품'); };
+  if(p.pt){ const img=new Image(); img.onload=()=>{ const c=document.createElement('canvas'); c.width=PT.TW; c.height=PT.TH; c.getContext('2d').drawImage(img,0,0,PT.TW,PT.TH); applyPaintTo(mesh,c,mat); go(); }; img.onerror=go; img.src=p.pt; }
+  else go();
+}
+$('boxClose').addEventListener('click',closeBox);
+
+/* ---------- 선생님 추천 ⭐ (only the teacher sees the button) ---------- */
+function savePicks(next){
+  return sharedDb.doc('shelf/_picks').set({picks:[...next]}).then(()=>{ picks=next; });
+}
+$('vStar').addEventListener('click',()=>{
+  const key=$('vStar').dataset.key; if(!key||!isTeacher||!sharedDb) return;
+  const next=new Set(picks), on=!next.has(key); if(on) next.add(key); else next.delete(key);
+  $('vStar').setAttribute('aria-pressed',on);
+  saveChain=saveChain.then(()=>savePicks(next)).then(()=>toast(on?'⭐ 추천 작품으로 골랐어요 · 선반에서 빠지지 않아요':'추천을 거뒀어요'))
+    .catch(()=>{ $('vStar').setAttribute('aria-pressed',!on); toast('추천을 저장하지 못했어요'); });
+});
 
 /* ---------- go to my work ---------- */
 let focus=null, haloT=0, goT=0;
@@ -2913,7 +3032,7 @@ function myPotList(){
   return list.sort((a,b)=>b.t-a.t);
 }
 function myLatestPot(){ const l=myPotList(); return l.length?l[0].mesh:null; }
-function updateMyWorkBtn(){ $('myWorkBtn').hidden=!myLatestPot(); }
+function updateMyWorkBtn(){ $('myWorkBtn').hidden=!(myLatestPot()||(sharedDb&&myPots.length)); }
 function offerGoWork(){ $('goWork').hidden=false; clearTimeout(goT); goT=setTimeout(()=>{ $('goWork').hidden=true; },10000); }
 let selected=null;
 function goToMyWork(){
@@ -2960,7 +3079,7 @@ $('wpClose').addEventListener('click',()=>{ halo.visible=false; releaseFocus(); 
 $('wpDel').addEventListener('click',()=>{ $('wpActs').hidden=true; $('wpConfirm').hidden=false; $('wpNo').focus(); });
 $('wpNo').addEventListener('click',()=>{ $('wpActs').hidden=false; $('wpConfirm').hidden=true; });
 $('wpYes').addEventListener('click',deleteSelected);
-$('myWorkBtn').addEventListener('click',goToMyWork);
+$('myWorkBtn').addEventListener('click',()=>{ if(sharedDb&&myId) openBox(); else goToMyWork(); });
 $('goWorkBtn').addEventListener('click',goToMyWork);
 
 /* ---------- large viewer for a single pot ---------- */
@@ -3066,7 +3185,8 @@ function openViewer(mesh,title,celebrate){
   $('vHint').textContent=celebrate?'나무판에 올려 선반으로 옮겨요 · 닫으면 계속 빚을 수 있어요':'드래그해서 돌려 보기 · 두 손가락이나 휠로 확대';
   // paint any pot of mine: the one just finished, or one of mine opened from the shelf / work panel
   const mine=celebrate||title==='내 작품'; $('vPaint').hidden=!mine;
-  if(mine&&!celebrate&&mesh.isMesh){ const u=mesh.userData; lastFinished={geo:u.srcGeo||mesh.geometry,mat:u.clayMat||mesh.material,paint:u.paint||null,local:mesh,fromShelf:true}; }
+  if(mine&&!celebrate&&mesh.isMesh){ const u=mesh.userData; lastFinished={geo:u.srcGeo||mesh.geometry,mat:u.clayMat||mesh.material,paint:u.paint||null,local:mesh,fromShelf:true,potId:u.potId||null}; }
+  { const key=!celebrate&&mesh.userData&&mesh.userData.key; $('vStar').hidden=!(isTeacher&&key); $('vStar').style.top=`calc(${mine?108:60}px + env(safe-area-inset-top,0px))`; if(key){ $('vStar').dataset.key=key; $('vStar').setAttribute('aria-pressed',picks.has(key)); } }
   $('viewer').hidden=false; viewer.open=true; resizeViewer();
   // on a tall phone screen the sides are the tight edge: step back so the whole pot (and board) fits
   if(vCam.aspect<1) vDist*=celebrate?Math.min(2.8,1.12/vCam.aspect):Math.min(2.2,.85/vCam.aspect);
@@ -3267,7 +3387,7 @@ function paintURL(cv){
 }
 function persistPaint(lf,shelfMesh,cv){
   if(!sharedDb||!myId) return;
-  let id=lf.potId||null; if(!id&&shelfMesh) sharedPots.forEach(v=>{ if(v.mesh===shelfMesh&&v.owner===myId) id=v.id; });
+  let id=lf.potId||(shelfMesh&&shelfMesh.userData.potId)||null; if(!id&&shelfMesh) sharedPots.forEach(v=>{ if(v.mesh===shelfMesh&&v.owner===myId) id=v.id; });
   const url=paintURL(cv);
   saveChain=saveChain.then(()=>{
     const pid=id||lf.potId; if(!pid||!myPots.some(p=>p.id===pid)) return;
@@ -3445,7 +3565,11 @@ async function supabaseCaps(){
   let name=''; try{ name=localStorage.getItem('mullae-name')||''; }catch(e){}
   if(!name){ name=await askName(); try{ localStorage.setItem('mullae-name',name); }catch(e){} }
   const names={[id]:name}, clean=v=>String(v||'').replace(/[\u0000-\u001f\u007f-\u009f]/g,'').slice(0,12);
-  const user={ id:async()=>id, profiles:async ids=>{ const o={}; ids.forEach(k=>{ if(names[k]) o[k]={name:names[k]}; }); return o; } };
+  // the teacher on this device: open the page with #teacher to see this device's number and send it to Claude
+  if(/teacher/.test(location.hash)){ const tb=document.createElement('div'); tb.className='hud panel'; tb.id='teachBox';
+    tb.innerHTML='<strong style="font-family:Jua,var(--display);font-size:18px">선생님 기기 번호</strong><span style="font-size:13px;color:var(--muted)">이 번호를 Claude에게 보내 주면 이 기기에서 ⭐ 추천을 할 수 있어요</span><code></code><button type="button" class="primary" style="padding:10px">닫기</button>';
+    tb.querySelector('code').textContent=id; tb.querySelector('button').onclick=()=>tb.remove(); document.body.appendChild(tb); }
+  const user={ isOwner:async()=>TEACHER_IDS.includes(id), id:async()=>id, profiles:async ids=>{ const o={}; ids.forEach(k=>{ if(names[k]) o[k]={name:names[k]}; }); return o; } };
   // room: presence says who is here (with their name); broadcast carries where they are and what they're doing
   const states={}, ch=sb.channel('studio',{config:{presence:{key:id},broadcast:{self:false}}});
   let peersCb=null, prev=new Set(), mine={};
@@ -3462,13 +3586,21 @@ async function supabaseCaps(){
   await new Promise((ok,no)=>ch.subscribe(async status=>{ if(status==='SUBSCRIBED'){ await ch.track({name}); ok(); } else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT') no(new Error(status)); }));
   const room={ slow:true, presence(obj){ mine=Object.assign({},mine,obj); return sendMine().then(()=>{}); }, onPeers(cb){ peersCb=cb; emit(); } };
   // shelf: one row per person (their last 8 pots), readable by everyone, writable only by its owner
+  let myPicksEl=null, myLastPots=[];
   const shelfDb={
     collection:()=>({ onSnapshot(cb,err){
       const load=async()=>{ const {data,error}=await sb.from('shelf').select('id,name,pots'); if(error){ err&&err(error); return; }
-        cb({metadata:{fromCache:false},docs:(data||[]).map(r=>{ if(r.name) names[r.id]=clean(r.name); return {id:r.id,data:()=>({pots:Array.isArray(r.pots)?r.pots:[]})}; })}); };
+        let pk=null;
+        const docs=(data||[]).map(r=>{ if(r.name) names[r.id]=clean(r.name); const all=Array.isArray(r.pots)?r.pots:[];
+          const el=all.find(p=>p&&p.id==='_picks'); if(r.id===id){ myPicksEl=el||null; myLastPots=all.filter(p=>!(p&&p.id==='_picks')); } if(el&&TEACHER_IDS.includes(r.id)&&Array.isArray(el.keys)) pk=el.keys;
+          return {id:r.id,data:()=>({pots:all.filter(p=>!(p&&p.id==='_picks'))})}; });
+        if(pk) docs.push({id:'_picks',data:()=>({picks:pk})});
+        cb({metadata:{fromCache:false},docs}); };
       load(); sb.channel('shelf-changes').on('postgres_changes',{event:'*',schema:'public',table:'shelf'},()=>load()).subscribe();
       setInterval(load,60000); } }),
-    doc:path=>({ set:async val=>{ const {error}=await sb.from('shelf').upsert({id:path.split('/')[1],name,pots:val.pots,updated_at:new Date().toISOString()}); if(error) throw error; } })
+    doc:path=>({ set:async val=>{
+      if(path==='shelf/_picks'){ myPicksEl={id:'_picks',keys:val.picks}; const {error}=await sb.from('shelf').upsert({id,name,pots:[...myLastPots,myPicksEl],updated_at:new Date().toISOString()}); if(error) throw error; return; }
+      myLastPots=val.pots; const {error}=await sb.from('shelf').upsert({id:path.split('/')[1],name,pots:myPicksEl?[...val.pots,myPicksEl]:val.pots,updated_at:new Date().toISOString()}); if(error) throw error; } })
   };
   return {user,db:shelfDb,room};
 }
@@ -3481,6 +3613,7 @@ async function supabaseCaps(){
   }
   const use=async k=>caps?caps[k]:cl.use(k);
   try{ userCap=await use('user'); if(userCap) myId=await userCap.id(); }catch(e){ userCap=null; }
+  try{ isTeacher=!!(userCap&&userCap.isOwner&&await userCap.isOwner()); }catch(e){ isTeacher=false; }
   try{ sharedDb=await use('db'); }catch(e){ sharedDb=null; }
   if(sharedDb&&myId) startShelf(); else sharedDb=null;
   try{ room=await use('room'); }catch(e){ room=null; }
