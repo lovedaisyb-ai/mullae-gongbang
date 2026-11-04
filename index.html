@@ -306,13 +306,14 @@ const floorTex = canvasTex(1024,1024,(g,w,h)=>{
   }
 },[10,7.5]);
 // wet stoneware: soft mottling and iron speckles (no lines)
+// tileable in both directions: the lathe wraps it all the way round the pot, so its left and right edges meet
 const clayTex = canvasTex(512,512,(g,w,h)=>{
   g.fillStyle='#e6dac8'; g.fillRect(0,0,w,h);
   for(let i=0;i<70;i++){
     const x=rnd(0,w), y=rnd(0,h), r=rnd(20,70), lighter=Math.random()<.5;
     const gr=g.createRadialGradient(x,y,0,x,y,r);
     gr.addColorStop(0,lighter?'rgba(246,238,226,.25)':'rgba(190,170,148,.16)'); gr.addColorStop(1,'rgba(0,0,0,0)');
-    g.fillStyle=gr; g.fillRect(x-r,y-r,r*2,r*2);
+    g.fillStyle=gr; [-w,0,w].forEach(ox=>[-h,0,h].forEach(oy=>{ g.save(); g.translate(ox,oy); g.fillRect(x-r,y-r,r*2,r*2); g.restore(); }));   // wrap so the texture tiles with no seam
   }
   for(let i=0;i<14000;i++){ const v=rnd(-1,1); g.fillStyle=v>0?`rgba(250,244,234,${v*.08})`:`rgba(160,140,118,${-v*.07})`; g.fillRect(rnd(0,w),rnd(0,h),1.5,1.5); }
   for(let i=0;i<260;i++){ g.fillStyle=`rgba(120,95,72,${rnd(.18,.38)})`; g.beginPath(); g.arc(rnd(0,w),rnd(0,h),rnd(.6,1.6),0,7); g.fill(); }
@@ -1900,9 +1901,11 @@ function clayGeo(c){
     pts.push(V(last*.75,yb)); pts.push(V(.0005,yb));
   }
   // map the texture by real surface length so the top and inside don't stretch into streaks
-  const SEG=72, geo=new THREE.LatheGeometry(pts,SEG), np=pts.length, uv=geo.attributes.uv;
+  // more segments round the pot so the surface shades smoothly (no faceted lines), and the texture wraps
+  // round a whole number of times so its edges meet without a seam
+  const SEG=128, geo=new THREE.LatheGeometry(pts,SEG), np=pts.length, uv=geo.attributes.uv;
   const cum=[0]; for(let k=1;k<np;k++) cum.push(cum[k-1]+pts[k].distanceTo(pts[k-1]));
-  for(let i=0;i<=SEG;i++) for(let j=0;j<np;j++) uv.setY(i*np+j,cum[j]/.3);
+  for(let i=0;i<=SEG;i++) for(let j=0;j<np;j++){ uv.setX(i*np+j,i/SEG*2); uv.setY(i*np+j,cum[j]/.3); }
   uv.needsUpdate=true;
   return geo;
 }
