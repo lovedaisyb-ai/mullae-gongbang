@@ -873,6 +873,37 @@ const dayCal=(()=>{
   }
   plant(-2.98,-4.12,'kumquat');   // and a kumquat on its other side
   plant(2.98,-4.12,'willow');     // right speaker: narrow-leaf plant
+  // golden pothos in a black pot on the other side of the left speaker, vines trailing over the rim onto the floor
+  { const px=-3.66, pz=-4.2, PH=.22, PR=.11;
+    const g=new THREE.Group(); g.position.set(px,0,pz); scene.add(g);
+    const pot=new THREE.MeshStandardMaterial({color:'#1d1f20',roughness:.45});
+    const add=(geo,mat,x,y,z)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; g.add(m); return m; };
+    add(new THREE.CylinderGeometry(PR,PR*.82,PH,28),pot,0,PH/2,0);
+    add(new THREE.TorusGeometry(PR,.009,8,28),pot,0,PH,0).rotation.x=Math.PI/2;
+    add(new THREE.CylinderGeometry(PR*.95,PR*.95,.01,24),new THREE.MeshStandardMaterial({color:'#3a2a1e',roughness:1}),0,PH-.02,0);
+    const vineM=new THREE.MeshStandardMaterial({color:'#2f5a14',roughness:.7});
+    const leafMs=['#1f5a12','#2f6e18','#18480d','#3f7a1c'].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.45,side:THREE.DoubleSide}));
+    // heart-shaped pothos leaf, pointed tip along +y
+    const hs=new THREE.Shape(); hs.moveTo(0,0); hs.bezierCurveTo(-.03,.004,-.045,.03,-.035,.05); hs.bezierCurveTo(-.025,.07,-.008,.085,0,.1); hs.bezierCurveTo(.008,.085,.025,.07,.035,.05); hs.bezierCurveTo(.045,.03,.03,.004,0,0);
+    const leafGeo=new THREE.ShapeGeometry(hs,8);
+    { const P=leafGeo.attributes.position; for(let i=0;i<P.count;i++){ const x=P.getX(i), y=P.getY(i); P.setZ(i,-Math.abs(x)*.35+.02*Math.sin(y/.1*Math.PI)); } leafGeo.computeVertexNormals(); }
+    const leaf=(pos,dir,sc)=>{ const m=new THREE.Mesh(leafGeo,leafMs[Math.floor(Math.random()*leafMs.length)]); m.position.copy(pos); m.scale.setScalar(sc);
+      m.lookAt(pos.clone().add(new THREE.Vector3(rnd(-.4,.4),1,rnd(-.4,.4))));          // face mostly up
+      m.rotateZ(Math.atan2(dir.x,dir.z)+rnd(-.8,.8)); m.rotateX(rnd(-.5,.2)); m.castShadow=true; g.add(m); };
+    // an upright bushy crown
+    for(let k=0;k<16;k++){ const a=rnd(0,6.28), r=rnd(0,.1), h=PH+rnd(.03,.26);
+      const st=new THREE.CatmullRomCurve3([new THREE.Vector3(Math.cos(a)*.02,PH,Math.sin(a)*.02),new THREE.Vector3(Math.cos(a)*r*.6,(PH+h)/2+.03,Math.sin(a)*r*.6),new THREE.Vector3(Math.cos(a)*r,h,Math.sin(a)*r)]);
+      add(new THREE.TubeGeometry(st,6,.0035,5,false),vineM,0,0,0);
+      leaf(new THREE.Vector3(Math.cos(a)*r,h,Math.sin(a)*r),new THREE.Vector3(Math.cos(a),0,Math.sin(a)),rnd(1.1,1.6)); }
+    // long trailing vines: over the rim, down the pot and out across the floor (away from the wall)
+    [[.2,.55],[.9,.45],[1.6,.5],[2.3,.35],[-.4,.4],[1.2,.3]].forEach(([a,len])=>{
+      const dx=Math.cos(a), dz=Math.abs(Math.sin(a))+.15, n=new THREE.Vector3(dx,0,dz).normalize();
+      const pts=[[0,PH+.02,0],[PR*1.1,PH-.01,0],[PR*1.35,PH*.5,0],[PR*1.45+.05,.02,0],[PR+len*.45,.012,rnd(-.08,.08)],[PR+len,.012,rnd(-.15,.15)]]
+        .map(([r,y,o])=>new THREE.Vector3(n.x*r-n.z*o,y,n.z*r+n.x*o));
+      const c=new THREE.CatmullRomCurve3(pts); add(new THREE.TubeGeometry(c,40,.003,5,false),vineM,0,0,0);
+      for(let t=.12;t<1;t+=rnd(.07,.12)){ const p=c.getPoint(t); p.y=Math.max(p.y,.006); leaf(p,c.getTangent(t),rnd(1.0,1.4)); } });
+    collide(px-.2,px+.2,pz-.2,pz+.2);
+  }
   plant(-5.5,-2.45,'coffee');     // moved from the kiln: on the floor in front of the garden window
   plant(-RX+.34,2.92,'olive');     // by the entrance door, on its right as you face it
   plant(-RX+.34,2.42,'kumquat');   // and a kumquat (same as by the left speaker) just to its right
