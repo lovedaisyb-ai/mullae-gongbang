@@ -328,7 +328,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261104-2340';
+(function(){ const BUILD='20261105-0005';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -2862,14 +2862,16 @@ function renderShelf(docs){
   const all=[];
   docs.forEach(d=>{ const b=d.data(); if(!b||!Array.isArray(b.pots)) return;
     b.pots.slice(-8).forEach(p=>{ if(!p||typeof p.id!=='string'||p.id.length>40) return; const cl=decodeClay(p.c); if(!cl) return;
-      all.push({key:d.id+'/'+p.id,id:p.id,owner:d.id,t:numIn(p.t,0,1e15,0),clay:cl,l:numIn(p.l,-.06,.06,0)}); }); });
+      all.push({key:d.id+'/'+p.id,id:p.id,owner:d.id,t:numIn(p.t,0,1e15,0),clay:cl,l:numIn(p.l,-.06,.06,0),
+        pt:(typeof p.pt==='string'&&p.pt.startsWith('data:image/png;base64,')&&p.pt.length<400000)?p.pt:null}); }); });
   all.sort((a,b)=>b.t-a.t);
   const shown=all.slice(0,SBOARDS.length*SPER), keep=new Set(shown.map(p=>p.key));
   sharedPots.forEach((v,k)=>{ if(!keep.has(k)){ scene.remove(v.mesh); scene.remove(v.label); if(v.board) scene.remove(v.board); v.mesh.geometry.dispose(); sharedPots.delete(k); } });
   shown.forEach((p,i)=>{
     let v=sharedPots.get(p.key);
     if(!v){ const mesh=new THREE.Mesh(clayGeo(p.clay),clayMats[p.clay.k||0]); mesh.castShadow=mesh.receiveShadow=true; mesh.rotation.y=rnd(0,6.28); scene.add(mesh);
-      v={mesh,label:potLabel(),owner:p.owner,t:p.t,id:p.id,board:wareBoardFor(mesh)}; sharedPots.set(p.key,v); }
+      v={mesh,label:potLabel(),owner:p.owner,t:p.t,id:p.id,board:wareBoardFor(mesh),pt:null}; sharedPots.set(p.key,v); }
+    if(p.pt&&v.pt!==p.pt&&!(v.mesh.userData.paint&&v.pt===undefined)){ v.pt=p.pt; paintFromURL(v,p.pt,clayMats[p.clay.k||0]); }
     const by=SBOARDS[Math.floor(i/SPER)], j=i%SPER, x=(j<7?-1.55:1.55)+(j%7-3)*.43; /* 7 per bay, clear of the middle post */
     v.board.position.set(x,by+.029,SZ+.02); v.board.rotation.y=(p.l||0)*.5; v.mesh.position.set(x,by+.038,SZ+.02); v.label.position.set(x,by-.035,SZ-.192);
   });
@@ -2893,6 +2895,7 @@ function startShelf(){
 }
 function saveShared(clay){
   const pot={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),t:Date.now(),l:+rnd(-.04,.03).toFixed(3),c:encodeClay(clay)}, H=clay.H;
+  if(lastFinished) lastFinished.potId=pot.id;
   saveChain=saveChain.then(()=>{
     const next=[...myPots,pot].slice(-8);
     return sharedDb.doc('shelf/'+myId).set({pots:next}).then(()=>{ myPots=next; toast(`모두의 선반에 올렸어요 (높이 ${(H*100).toFixed(1)}cm)`); updateMyWorkBtn(); offerGoWork(); });
@@ -3137,8 +3140,7 @@ const PT=(()=>{
     Object.assign(key.shadow.camera,{left:-.4,right:.4,top:.4,bottom:-.4,near:.5,far:6}); key.shadow.radius=6; key.shadow.bias=-.0006; scene.add(key);
     const fl=new THREE.DirectionalLight('#eef3ff',.35); fl.position.set(-1.5,.8,-1); scene.add(fl);
     const ground=new THREE.Mesh(new THREE.PlaneGeometry(4,4),new THREE.ShadowMaterial({opacity:.1})); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
-    const mk=()=>{ const c=document.createElement('canvas'); c.width=TW; c.height=TH; return c; };
-    base=mk(); paint=mk(); pg=paint.getContext('2d'); stroke=mk(); sg=stroke.getContext('2d'); disp=mk(); dg=disp.getContext('2d');
+    canvases();
     tex=new THREE.CanvasTexture(disp); tex.encoding=THREE.sRGBEncoding; tex.anisotropy=R.capabilities.getMaxAnisotropy(); tex.wrapS=THREE.RepeatWrapping;
     // UI
     document.querySelectorAll('#paintScr .ptTool').forEach(b=>b.addEventListener('click',()=>{ const t=b.dataset.tool; $('ptColor').hidden=true;
@@ -3168,6 +3170,8 @@ const PT=(()=>{
     addEventListener('resize',()=>{ if(s.open) resize(); });
   }
   let dist0=1;
+  function canvases(){ if(base) return; const mk=()=>{ const c=document.createElement('canvas'); c.width=TW; c.height=TH; return c; };
+    base=mk(); paint=mk(); pg=paint.getContext('2d'); stroke=mk(); sg=stroke.getContext('2d'); disp=mk(); dg=disp.getContext('2d'); }
   function resize(){ const w=innerWidth,h=innerHeight; R.setSize(w,h,false); cam.aspect=w/h; cam.updateProjectionMatrix(); }
 
   // a copy of the pot whose texture coordinates wrap once round and run along the profile 0..1
@@ -3237,21 +3241,43 @@ const PT=(()=>{
   }
   function render(){ if(dirty) compose(); pot.rotation.y=yaw; cam.position.set(0,target.y+Math.sin(tilt)*dist,Math.cos(tilt)*dist); cam.lookAt(target); R.render(scene,cam); }
   // the painted look for any copy of the pot: clay colour + speckle + the painting, on the once-round coordinates
-  function bakeMaterial(mat,paintCv){
-    if(!R) init();
-    fillBase(mat); const c=document.createElement('canvas'); c.width=TW; c.height=TH; const g=c.getContext('2d'); g.drawImage(base,0,0); g.drawImage(paintCv,0,0);
+  // shelf copies use a half-size texture and one cached clay background per clay, so many painted pots stay light
+  const baseCache=new Map();
+  function bakeMaterial(mat,paintCv,small){
+    canvases(); const w=small?TW/2:TW, h=small?TH/2:TH;
+    let bc=baseCache.get(mat.uuid+w); if(!bc){ fillBase(mat); bc=document.createElement('canvas'); bc.width=w; bc.height=h; bc.getContext('2d').drawImage(base,0,0,w,h); baseCache.set(mat.uuid+w,bc); }
+    const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d'); g.drawImage(bc,0,0); g.drawImage(paintCv,0,0,w,h);
     const t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; t.wrapS=THREE.RepeatWrapping; t.anisotropy=8;
     return new THREE.MeshStandardMaterial({map:t,roughness:.6,metalness:0,side:THREE.DoubleSide});
   }
-  return {s,open,close,render,paintGeo,bakeMaterial};
+  return {s,open,close,render,paintGeo,bakeMaterial,TW,TH};
 })();
 // the finished pot that was just celebrated, so its painting can follow it onto the shelf
 let lastFinished=null;
-function applyPaintTo(mesh,paintCv,clayMat){
+function applyPaintTo(mesh,paintCv,clayMat,small){
   if(!mesh) return;
   const u=mesh.userData;
   if(!u.paintGeo){ u.srcGeo=mesh.geometry; u.clayMat=clayMat; mesh.geometry=PT.paintGeo(mesh.geometry); u.paintGeo=true; }
-  mesh.material=PT.bakeMaterial(clayMat,paintCv); u.paint=paintCv;
+  mesh.material=PT.bakeMaterial(clayMat,paintCv,small); u.paint=paintCv;
+}
+// the painting travels with the pot in the shared shelf: a small transparent PNG of just the paint layer
+function paintURL(cv){
+  for(const [w,h] of [[1024,512],[768,384],[512,256]]){ const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(cv,0,0,w,h);
+    const u=c.toDataURL('image/png'); if(u.length<100000||w===512) return u; }
+}
+function persistPaint(lf,shelfMesh,cv){
+  if(!sharedDb||!myId) return;
+  let id=lf.potId||null; if(!id&&shelfMesh) sharedPots.forEach(v=>{ if(v.mesh===shelfMesh&&v.owner===myId) id=v.id; });
+  const url=paintURL(cv);
+  saveChain=saveChain.then(()=>{
+    const pid=id||lf.potId; if(!pid||!myPots.some(p=>p.id===pid)) return;
+    const next=myPots.map(p=>p.id===pid?Object.assign({},p,{pt:url}):p);
+    return sharedDb.doc('shelf/'+myId).set({pots:next}).then(()=>{ myPots=next; sharedPots.forEach(v=>{ if(v.id===pid) v.pt=url; }); toast('그림도 선반에 함께 올렸어요'); });
+  }).catch(e=>{ toast(e&&e.code==='quota_exceeded'?'선반 저장 공간이 가득 차서 그림을 올리지 못했어요':'그림을 선반에 저장하지 못했어요'); });
+}
+function paintFromURL(v,url,clayMat){
+  const img=new Image(); img.onload=()=>{ if(v.pt!==url) return; const c=document.createElement('canvas'); c.width=PT.TW; c.height=PT.TH; c.getContext('2d').drawImage(img,0,0,PT.TW,PT.TH); applyPaintTo(v.mesh,c,clayMat,true); };
+  img.src=url;
 }
 function shelfOf(lf){ if(lf.local) return lf.local; let best=null; if(typeof sharedPots!=='undefined') sharedPots.forEach(v=>{ if(v.owner===myId&&(!best||v.t>best.t)) best=v; }); return best?best.mesh:null; }
 $('vPaint').addEventListener('click',()=>{
@@ -3265,6 +3291,7 @@ $('vPaint').addEventListener('click',()=>{
     applyPaintTo(shelfMesh,cv,lf.mat);
     if(lf.fromShelf&&shelfMesh){ vPot.geometry=shelfMesh.geometry; vPot.material=shelfMesh.material; } else applyPaintTo(vPot,cv,lf.mat);
     $('vHint').textContent='그림을 입혔어요 · 사진첩에 저장해 보세요';
+    persistPaint(lf,shelfMesh,cv);
   });
 });
 
