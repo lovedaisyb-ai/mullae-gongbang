@@ -2713,18 +2713,18 @@ function arriveTarget(){
 
 /* ---------- shared shelf on the front wall ---------- */
 let sharedDb=null, myPots=[], saveChain=Promise.resolve();
-const SZ=RZ-.2, SBOARDS=[1.05,1.55,.55,2.05,2.55], SPER=10, sharedPots=new Map();
-[.55,1.05,1.55,2.05,2.55].forEach(y=>box(6.2,.04,.38,M.wood,0,y,SZ));
-[-3.1,0,3.1].forEach(x=>box(.05,2.12,.38,M.woodDark,x,1.55,SZ));
+const SZ=RZ-.2, SBOARDS=[1.05,1.55,.55,2.05,2.55,3.05], SPER=13, sharedPots=new Map();
+[.55,1.05,1.55,2.05,2.55,3.05].forEach(y=>box(6.2,.04,.38,M.wood,0,y,SZ));
+[-3.1,0,3.1].forEach(x=>box(.05,2.62,.38,M.woodDark,x,1.8,SZ));
 collide(-3.2,3.2,RZ-.45,RZ);
 
 const sharedSign=(()=>{ const c=document.createElement('canvas'); c.width=640; c.height=96; const t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding;
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(1.6,.24),new THREE.MeshStandardMaterial({map:t,roughness:.8})); m.position.set(0,2.86,RZ-.012); m.rotation.y=Math.PI; scene.add(m); return {c,t}; })();
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(1.6,.24),new THREE.MeshStandardMaterial({map:t,roughness:.8})); m.position.set(0,3.36,RZ-.012); m.rotation.y=Math.PI; scene.add(m); return {c,t}; })();
 function drawSign(text){
   const {c,t}=sharedSign, g=c.getContext('2d');
-  g.fillStyle='#2f3433'; g.fillRect(0,0,c.width,c.height); g.textBaseline='middle';
-  g.fillStyle='#e8e3da'; g.font='bold 40px "Gowun Batang", serif'; g.textAlign='left'; g.fillText('모두의 선반',28,50);
-  g.fillStyle='#93bcac'; g.font='28px "Gowun Dodum", sans-serif'; g.textAlign='right'; g.fillText(text,c.width-28,52);
+  g.fillStyle='#1f5a3a'; g.fillRect(0,0,c.width,c.height); g.textBaseline='middle';
+  g.fillStyle='#ffffff'; g.font='bold 40px "Gowun Batang", serif'; g.textAlign='left'; g.fillText('모두의 선반',28,50);
+  g.fillStyle='rgba(255,255,255,.85)'; g.font='28px "Gowun Dodum", sans-serif'; g.textAlign='right'; g.fillText(text,c.width-28,52);
   t.needsUpdate=true;
 }
 drawSign('공유하면 함께 채워져요');
@@ -2755,7 +2755,7 @@ function renderShelf(docs){
     let v=sharedPots.get(p.key);
     if(!v){ const mesh=new THREE.Mesh(clayGeo(p.clay),clayMats[p.clay.k||0]); mesh.castShadow=mesh.receiveShadow=true; mesh.rotation.y=rnd(0,6.28); scene.add(mesh);
       v={mesh,label:potLabel(),owner:p.owner,t:p.t,id:p.id,board:wareBoardFor(mesh)}; sharedPots.set(p.key,v); }
-    const by=SBOARDS[Math.floor(i/SPER)], x=-2.75+(i%SPER)*.61;
+    const by=SBOARDS[Math.floor(i/SPER)], x=-2.82+(i%SPER)*.47;
     v.board.position.set(x,by+.029,SZ+.02); v.board.rotation.y=(p.l||0)*.5; v.mesh.position.set(x,by+.038,SZ+.02); v.label.position.set(x,by-.035,SZ-.192);
   });
   drawSign(all.length?`작품 ${all.length}점`:'첫 작품을 올려 보세요');
@@ -3038,7 +3038,7 @@ function upsertRemote(p){
   if(!r){ r=makeRemote(p); remotes.set(p.peer,r); resolveName(r,p); r.root.position.set(numIn(pr.x,-RX,RX,0),0,numIn(pr.z,-RZ,RZ,0)); }
   const w=(Number.isInteger(pr.w)&&pr.w>=0&&pr.w<wheels.length)?pr.w:-1;
   const clayKey=w>=0&&pr.clay?JSON.stringify(pr.clay):null;
-  r.t={x:numIn(pr.x,-RX,RX,0),z:numIn(pr.z,-RZ,RZ,0),ry:numIn(pr.ry,-10,10,0),mv:!!pr.mv,dn:!!pr.dn,w,rpm:numIn(pr.rpm,0,250,0),clayKey,clayObj:(r.t&&r.t.clayKey===clayKey)?r.t.clayObj:decodeClay(pr.clay)};
+  r.t={x:numIn(pr.x,-RX,RX,0),z:numIn(pr.z,-RZ,RZ,0),ry:numIn(pr.ry,-10,10,0),mv:!!pr.mv,dn:!!pr.dn,dk:!!pr.dk,w,rpm:numIn(pr.rpm,0,250,0),clayKey,clayObj:(r.t&&r.t.clayKey===clayKey)?r.t.clayObj:decodeClay(pr.clay)};
   if(pr.say&&typeof pr.say==='object'&&pr.say.n!==r.sayN){
     const first=r.sayN===null; r.sayN=pr.say.n;
     const text=String(pr.say.text||'').slice(0,40);
@@ -3359,7 +3359,7 @@ function frame(){
   // other potters
   remotes.forEach(r=>{
     const t=r.t; if(!t) return;
-    const seat=t.w>=0?wheels[t.w].seat:null, k=Math.min(1,dt*10);
+    const seat=t.w>=0?wheels[t.w].seat:(t.dk?{x:DESK.sx,z:DESK.sz}:null), k=Math.min(1,dt*10);
     const tx=seat?seat.x:t.x, tz=seat?seat.z:t.z, tr=seat?Math.PI:t.ry;
     r.root.position.x+=(tx-r.root.position.x)*k; r.root.position.z+=(tz-r.root.position.z)*k;
     let d=tr-r.root.rotation.y; d=Math.atan2(Math.sin(d),Math.cos(d)); r.root.rotation.y+=d*k;
@@ -3381,7 +3381,7 @@ function frame(){
   presT-=dt;
   if(room&&presT<=0){
     presT=room.slow?.2:.1;   // Supabase: 5 updates a second is plenty and stays well inside the free limits
-    const st={x:+avatar.position.x.toFixed(2),z:+avatar.position.z.toFixed(2),ry:+avatar.rotation.y.toFixed(2),mv:(mode==='walk'&&moving)?1:0,dn:danceT>0?1:0,
+    const st={x:+avatar.position.x.toFixed(2),z:+avatar.position.z.toFixed(2),ry:+avatar.rotation.y.toFixed(2),mv:(mode==='walk'&&moving)?1:0,dn:danceT>0?1:0,dk:mode==='desk'?1:0,
       w:(mode!=='walk'&&mode!=='desk')?wheels.indexOf(active):-1,rpm:mode==='throw'?active.rpm:0,clay:mode==='throw'?encodeClay(active.clay):null,uid:myId};
     const key=JSON.stringify(st);
     if(key!==lastPres){ lastPres=key; room.presence(st).catch(()=>{}); }
