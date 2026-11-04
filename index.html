@@ -319,7 +319,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261104-2325';
+(function(){ const BUILD='20261104-2330';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -1960,9 +1960,15 @@ function setClayKind(k){ clayKind=k; try{ localStorage.setItem('mullae-clay',k);
   if(active&&active.clay){ active.clay.k=k; if(active.mesh) active.mesh.material=clayMats[k]; } }
 // on a phone the picker folds down to just the chosen clay after a pick; tap that to open it again
 const phonePick=()=>matchMedia('(max-width:640px)').matches;
-document.querySelectorAll('#clayPick button').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); const box=$('clayPick');
-  if(phonePick()&&box.classList.contains('folded')){ box.classList.remove('folded'); return; }
-  setClayKind(+b.dataset.clay); if(phonePick()) box.classList.add('folded'); }));
+// the fold happens on the finger lifting (not the later click), so the other clays vanish at once and never
+// sit over the wheel help; once a clay has been picked before, the picker starts folded too
+const foldPick=()=>{ if(phonePick()) $('clayPick').classList.add('folded'); };
+document.querySelectorAll('#clayPick button').forEach(b=>{
+  b.addEventListener('pointerup',e=>{ e.stopPropagation(); const box=$('clayPick');
+    if(phonePick()&&box.classList.contains('folded')){ box.classList.remove('folded'); return; }
+    setClayKind(+b.dataset.clay); try{ localStorage.setItem('mullae-clay-picked','1'); }catch(err){} foldPick(); });
+  b.addEventListener('click',e=>{ e.stopPropagation(); if(e.detail===0){ const box=$('clayPick');   // keyboard
+    if(phonePick()&&box.classList.contains('folded')){ box.classList.remove('folded'); return; } setClayKind(+b.dataset.clay); foldPick(); } }); });
 function newClay(){
   const r=new Float32Array(N), H=.105;
   // a smooth, slightly lumpy profile (no row-by-row jitter, which showed as fine horizontal lines)
@@ -2113,6 +2119,7 @@ canvas.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('selectstart',e=>{ if(!(e.target instanceof HTMLInputElement)) e.preventDefault(); });
 document.getElementById('throwHud').addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('pointerdown',e=>{
+  if(mode==='throw') foldPick();   // starting work on the clay tucks the clay picker away
   canvas.setPointerCapture(e.pointerId); canvas.focus();
   ptr.x=e.clientX; ptr.y=e.clientY; lastPtrY=e.clientY; lastPtrX=e.clientX;
   if(mode==='sitting'){ sitT=Math.max(sitT,2.25); return; }
@@ -2326,7 +2333,8 @@ function trySit(){
   $('sub').textContent=`물레 ${wheels.indexOf(w)+1}번 · 앉는 중`;
 }
 function beginThrow(){
-  const w=active; $('clayPick').classList.remove('folded');
+  const w=active; let picked=false; try{ picked=!!localStorage.getItem('mullae-clay-picked'); }catch(e){}
+  $('clayPick').classList.toggle('folded',picked&&phonePick());
   if(w.clay&&w.clay.open<.02&&w.clay.center<.05){ w.clay.k=clayKind; if(w.mesh) w.mesh.material=clayMats[clayKind]; }
   document.querySelectorAll('#clayPick button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.clay===(w.clay.k||0))); mode='throw'; document.body.classList.add('throwing');
   avatar.position.set(w.seat.x,0,w.seat.z); avatar.rotation.y=Math.PI; avatar.visible=false;
