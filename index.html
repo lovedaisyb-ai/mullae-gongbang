@@ -104,6 +104,8 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 #vBar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom,0px));padding:10px 18px;text-align:center;display:grid;gap:3px;width:max-content;max-width:calc(100vw - 32px);box-sizing:border-box;}
 #vInfo{font-size:15px;font-variant-numeric:tabular-nums;}
 #vHint{font-size:12px;color:var(--muted);}
+#vSave{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:calc(12px + env(safe-area-inset-left,0px));height:44px;padding:0 16px;border-radius:999px;background:var(--celadon-deep);border:1px solid var(--celadon);font-size:14px;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3);}
+#vSave:disabled{opacity:.6;}
 #goWork{left:50%;transform:translateX(-50%);top:calc(64px + env(safe-area-inset-top,0px));}
 #goWork button{padding:11px 18px;font-size:15px;background:var(--celadon-deep);border:1px solid var(--celadon);border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.35);white-space:nowrap;}
 #chat{right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;padding:6px;}
@@ -196,6 +198,7 @@ body.throwing #brand{display:none;}
 </div>
 <div id="viewer" hidden><canvas id="vc" aria-label="작품 크게 보기"></canvas>
   <button id="vClose" type="button" aria-label="닫기">✕</button>
+  <button id="vSave" type="button">📷 사진첩에 저장</button>
   <div class="panel" id="vBar"><div id="vInfo">작품</div><div id="vHint">드래그해서 돌려 보기 · 두 손가락이나 휠로 확대</div></div>
 </div>
 <div class="hud" id="goWork" hidden><button id="goWorkBtn" type="button">내 작품 보러 가기 →</button></div>
@@ -2973,6 +2976,38 @@ function renderViewer(dt){
 }
 addEventListener('resize',resizeViewer);
 $('vClose').addEventListener('click',closeViewer);
+/* save the piece as a photo: the 3D view plus a small caption strip with the studio name and size */
+function viewerPhoto(){
+  renderViewer(0);   // draw now, so the WebGL buffer is still filled when it is copied
+  const src=$('vc'), W=src.width, H=src.height, cap=Math.round(Math.max(60,Math.min(W,H)*.11));
+  const c=document.createElement('canvas'); c.width=W; c.height=H+cap; const g=c.getContext('2d');
+  g.drawImage(src,0,0); g.fillStyle='#f4efe4'; g.fillRect(0,H,W,cap);
+  g.fillStyle='#2b3a36'; g.textBaseline='middle'; g.textAlign='left'; g.font=`bold ${Math.round(cap*.34)}px "Gowun Batang", serif`; g.fillText('선아씨 물레 공방',cap*.4,H+cap/2);
+  const info=$('vInfo').textContent.replace(/^완성했어요!\s*·\s*/,'');
+  g.fillStyle='#5b5a52'; g.textAlign='right'; g.font=`${Math.round(cap*.26)}px "Gowun Dodum", sans-serif`; g.fillText(info,W-cap*.4,H+cap/2);
+  const url=c.toDataURL('image/png'), bin=atob(url.split(',')[1]), buf=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
+  return new Blob([buf],{type:'image/png'});
+}
+$('vSave').addEventListener('click',async()=>{
+  const btn=$('vSave'), hint=$('vHint'), d=new Date(), p=n=>String(n).padStart(2,'0');
+  const name=`선아씨물레공방_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.png`;
+  const blob=viewerPhoto(), done=m=>{ hint.textContent=m; btn.disabled=false; };
+  btn.disabled=true;
+  // inside claude.ai the page saves through the viewer's download prompt (the Claude phone app opens the share sheet → 이미지 저장)
+  if(window.claude&&window.claude.use){
+    try{ const dl=await window.claude.use('downloads');
+      if(dl){ try{ await dl.save({filename:name,data:blob}); return done('저장했어요 · 사진첩이나 다운로드에서 볼 수 있어요'); }
+        catch(e){ if(e&&e.code==='declined') return done('저장을 취소했어요'); } } }catch(e){}
+  }
+  // on a phone browser the share sheet has "이미지 저장", which puts the photo straight into the photo album
+  try{ const file=new File([blob],name,{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'선아씨 물레 공방'}); return done('사진을 내보냈어요 · "이미지 저장"을 고르면 사진첩에 들어가요'); } }
+  catch(e){ if(e&&e.name==='AbortError') return done('저장을 취소했어요'); }
+  // otherwise a plain download
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000); done('사진을 내려받았어요');
+});
 $('wpView').addEventListener('click',()=>{ if(selected) openViewer(selected.mesh,'내 작품'); });
 { const vc=$('vc');
   ['touchstart','touchmove'].forEach(t=>vc.addEventListener(t,e=>e.preventDefault(),{passive:false}));
