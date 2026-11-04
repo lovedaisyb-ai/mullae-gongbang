@@ -120,6 +120,8 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 #clayPick small{display:block;font-size:11px;color:var(--muted);}
 body.throwing #brand{display:none;}
 #chat{display:none!important;}
+#deskHud{left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;padding:8px 8px 8px 16px;font-size:13px;white-space:nowrap;}
+#deskHud button{padding:9px 16px;font-size:14px;background:var(--celadon-deep);border:1px solid var(--celadon);border-radius:999px;color:#fff;}
 @media (max-width:640px){
   #clayPick{top:calc(56px + env(safe-area-inset-top,0px));left:calc(8px + env(safe-area-inset-left,0px));width:auto;padding:6px;gap:0;}
   #clayPick h3{display:none;}
@@ -194,6 +196,7 @@ body.throwing #brand{display:none;}
   <div class="panel" id="vBar"><div id="vInfo">작품</div><div id="vHint">드래그해서 돌려 보기 · 두 손가락이나 휠로 확대</div></div>
 </div>
 <div class="hud" id="goWork" hidden><button id="goWorkBtn" type="button">내 작품 보러 가기 →</button></div>
+<div class="hud panel" id="deskHud" hidden><span>작업대에 앉았어요 · 드래그로 둘러보기</span><button id="deskUp" type="button">일어나기 <kbd>E</kbd></button></div>
 <div class="hud" id="prompt" hidden><button id="sitBtn" type="button">물레에 앉기 <kbd>E</kbd></button></div>
 <form class="hud panel" id="chat" hidden autocomplete="off"><label for="chatIn" class="sr">말하기</label><input id="chatIn" maxlength="40" placeholder="공방에 한마디…"><button type="submit">말하기</button></form>
 <div class="hud" id="joy" hidden><div id="knob"></div></div>
@@ -1997,7 +2000,7 @@ addEventListener('keydown',e=>{
   keys[e.code]=true;
   if(viewer.open){ if(e.code==='Escape') closeViewer(); return; }
   if(e.code==='Enter' && !$('chat').hidden){ e.preventDefault(); $('chatIn').focus(); return; }
-  if(e.code==='KeyE'){ mode==='walk'?trySit():stand(); }
+  if(e.code==='KeyE'){ mode==='walk'?trySit():mode==='desk'?leaveDesk():stand(); }
   if(e.code==='Escape' && mode==='throw') stand();
   if(mode==='throw'){
     const map={Digit1:'center',Digit2:'open',Digit3:'flat',Digit4:'pull',Digit5:'shape'};
@@ -2259,6 +2262,26 @@ function finishStand(){
 }
 
 let sitT=0; const lookV=new THREE.Vector3();
+/* ---------- sitting at the painting table ---------- */
+const DESK={x:-4.6,z:-3.6,h:.76,sx:-4.55,sz:-2.82};
+DESK.box=new THREE.Box3(new THREE.Vector3(DESK.x-.85,0,DESK.z-.42),new THREE.Vector3(DESK.x+.85,DESK.h+.35,DESK.z+.42));
+let deskYaw0=0, deskPitch0=0;
+function sitDesk(){
+  mode='desk'; danceT=0; moveTarget=null; tapRing.visible=false;
+  avatar.position.set(DESK.sx,0,DESK.sz); avatar.rotation.y=Math.PI; avatar.visible=false;
+  rig.position.y=.24; legL.rotation.x=legR.rotation.x=-1.5; armL.rotation.x=armR.rotation.x=-1.1;
+  $('prompt').hidden=true; $('deskHud').hidden=false; $('help').style.visibility='hidden';
+  lookV.copy(camTarget); deskYaw0=yaw; deskPitch0=pitch;
+  $('sub').textContent='작업대 · 앉아 있는 중';
+}
+function leaveDesk(){
+  if(mode!=='desk') return;
+  mode='walk'; avatar.visible=true; avatar.position.set(DESK.sx,0,DESK.sz+.45); avatar.rotation.y=0;
+  rig.position.y=0; legL.rotation.x=legR.rotation.x=0; armL.rotation.x=armR.rotation.x=0;
+  $('deskHud').hidden=true; $('help').style.visibility='';
+  yaw=0; pitch=.35; $('sub').textContent='물레실 · 산책 중';
+}
+$('deskUp').addEventListener('click',e=>{ e.stopPropagation(); leaveDesk(); });
 function throwCam(w){
   const c=w.clay; let maxR=0; for(let i=0;i<N;i++) maxR=Math.max(maxR,c.r[i]);
   const size=Math.max(c.H,maxR*1.6);
@@ -2653,6 +2676,10 @@ function handleTap(cx,cy){
   ndc.set(((cx-b.left)/b.width)*2-1,-((cy-b.top)/b.height)*2+1);
   ray.setFromCamera(ndc,camera);
   if(mode==='walk'&&avatar.visible&&ray.intersectObject(avatar,true).length){ danceT=DANCE_LEN; danceClock=0; moveTarget=null; autoSit=null; tapRing.visible=false; return; }
+  // tapped the painting table? walk to its stool and sit down at it
+  if(mode==='walk'&&ray.ray.intersectBox(DESK.box,new THREE.Vector3())){
+    moveTarget=new THREE.Vector3(DESK.sx,0,DESK.sz+.42); autoSit='desk'; stuckT=0;
+    tapRing.position.x=DESK.sx; tapRing.position.z=DESK.sz+.42; tapRing.visible=true; return; }
   // tapped one of my own pots? go to it
   const potMeshes=[...sharedPots.values()].map(v=>v.mesh).concat(savedPots.filter(Boolean));
   const ph=ray.intersectObjects(potMeshes,false);
@@ -2680,6 +2707,7 @@ function handleTap(cx,cy){
 }
 function arriveTarget(){
   const w=autoSit; moveTarget=null; autoSit=null; stuckT=0; tapRing.visible=false;
+  if(w==='desk'){ if(Math.hypot(avatar.position.x-DESK.sx,avatar.position.z-DESK.sz)<1.2) sitDesk(); return; }
   if(w && nearestWheel()===w) trySit();
 }
 
@@ -3301,6 +3329,11 @@ function frame(){
 
     const near=mode==='walk'?nearestWheel():null; $('prompt').hidden=!near;
     if(near) $('sitBtn').firstChild.textContent=near.remote?`물레 ${wheels.indexOf(near)+1}번 · 사용 중 `:`물레 ${wheels.indexOf(near)+1}번에 앉기 `;
+  } else if(mode==='desk'){
+    // over-the-shoulder view down onto the table; dragging looks around a little
+    const lx=Math.max(-.7,Math.min(.7,(deskYaw0-yaw)*.6)), ly=Math.max(-.25,Math.min(.35,(pitch-deskPitch0)*.6));
+    camPos.set(DESK.sx+.02,1.42,DESK.sz+.32); camTarget.set(DESK.sx+lx,DESK.h+.02+ly,DESK.z+.08);
+    camera.position.lerp(camPos,Math.min(1,dt*3)); lookV.lerp(camTarget,Math.min(1,dt*3)); camera.lookAt(lookV);
   } else if(mode==='sitting'){
     sitIntro(dt);
   } else if(mode==='rising'){
@@ -3349,7 +3382,7 @@ function frame(){
   if(room&&presT<=0){
     presT=room.slow?.2:.1;   // Supabase: 5 updates a second is plenty and stays well inside the free limits
     const st={x:+avatar.position.x.toFixed(2),z:+avatar.position.z.toFixed(2),ry:+avatar.rotation.y.toFixed(2),mv:(mode==='walk'&&moving)?1:0,dn:danceT>0?1:0,
-      w:mode!=='walk'?wheels.indexOf(active):-1,rpm:mode==='throw'?active.rpm:0,clay:mode==='throw'?encodeClay(active.clay):null,uid:myId};
+      w:(mode!=='walk'&&mode!=='desk')?wheels.indexOf(active):-1,rpm:mode==='throw'?active.rpm:0,clay:mode==='throw'?encodeClay(active.clay):null,uid:myId};
     const key=JSON.stringify(st);
     if(key!==lastPres){ lastPres=key; room.presence(st).catch(()=>{}); }
   }
