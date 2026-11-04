@@ -359,7 +359,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261105-0035';
+(function(){ const BUILD='20261105-0100';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -792,14 +792,14 @@ Object.assign(sun.shadow.camera,{left:-8,right:8,top:6,bottom:-6,near:1,far:25})
 sun.shadow.bias=-.0006; scene.add(sun,sun.target);
 
 /* ---------- pots (decor + saved works) ---------- */
-function potGeo(outer,wall){
+function potGeo(outer,wall,seg){
   const pts=[new THREE.Vector2(0.001,0)];
   outer.forEach(([r,y])=>pts.push(new THREE.Vector2(r,y)));
   const top=outer[outer.length-1];
   pts.push(new THREE.Vector2(top[0]-wall/2,top[1]+wall*.4));
   for(let i=outer.length-1;i>=0;i--){ const [r,y]=outer[i]; if(y<wall*1.4) break; pts.push(new THREE.Vector2(Math.max(.002,r-wall),y)); }
   pts.push(new THREE.Vector2(.001,wall*1.4));
-  return new THREE.LatheGeometry(pts,48);
+  return new THREE.LatheGeometry(pts,seg||48);
 }
 const SHAPES={
   bowl:[[.035,0],[.055,.02],[.075,.045],[.088,.07]],
@@ -1721,7 +1721,7 @@ function shelfUnit(cx,cz,ry,width,boards,fill){
     add(new THREE.BoxGeometry(.008,.07,.04),zinc,x-.022,B-.045,z); add(new THREE.BoxGeometry(.008,.07,.04),zinc,x+.022,B-.045,z);
     add(new THREE.CylinderGeometry(.045,.045,.03,18),rubber,x,.045,z+.012).rotation.z=Math.PI/2; });
   // boards of bowls (instanced), each board pulled out a little differently; plastic over the top five
-  const bowlGeo=potGeo(SHAPES.bowl,.006), per=5*3, bowls=new THREE.InstancedMesh(bowlGeo,wet,levels.length*per); bowls.castShadow=true; bowls.receiveShadow=true;
+  const bowlGeo=potGeo(SHAPES.bowl,.006,28), per=5*3,   /* 180 small bowls on the rack: 28 sides is plenty at that size */ bowls=new THREE.InstancedMesh(bowlGeo,wet,levels.length*per); bowls.castShadow=true; bowls.receiveShadow=true;
   const mtx=new THREE.Matrix4(), q=new THREE.Quaternion(), sc=new THREE.Vector3(.78,.78,.78), pos=new THREE.Vector3(), up=new THREE.Vector3(0,1,0); let n=0;
   levels.forEach((y,li)=>{
     const out=rnd(.0,.07);
@@ -2034,22 +2034,22 @@ function smooth(c,k){
   n[N-1]=r[N-1]+k*(r[N-2]-r[N-1])*.5; c.r.set(n);
 }
 function clampR(c){ const minR=c.open>.5?c.tw+.006:.012; for(let i=0;i<N;i++) c.r[i]=Math.min(.17,Math.max(minR,c.r[i])); }
-function clayGeo(c){
-  const V=(x,y)=>new THREE.Vector2(x,y), dh=c.H/(N-1), pts=[V(.0005,0)];
-  for(let i=0;i<N;i++) pts.push(V(c.r[i],i*dh));
+function clayGeo(c,lod){
+  const V=(x,y)=>new THREE.Vector2(x,y), dh=c.H/(N-1), pts=[V(.0005,0)], st=lod===2?2:1;
+  for(let i=0;i<N;i+=st) pts.push(V(c.r[i],i*dh)); if((N-1)%st) pts.push(V(c.r[N-1],(N-1)*dh));
   if(c.open<.02){
     pts.push(V(c.r[N-1]*.6,c.H+.004)); pts.push(V(.0005,c.H+.006));
   } else {
     const k=Math.min(1,c.open*2.2), yb=c.H-c.open*(c.H-FLOOR);
     pts.push(V((c.r[N-1]+innerR(c,N-1,k))/2,c.H+Math.min(.004,c.tw*.4)));
     let last=innerR(c,N-1,k);
-    for(let i=N-1;i>=0;i--){ const y=i*dh; if(y<yb) break; last=innerR(c,i,k); pts.push(V(last,y)); }
+    for(let i=N-1;i>=0;i-=st){ const y=i*dh; if(y<yb) break; last=innerR(c,i,k); pts.push(V(last,y)); }
     pts.push(V(last*.75,yb)); pts.push(V(.0005,yb));
   }
   // map the texture by real surface length so the top and inside don't stretch into streaks
   // more segments round the pot so the surface shades smoothly (no faceted lines), and the texture wraps
   // round a whole number of times so its edges meet without a seam
-  const SEG=128, geo=new THREE.LatheGeometry(pts,SEG), np=pts.length, uv=geo.attributes.uv;
+  const SEG=lod===2?48:lod===1?72:128, geo=new THREE.LatheGeometry(pts,SEG), np=pts.length, uv=geo.attributes.uv;
   const cum=[0]; for(let k=1;k<np;k++) cum.push(cum[k-1]+pts[k].distanceTo(pts[k-1]));
   for(let i=0;i<=SEG;i++) for(let j=0;j<np;j++){ uv.setX(i*np+j,i/SEG*2); uv.setY(i*np+j,cum[j]/.3); }
   uv.needsUpdate=true;
@@ -2334,7 +2334,7 @@ const firstTouch=()=>{
 UNLOCK.forEach(t=>addEventListener(t,firstTouch,true));
 document.addEventListener('visibilitychange',()=>{ if(!audioCtx) return; if(document.hidden){ audioCtx.suspend(); try{ silentEl&&silentEl.pause(); }catch(e){} } else if(bgm.on){ audio(); bgm.next=audioCtx.currentTime+.1; } });
 $('saveBtn').addEventListener('click',()=>{
-  if(!active) return; const c=active.clay;
+  if(!active) return; const c=active.clay; if(active.draft){ active.draft=false; rebuild(active); }
   if(c.open<.95){ warn('구멍을 뚫고 벽을 세워야 선반에 올릴 수 있어요'); return; }
   // celebrate: show the finished pot on a ware board with confetti and a fanfare
   fanfare();
@@ -2930,7 +2930,7 @@ function renderShelf(docs){
   sharedPots.forEach((v,k)=>{ if(!keep.has(k)){ scene.remove(v.mesh); scene.remove(v.label); if(v.board) scene.remove(v.board); v.mesh.geometry.dispose(); sharedPots.delete(k); } });
   shown.forEach((p,i)=>{
     let v=sharedPots.get(p.key);
-    if(!v){ const mesh=new THREE.Mesh(clayGeo(p.clay),clayMats[p.clay.k||0]); mesh.castShadow=mesh.receiveShadow=true; mesh.rotation.y=rnd(0,6.28); scene.add(mesh);
+    if(!v){ const mesh=new THREE.Mesh(clayGeo(p.clay,2),clayMats[p.clay.k||0]); mesh.userData.clay=p.clay; mesh.castShadow=mesh.receiveShadow=true; mesh.rotation.y=rnd(0,6.28); scene.add(mesh);
       mesh.userData.potId=p.id; mesh.userData.key=p.key; mesh.userData.owner=p.owner;
       v={mesh,label:potLabel(),owner:p.owner,t:p.t,id:p.id,board:wareBoardFor(mesh),pt:null}; sharedPots.set(p.key,v); }
     v.star=p.star;
@@ -3209,7 +3209,9 @@ function openViewer(mesh,title,celebrate){
   if(vPot) vScene.remove(vPot);
   if(!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
   const bb=mesh.geometry.boundingBox, h=bb.max.y, r=Math.max(bb.max.x,bb.max.z,-bb.min.x,-bb.min.z);
-  vPot=new THREE.Mesh(mesh.geometry,mesh.material); vPot.castShadow=true; vScene.add(vPot);
+  let vGeo=mesh.geometry;
+  if(mesh.userData&&mesh.userData.clay){ const hi=clayGeo(mesh.userData.clay); vGeo=mesh.userData.paintGeo?PT.paintGeo(hi):hi; }   // shelf pots are stored light; close up gets every detail
+  vPot=new THREE.Mesh(vGeo,mesh.material); vPot.castShadow=true; vScene.add(vPot);
   const disc=vScene.getObjectByName('disc'), board=vScene.getObjectByName('board'), conf=vScene.getObjectByName('confetti'), carry=vScene.getObjectByName('carry');
   disc.scale.set(r*1.4,1,r*1.4); disc.position.y=-.011; disc.visible=!celebrate;
   board.visible=false;
@@ -3230,7 +3232,7 @@ function openViewer(mesh,title,celebrate){
   $('vHint').textContent=celebrate?'나무판에 올려 선반으로 옮겨요 · 닫으면 계속 빚을 수 있어요':'드래그해서 돌려 보기 · 두 손가락이나 휠로 확대';
   // paint any pot of mine: the one just finished, or one of mine opened from the shelf / work panel
   const mine=celebrate||title==='내 작품'; $('vPaint').hidden=!mine;
-  if(mine&&!celebrate&&mesh.isMesh){ const u=mesh.userData; lastFinished={geo:u.srcGeo||mesh.geometry,mat:u.clayMat||mesh.material,paint:u.paint||null,local:mesh,fromShelf:true,potId:u.potId||null}; }
+  if(mine&&!celebrate&&mesh.isMesh){ const u=mesh.userData; lastFinished={geo:u.clay?clayGeo(u.clay):(u.srcGeo||mesh.geometry),mat:u.clayMat||mesh.material,paint:u.paint||null,local:mesh,fromShelf:true,potId:u.potId||null}; }
   { const key=!celebrate&&mesh.userData&&mesh.userData.key; $('vStar').hidden=!(isTeacher&&key); $('vStar').style.top=`calc(${mine?108:60}px + env(safe-area-inset-top,0px))`; if(key){ $('vStar').dataset.key=key; $('vStar').setAttribute('aria-pressed',picks.has(key)); } }
   $('viewer').hidden=false; viewer.open=true; resizeViewer();
   // on a tall phone screen the sides are the tight edge: step back so the whole pot (and board) fits
@@ -3454,7 +3456,7 @@ $('vPaint').addEventListener('click',()=>{
     // the same pot on the shelf (mine, the newest), and the one in this close-up view
     const shelfMesh=shelfOf(lf);
     applyPaintTo(shelfMesh,cv,lf.mat);
-    if(lf.fromShelf&&shelfMesh){ vPot.geometry=shelfMesh.geometry; vPot.material=shelfMesh.material; } else applyPaintTo(vPot,cv,lf.mat);
+    if(lf.fromShelf&&shelfMesh){ vPot.geometry=shelfMesh.userData.clay?PT.paintGeo(clayGeo(shelfMesh.userData.clay)):shelfMesh.geometry; vPot.material=shelfMesh.material; } else applyPaintTo(vPot,cv,lf.mat);
     $('vHint').textContent='그림을 입혔어요 · 사진첩에 저장해 보세요';
     persistPaint(lf,shelfMesh,cv);
   });
@@ -3797,8 +3799,26 @@ const ceilingFan=(()=>{
 const clock=new THREE.Clock(); let walkPhase=0, statT=0;
 const camTarget=new THREE.Vector3(), camPos=new THREE.Vector3();
 camera.position.set(.4,2.2,4.6);
+/* ---------- keeping it smooth ----------
+   1) shadows: redrawn every other frame while anything moves, rarely when the room is still
+   2) resolution: if frames get slow the drawing resolution steps down a little (and back up when there is room) */
+let lastNearTxt=null, frameN=0, perfAcc=0, perfN=0, perfT=0, pixR=Math.min(devicePixelRatio,2);
+const PIX_MAX=Math.min(devicePixelRatio,2), PIX_MIN=Math.min(1,PIX_MAX);
+renderer.shadowMap.autoUpdate=false; renderer.shadowMap.needsUpdate=true;
+function tunePerf(raw){
+  perfAcc+=raw; perfN++; perfT+=raw;
+  if(perfT<1.5) return;
+  const avg=perfAcc/perfN; perfAcc=0; perfN=0; perfT=0;
+  let next=pixR;
+  if(avg>1/38&&pixR>PIX_MIN) next=Math.max(PIX_MIN,pixR-.25);
+  else if(avg<1/56&&pixR<PIX_MAX) next=Math.min(PIX_MAX,pixR+.25);
+  if(next!==pixR){ pixR=next; renderer.setPixelRatio(pixR); resize(); }
+}
 function frame(){
-  const dt=Math.min(.05,clock.getDelta());
+  const raw=clock.getDelta(), dt=Math.min(.05,raw); frameN++;
+  if(!document.hidden&&raw<.5) tunePerf(raw);
+  { const busy=mode!=='walk'||moving||danceT>0||remotes.size>0||!!focus;
+    if(frameN%(busy?2:30)===0) renderer.shadowMap.needsUpdate=true; }
 
   // wheels spin
   wheels.forEach(w=>w.remote=null);
@@ -3808,7 +3828,7 @@ function frame(){
     let rpm=w.rpm, center=w.clay.center;
     if(w.remote && w!==active){
       const t=w.remote.t; rpm=t.rpm;
-      if(t.clayObj){ center=t.clayObj.center; if(t.clayKey!==w.remoteKey){ w.remoteKey=t.clayKey; w.mesh.geometry.dispose(); w.mesh.geometry=clayGeo(t.clayObj); w.mesh.material=clayMats[t.clayObj.k||0]; } }
+      if(t.clayObj){ center=t.clayObj.center; if(t.clayKey!==w.remoteKey){ w.remoteKey=t.clayKey; w.mesh.geometry.dispose(); w.mesh.geometry=clayGeo(t.clayObj,1); w.mesh.material=clayMats[t.clayObj.k||0]; } }
     } else if(w.remoteKey){ w.remoteKey=null; rebuild(w); }
     w.angle+=rpm/60*Math.PI*2*dt; w.head.rotation.y=w.angle;
     if(w.mesh){ const wob=(1-center)*.007*Math.min(1,rpm/60); w.mesh.position.x=Math.cos(w.angle)*wob; w.mesh.position.z=Math.sin(w.angle)*wob; }
@@ -3866,8 +3886,8 @@ function frame(){
     camPos.x=Math.min(RX-.2,Math.max(-RX+.2,camPos.x)); camPos.z=Math.min(RZ-.2,Math.max(-RZ+.2,camPos.z)); camPos.y=Math.min(RH-.2,camPos.y);
     camera.position.lerp(camPos,Math.min(1,dt*6)); camera.lookAt(camTarget);
 
-    const near=mode==='walk'?nearestWheel():null; $('prompt').hidden=!near;
-    if(near) $('sitBtn').firstChild.textContent=near.remote?`물레 ${wheels.indexOf(near)+1}번 · 사용 중 `:`물레 ${wheels.indexOf(near)+1}번에 앉기 `;
+    const near=mode==='walk'?nearestWheel():null, nearTxt=near?(near.remote?`물레 ${wheels.indexOf(near)+1}번 · 사용 중 `:`물레 ${wheels.indexOf(near)+1}번에 앉기 `):'';
+    if(nearTxt!==lastNearTxt){ lastNearTxt=nearTxt; $('prompt').hidden=!near; if(near) $('sitBtn').firstChild.textContent=nearTxt; }
   } else if(mode==='desk'){
     // over-the-shoulder view down onto the table; dragging looks around a little
     const lx=Math.max(-.7,Math.min(.7,(deskYaw0-yaw)*.6)), ly=Math.max(-.25,Math.min(.35,(pitch-deskPitch0)*.6));
@@ -3879,7 +3899,8 @@ function frame(){
     riseOutro(dt);
   } else {
     const w=active, c=w.clay;
-    if(workClay(w,dt)){ rebuild(w); justSaved=false; }
+    if(workClay(w,dt)){ w.mesh.geometry.dispose(); w.mesh.geometry=clayGeo(w.clay,1); w.mesh.material=clayMats[w.clay.k||0]; w.draft=true; justSaved=false; }
+    else if(w.draft&&!pressing){ w.draft=false; rebuild(w); }
     if(tipTimer>0){ tipTimer-=dt; if(tipTimer<=0){ tipOverride=''; setTip(); } }
     const maxR=throwCam(w);
     updateHands(w,dt);
