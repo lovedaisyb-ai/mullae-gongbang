@@ -3127,6 +3127,48 @@ async function supabaseCaps(){
     if(o.geometry.type==='BoxGeometry'){ const w=Math.max(p.width,p.depth); o.material=mk(w/TW,p.height/TH); }
     else o.material=mk(1/TW,1/TH); });
 }
+
+// vintage ceiling fan hanging from the ridge in the middle of the room (blades turn slowly)
+const ceilingFan=(()=>{
+  const FY=3.55, TOP=5.16;      // hub height, underside of the ridge beam
+  const root=new THREE.Group(); root.position.set(0,0,1.0); scene.add(root); const SC=1.35;
+  const bronze=new THREE.MeshStandardMaterial({color:'#6b5034',roughness:.35,metalness:.75});
+  const dark=new THREE.MeshStandardMaterial({color:'#3a2c20',roughness:.4,metalness:.6});
+  const brass=new THREE.MeshStandardMaterial({color:'#b98c45',roughness:.3,metalness:.85});
+  const glass=new THREE.MeshStandardMaterial({color:'#fbf6ea',roughness:.25,emissive:'#fff1d0',emissiveIntensity:.55,transparent:true,opacity:.95});
+  const add=(geo,mat,x,y,z,par=root)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=true; par.add(m); return m; };
+  add(new THREE.CylinderGeometry(.06,.07,.05,20),bronze,0,TOP-.025,0);                    // canopy
+  add(new THREE.CylinderGeometry(.012,.012,TOP-FY-.15,10),dark,0,(TOP+FY+.15)/2,0);         // downrod
+  add(new THREE.CylinderGeometry(.03,.045,.06,18),bronze,0,FY+.16,0);
+  // motor housing with a brass band and vent ring
+  add(new THREE.CylinderGeometry(.13,.15,.12,32),bronze,0,FY+.06,0);
+  add(new THREE.TorusGeometry(.142,.008,8,32),brass,0,FY+.035,0).rotation.x=Math.PI/2;
+  add(new THREE.CylinderGeometry(.15,.11,.05,32),dark,0,FY-.02,0);
+  // spinning part: five wooden blades with cane-weave inserts on brass irons
+  const spin=new THREE.Group(); spin.position.y=FY-.01; root.add(spin);
+  const woodT=canvasTex(128,512,(g,w,h)=>{ g.fillStyle='#8a5a30'; g.fillRect(0,0,w,h);
+    for(let i=0;i<60;i++){ const x=rnd(0,w); g.strokeStyle=Math.random()<.5?'rgba(70,38,15,.35)':'rgba(190,130,75,.3)'; g.lineWidth=rnd(.6,2.5); g.beginPath(); g.moveTo(x,0); g.bezierCurveTo(x+rnd(-6,6),h*.3,x+rnd(-6,6),h*.7,x+rnd(-4,4),h); g.stroke(); }
+    // cane weave panel down the middle
+    g.fillStyle='#b9a27c'; g.fillRect(w*.22,h*.12,w*.56,h*.76); g.strokeStyle='rgba(90,70,45,.65)'; g.lineWidth=1.2;
+    for(let y=h*.12;y<h*.88;y+=6){ for(let x=w*.22;x<w*.78;x+=6){ g.beginPath(); g.arc(x+3,y+3,1.6,0,7); g.stroke(); } }
+    g.strokeStyle='#4a2c14'; g.lineWidth=3; g.strokeRect(w*.22,h*.12,w*.56,h*.76); });
+  const bladeM=new THREE.MeshStandardMaterial({map:woodT,roughness:.6});
+  const bs=new THREE.Shape(); bs.moveTo(-.045,0); bs.lineTo(.045,0); bs.lineTo(.075,.62); bs.quadraticCurveTo(0,.68,-.075,.62); bs.lineTo(-.045,0);
+  const bladeGeo=new THREE.ExtrudeGeometry(bs,{depth:.008,bevelEnabled:false}); bladeGeo.rotateX(Math.PI/2);   // blade runs outward along +z
+  { const uv=bladeGeo.attributes.uv, P=bladeGeo.attributes.position; for(let i=0;i<uv.count;i++) uv.setXY(i,(P.getX(i)+.075)/.15,P.getZ(i)/.68); }
+  for(let k=0;k<5;k++){ const arm=new THREE.Group(); arm.rotation.y=k/5*Math.PI*2; spin.add(arm);
+    const iron=add(new THREE.BoxGeometry(.03,.012,.18),brass,0,-.005,.17,arm); iron.rotation.x=.08;
+    const b=add(bladeGeo,bladeM,0,-.02,.16,arm); b.rotation.x=-.1; }
+  // light kit: four tulip glass shades on curved brass arms with pull chains
+  for(let k=0;k<4;k++){ const a=k/4*Math.PI*2+Math.PI/4, ax=Math.cos(a)*.13, az=Math.sin(a)*.13;
+    const c=new THREE.CatmullRomCurve3([new THREE.Vector3(0,FY-.05,0),new THREE.Vector3(ax*.6,FY-.07,az*.6),new THREE.Vector3(ax,FY-.12,az)]);
+    add(new THREE.TubeGeometry(c,10,.007,6,false),brass,0,0,0);
+    const sh=add(new THREE.SphereGeometry(.06,20,14,0,Math.PI*2,0,Math.PI*.62),glass,ax,FY-.12,az); sh.rotation.x=Math.PI; sh.scale.set(1,1.15,1); }
+  add(new THREE.SphereGeometry(.075,20,14),glass,0,FY-.12,0);
+  [[0,-.21],[.04,-.25]].forEach(([dx,dy])=>{ add(new THREE.CylinderGeometry(.0012,.0012,.18,4),brass,dx,FY+dy,0); add(new THREE.SphereGeometry(.01,10,8),brass,dx,FY+dy-.09,0); });
+  root.scale.set(SC,1,SC); spin.scale.set(1,SC,1);
+  return {spin};
+})();
 const clock=new THREE.Clock(); let walkPhase=0, statT=0;
 const camTarget=new THREE.Vector3(), camPos=new THREE.Vector3();
 camera.position.set(.4,2.2,4.6);
@@ -3215,6 +3257,7 @@ function frame(){
     }
   }
   updateClock();
+  ceilingFan.spin.rotation.y+=dt*1.6;
   if(halo.visible){ haloT-=dt; const hs=halo.userData.base*(1+Math.sin(clock.elapsedTime*5)*.08); halo.scale.set(hs,hs,hs); halo.material.opacity=Math.min(.9,haloT); if(haloT<=0) halo.visible=false; }
   // other potters
   remotes.forEach(r=>{
