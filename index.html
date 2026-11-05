@@ -88,6 +88,25 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 #loading{position:fixed;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:18px;color:var(--muted);}
 
 #who{margin:4px 0 0;font-size:12px;color:var(--celadon);}
+#galPanel{left:50%;top:50%;transform:translate(-50%,-50%);z-index:25;width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 110px);max-height:calc(100dvh - 110px);display:flex;flex-direction:column;padding:14px 14px 12px;box-sizing:border-box;}
+#galHead{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+#galHead h2{margin:0;flex:1;font-family:"Jua","Gaegu",var(--body);font-size:20px;font-weight:400;}
+#galClose{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.6);font-size:16px;padding:0;}
+#galTabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
+#galTabs button{font-family:"Jua","Gaegu",var(--body);font-size:14px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.55);}
+#galTabs button[aria-pressed=true]{background:#f48b34;border-color:#f48b34;color:#fff;}
+#galSub{font-size:12px;color:var(--muted);margin:0 0 8px;}
+#galGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:8px;overflow:auto;padding:2px 2px 4px;-webkit-overflow-scrolling:touch;}
+.galCard{position:relative;display:grid;gap:4px;padding:7px;border-radius:12px;background:rgba(255,255,255,.55);border:1.5px solid var(--line);text-align:left;font:inherit;color:inherit;cursor:pointer;}
+.galCard:active{transform:scale(.98);}
+.galCard.star{border-color:#e8742a;background:rgba(255,240,224,.85);}
+.galCard canvas{width:100%;height:auto;aspect-ratio:360/276;display:block;border-radius:8px;background:linear-gradient(#f6f1e7,#ebe3d4);}
+.galCard .who{font-family:"Jua","Gaegu",var(--body);font-size:14px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.galCard .meta{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;}
+.galCard .badge{position:absolute;top:11px;left:11px;font-family:"Jua","Gaegu",var(--body);font-size:11px;padding:2px 7px;border-radius:999px;background:#e8742a;color:#fff;}
+.galCard .badge.new{background:#4f7f70;}
+#galEmpty{font-size:13px;color:var(--muted);text-align:center;padding:24px 0;}
+#allWorkBtn{padding:6px 12px;font-size:12px;background:#e8742a;border:1px solid #f4a46a;border-radius:999px;color:#fff;}
 #boxPanel{left:50%;top:50%;transform:translate(-50%,-50%);z-index:25;width:min(460px,calc(100vw - 24px));max-height:calc(100vh - 110px);max-height:calc(100dvh - 110px);display:flex;flex-direction:column;padding:14px 14px 12px;box-sizing:border-box;}
 #boxHead{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
 #boxHead h2{margin:0;flex:1;font-family:"Jua","Gaegu",var(--body);font-size:20px;font-weight:400;}
@@ -265,7 +284,7 @@ body.throwing #brand{display:none;}
 <div id="loading">공방 문을 여는 중…</div>
 <canvas id="c" tabindex="0" aria-label="도자기 공방 3D 공간"></canvas>
 
-<div class="hud panel" id="brand"><h1>선아씨 물레 공방</h1><p id="sub">물레실 · 산책 중</p><p id="who">공방 연결 중…</p><div class="brandBtns"><button id="myWorkBtn" type="button" hidden>내 작품함</button></div></div>
+<div class="hud panel" id="brand"><h1>선아씨 물레 공방</h1><p id="sub">물레실 · 산책 중</p><p id="who">공방 연결 중…</p><div class="brandBtns"><button id="allWorkBtn" type="button" hidden>모두의 작품</button><button id="myWorkBtn" type="button" hidden>내 작품함</button></div></div>
 
 <div class="hud panel" id="help">
   <div><b>클릭</b>한 곳으로 걷기 · 드래그로 시점</div>
@@ -275,6 +294,12 @@ body.throwing #brand{display:none;}
   <div><b>물레 앞:</b> <kbd>1</kbd>–<kbd>5</kbd> 도구 · <kbd>Space</kbd> 물레 켜기</div>
 </div>
 
+<div class="hud panel" id="galPanel" role="dialog" aria-labelledby="galTitle" hidden>
+  <div id="galHead"><h2 id="galTitle">모두의 작품</h2><button id="galClose" type="button" aria-label="닫기">✕</button></div>
+  <div id="galTabs" role="group" aria-label="보기"><button type="button" data-f="all" aria-pressed="true">전체</button><button type="button" data-f="star" aria-pressed="false">⭐ 선아씨 추천</button><button type="button" data-f="new" aria-pressed="false">새 작품</button></div>
+  <p id="galSub"></p>
+  <div id="galGrid"></div>
+</div>
 <div class="hud panel" id="boxPanel" role="dialog" aria-labelledby="boxTitle" hidden>
   <div id="boxHead"><h2 id="boxTitle">내 작품함</h2><button id="boxClose" type="button" aria-label="닫기">✕</button></div>
   <p id="boxSub"></p>
@@ -359,7 +384,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261106-0600';
+(function(){ const BUILD='20261106-0625';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -3043,13 +3068,16 @@ function renderShelf(docs){
     const by=SBOARDS[Math.floor(i/SPER)], j=i%SPER, x=(j<7?-1.55:1.55)+(j%7-3)*.43; /* 7 per bay, clear of the middle post */
     v.board.position.set(x,by+.029,SZ+.02); v.board.rotation.y=(p.l||0)*.5; v.mesh.position.set(x,by+.038,SZ+.02); v.label.position.set(x,by-.035,SZ-.192);
   });
+  galList=shown; $('allWorkBtn').hidden=!shown.length; if(!$('galPanel').hidden) drawGal();
   drawSign(all.length?`작품 ${all.length}점`:'첫 작품을 올려 보세요');
   nameLabels(); updateMyWorkBtn();
 }
 async function nameLabels(){
   const owners=[...new Set([...sharedPots.values()].map(v=>v.owner))];
   let ps={}; if(userCap&&owners.length){ try{ ps=await userCap.profiles(owners); }catch(e){} }
+  owners.forEach(o=>{ if(ps[o]&&ps[o].name) galNames[o]=ps[o].name; });
   sharedPots.forEach(v=>setPotLabel(v.label,(v.star?'⭐ ':'')+((ps[v.owner]&&ps[v.owner].name)||'도예가')));
+  if(!$('galPanel').hidden) drawGal();
 }
 function startShelf(){
   drawSign('불러오는 중…');
@@ -3120,9 +3148,71 @@ function potThumb(cv,p,cl){
   const mat=clayMats[cl.k||0], mesh=new THREE.Mesh(clayGeo(cl),mat);
   const done=()=>{ try{ thumbCache.set(key,thumbDraw(cv,mesh)); }catch(e){} mesh.geometry.dispose(); };
   if(p.pt){ const img=new Image(); img.onload=()=>{ const c=document.createElement('canvas'); c.width=PT.TW/2; c.height=PT.TH/2; c.getContext('2d').drawImage(img,0,0,c.width,c.height); applyPaintTo(mesh,c,mat,true); done(); }; img.onerror=done; img.src=p.pt; }
-  else requestAnimationFrame(done);
+  else thumbQ.push(done), pumpThumbs();
 }
-function openBox(){ closeWork(); $('boxPanel').hidden=false; drawBox(); }
+const thumbQ=[]; let thumbPumping=false;
+function pumpThumbs(){ if(thumbPumping) return; thumbPumping=true;
+  const step=()=>{ for(let i=0;i<3&&thumbQ.length;i++) thumbQ.shift()(); if(thumbQ.length) requestAnimationFrame(step); else thumbPumping=false; };
+  requestAnimationFrame(step); }
+
+/* ---------- 모두의 작품: every pot on the shared shelf as picture cards; tap one to see it close up ---------- */
+let galList=[], galFilter='all', galReturn=false; const galNames={};
+function openGal(){ closeWork(); closeBox(); $('galPanel').hidden=false; drawGal(); }
+function closeGal(){ $('galPanel').hidden=true; }
+function drawGal(){
+  const grid=$('galGrid'); grid.innerHTML='';
+  const dayAgo=Date.now()-86400000;
+  const list=galList.filter(p=>galFilter==='star'?p.star:galFilter==='new'?p.t>dayAgo:true).slice().sort((a,b)=>(b.star-a.star)||(b.t-a.t));
+  const people=new Set(galList.map(p=>p.owner)).size;
+  $('galSub').textContent=`작품 ${galList.length}점 · 도예가 ${people}명 · 카드를 누르면 크게 보여요`;
+  if(!list.length){ grid.innerHTML=`<div id="galEmpty">${galFilter==='star'?'아직 선아씨 추천 작품이 없어요':galFilter==='new'?'오늘 올라온 작품이 없어요':'아직 선반에 작품이 없어요'}</div>`; return; }
+  list.forEach(p=>{ const b=document.createElement('button'); b.type='button'; b.className='galCard'+(p.star?' star':'');
+    const nm=p.owner===myId?'내 작품':(galNames[p.owner]||'도예가');
+    const cv=document.createElement('canvas'); cv.width=360; cv.height=276; b.appendChild(cv); potThumb(cv,p,p.clay);
+    const who=document.createElement('span'); who.className='who'; who.textContent=p.owner===myId?'내 작품':nm+'의 작품'; b.appendChild(who);
+    b.insertAdjacentHTML('beforeend',`<span class="meta">높이 ${(p.clay.H*100).toFixed(1)}cm · ${new Date(p.t||0).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})}</span>${p.star?'<span class="badge">⭐ 추천</span>':p.t>dayAgo?'<span class="badge new">새 작품</span>':''}`);
+    b.setAttribute('aria-label',`${nm} 작품 크게 보기`);
+    b.addEventListener('click',()=>viewGalPot(p,nm)); grid.appendChild(b); });
+}
+function viewGalPot(p,nm){
+  const v=sharedPots.get(p.key);
+  if(v){ closeGal(); galReturn=true; openViewer(v.mesh,p.owner===myId?'내 작품':nm+'의 작품'); return; }   // the shelf copy already carries any painting
+}
+$('allWorkBtn').addEventListener('click',openGal);
+
+/* ---------- "you can tap these": when you walk up to the shared shelf, the pots right in front of you get a soft
+   pulsing ring on their ware boards; with a mouse, the pot under the pointer lights up and the cursor becomes a hand ---------- */
+// a soft warm glow behind each pot (a camera-facing sprite, so it reads from any angle)
+const potRings=[], RING_N=6, glowTex=canvasTex(128,128,(g,w,h)=>{ const gr=g.createRadialGradient(w/2,h/2,4,w/2,h/2,w/2); gr.addColorStop(0,'rgba(255,176,96,.95)'); gr.addColorStop(.4,'rgba(250,140,60,.55)'); gr.addColorStop(1,'rgba(245,130,50,0)'); g.fillStyle=gr; g.fillRect(0,0,w,h); });
+for(let i=0;i<RING_N+1;i++){ const m=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,transparent:true,opacity:0,depthWrite:false,toneMapped:false}));
+  m.visible=false; m.renderOrder=-1; scene.add(m); potRings.push(m); }
+let hoverPot=null, hoverT=0;
+function ringOn(r,v,strength,t){
+  const g=v.mesh.geometry; if(!g.boundingBox) g.computeBoundingBox(); const bb=g.boundingBox, h=bb.max.y, w=Math.max(bb.max.x,bb.max.z)*2;
+  r.visible=true; r.position.set(v.mesh.position.x,v.mesh.position.y+h*.48,v.mesh.position.z+.07);   // just behind the pot, toward the wall
+  const sz=Math.max(h,w)*2.7; r.scale.set(sz,sz,1);
+  r.material.opacity=Math.min(1,strength*(.8+.2*Math.sin(t*3.2+v.mesh.position.x*2)));
+}
+function updatePotRings(t){
+  potRings.forEach(r=>r.visible=false);
+  if(mode!=='walk'||viewer.open||PT.s.open||!sharedPots.size) return;
+  const ax=avatar.position.x, az=avatar.position.z;
+  if(az<SZ-2.2){ if(hoverPot) ringOn(potRings[RING_N],hoverPot,1.6,t); return; }   // far from the shelf: only the hovered pot
+  const near=[]; sharedPots.forEach(v=>{ const d=Math.hypot(v.mesh.position.x-ax,(v.mesh.position.z-az)*.6); if(d<1.5) near.push([d,v]); });
+  near.sort((a,b)=>a[0]-b[0]); near.slice(0,RING_N).forEach(([d,v],i)=>ringOn(potRings[i],v,Math.max(.6,1.1-d/1.8),t));
+  if(hoverPot) ringOn(potRings[RING_N],hoverPot,1.6,t);
+}
+{ const hr=new THREE.Raycaster(), hn=new THREE.Vector2();
+  canvas.addEventListener('pointermove',e=>{
+    if(e.pointerType!=='mouse'||mode!=='walk') return; const now=performance.now(); if(now-hoverT<70) return; hoverT=now;
+    const r=canvas.getBoundingClientRect(); hn.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1); hr.setFromCamera(hn,camera);
+    const meshes=[...sharedPots.values()].map(v=>v.mesh), h=hr.intersectObjects(meshes,false)[0];
+    hoverPot=h?[...sharedPots.values()].find(v=>v.mesh===h.object):null; canvas.style.cursor=hoverPot?'pointer':'';
+  });
+  canvas.addEventListener('pointerleave',()=>{ hoverPot=null; canvas.style.cursor=''; }); }
+$('galClose').addEventListener('click',closeGal);
+document.querySelectorAll('#galTabs button').forEach(b=>b.addEventListener('click',()=>{ galFilter=b.dataset.f; document.querySelectorAll('#galTabs button').forEach(x=>x.setAttribute('aria-pressed',x===b)); drawGal(); }));
+function openBox(){ closeWork(); $('galPanel').hidden=true; $('boxPanel').hidden=false; drawBox(); }
 function closeBox(){ $('boxPanel').hidden=true; }
 function drawBox(){
   const grid=$('boxGrid'); grid.innerHTML='';
@@ -3344,7 +3434,7 @@ function openViewer(mesh,title,celebrate){
   if(vCam.aspect<1) vDist*=celebrate?Math.min(2.8,1.12/vCam.aspect):Math.min(2.2,.85/vCam.aspect);
   vMaxDist=celebrate?vDist*1.12:4; vTiltMin=celebrate?.22:-.15; vTiltMax=celebrate?.62:1.2;
 }
-function closeViewer(){ $('viewer').hidden=true; viewer.open=false; vPtrs.clear(); party=null; }
+function closeViewer(){ $('viewer').hidden=true; viewer.open=false; vPtrs.clear(); party=null; if(galReturn){ galReturn=false; openGal(); } }   // back to the gallery if that is where the pot was opened
 const _cm=new THREE.Matrix4(), _cq=new THREE.Quaternion(), _ce=new THREE.Euler(), _cs=new THREE.Vector3(), _cp=new THREE.Vector3();
 function renderViewer(dt){
   if(vAuto) vYaw+=dt*.5;
@@ -4036,6 +4126,7 @@ function frame(){
     }
   }
   updateClock();
+  updatePotRings(clock.elapsedTime);
   ceilingFan.spin.rotation.y+=dt*1.6;
   if(halo.visible){ haloT-=dt; const hs=halo.userData.base*(1+Math.sin(clock.elapsedTime*5)*.08); halo.scale.set(hs,hs,hs); halo.material.opacity=Math.min(.9,haloT); if(haloT<=0) halo.visible=false; }
   // other potters
