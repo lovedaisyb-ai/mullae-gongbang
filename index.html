@@ -384,7 +384,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261106-0625';
+(function(){ const BUILD='20261106-0630';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -3183,7 +3183,7 @@ $('allWorkBtn').addEventListener('click',openGal);
 /* ---------- "you can tap these": when you walk up to the shared shelf, the pots right in front of you get a soft
    pulsing ring on their ware boards; with a mouse, the pot under the pointer lights up and the cursor becomes a hand ---------- */
 // a soft warm glow behind each pot (a camera-facing sprite, so it reads from any angle)
-const potRings=[], RING_N=6, glowTex=canvasTex(128,128,(g,w,h)=>{ const gr=g.createRadialGradient(w/2,h/2,4,w/2,h/2,w/2); gr.addColorStop(0,'rgba(255,176,96,.95)'); gr.addColorStop(.4,'rgba(250,140,60,.55)'); gr.addColorStop(1,'rgba(245,130,50,0)'); g.fillStyle=gr; g.fillRect(0,0,w,h); });
+const potRings=[], RING_N=6, glowTex=canvasTex(128,128,(g,w,h)=>{ const gr=g.createRadialGradient(w/2,h/2,4,w/2,h/2,w/2); gr.addColorStop(0,'rgba(255,228,140,.95)'); gr.addColorStop(.4,'rgba(245,196,80,.55)'); gr.addColorStop(1,'rgba(235,180,60,0)');   /* soft gold */ g.fillStyle=gr; g.fillRect(0,0,w,h); });
 for(let i=0;i<RING_N+1;i++){ const m=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,transparent:true,opacity:0,depthWrite:false,toneMapped:false}));
   m.visible=false; m.renderOrder=-1; scene.add(m); potRings.push(m); }
 let hoverPot=null, hoverT=0;
