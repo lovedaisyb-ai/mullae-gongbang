@@ -84,11 +84,11 @@ const $=id=>document.getElementById(id), canvas=$('c');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse=matchMedia('(pointer:coarse)').matches;
 let renderer;
-try{ renderer=new THREE.WebGLRenderer({canvas,antialias:!coarse,powerPreference:'high-performance'}); }
+try{ renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'}); }
 catch(e){ $('status').textContent='이 기기에서는 3D 화면을 열 수 없습니다. 다른 브라우저로 열어 주세요.'; throw e; }
 try{ await Promise.race([document.fonts.load('700 64px "Noto Serif KR"','大雄殿一柱門不二尋劍堂說禪梵鍾閣'),new Promise(r=>setTimeout(r,1500))]); }catch(e){}
 
-renderer.setPixelRatio(Math.min(devicePixelRatio,coarse?1.25:1.5));
+let pxr=Math.min(devicePixelRatio,2);renderer.setPixelRatio(pxr);
 // 그래픽 메모리가 넘쳐 화면이 꺼지면 검은 화면으로 두지 않고 복구하거나 안내한다
 {let timer=0;const box=document.createElement('div');box.id='lost';box.hidden=true;box.innerHTML='<p>그래픽 메모리가 부족해 화면이 꺼졌습니다.</p><button id="lostBtn" type="button">다시 열기</button>';document.body.append(box);box.querySelector('button').onclick=()=>location.reload();
   canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();timer=setTimeout(()=>{box.hidden=false;},2500);});
@@ -780,9 +780,11 @@ J.addEventListener('pointerdown',e=>{J.setPointerCapture(e.pointerId);jm(e);tgt.
 const jend=()=>{joy.x=joy.y=0;K.style.transform='';};J.addEventListener('pointerup',jend);J.addEventListener('pointercancel',jend);
 
 /* 매 장면 */
-let camSnap=true,last=performance.now();const camPos=new THREE.Vector3(),look=new THREE.Vector3();
+let camSnap=true,last=performance.now(),frN=0,frT=0;const camPos=new THREE.Vector3(),look=new THREE.Vector3();
 function frame(now){
-  const dt=Math.min(.05,(now-last)/1000);last=now;
+  const raw=now-last,dt=Math.min(.05,raw/1000);last=now;
+  // 기기가 버거워하면 선명도를 한 단계씩 낮춘다(시작은 최대 2배)
+  if(!document.hidden&&raw<400){frN++;frT+=raw;if(frN>=90){if(frT/frN>42&&pxr>1){pxr=Math.max(1,pxr-.35);renderer.setPixelRatio(pxr);size();}frN=frT=0;}}
   let ix=(key.KeyD||key.ArrowRight?1:0)-(key.KeyA||key.ArrowLeft?1:0)+joy.x, iz=(key.KeyS||key.ArrowDown?1:0)-(key.KeyW||key.ArrowUp?1:0)+joy.y;
   let mx=0,mz=0,walking=false;
   const il=Math.hypot(ix,iz);
