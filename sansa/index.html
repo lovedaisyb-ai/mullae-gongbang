@@ -40,10 +40,24 @@ button[aria-pressed="true"]{background:var(--noerok);color:#16201b;border-color:
 #mapPanel h2{margin:0 0 8px;font:500 13px var(--body);color:var(--paper)}
 #mapSvg{display:block;width:100%;height:auto;max-height:calc(100dvh - 240px)}
 @media (max-width:640px){#mapPanel{top:calc(150px + env(safe-area-inset-top,0px))}}
-#status{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding-inline:24px;color:var(--muted);font-size:15px;pointer-events:none}
+#status{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;text-align:center;padding-inline:24px;color:var(--muted);font-size:15px;
+  background:radial-gradient(ellipse at 50% 58%,#3a2e22 0%,#1d211f 62%,#141715 100%);transition:opacity .9s ease}
+#status.out{opacity:0;pointer-events:none}
+#status .ln{width:1px;height:46px;background:linear-gradient(transparent,rgba(236,230,216,.5));margin-bottom:26px}
+#status h2{margin:0;font:700 clamp(22px,5.4vw,32px)/1.35 var(--display);color:var(--paper);letter-spacing:.06em;animation:inS 1.4s ease both}
+#status p{margin:14px 0 0;font:400 clamp(14px,3.6vw,16px)/1.7 var(--display);color:#cfc6b2;letter-spacing:.04em;animation:inS 1.4s .5s ease both}
+#status #enterBtn{margin-top:28px;min-width:168px;padding:12px 30px;font:500 15px/1 var(--display);letter-spacing:.2em;color:#f1e7cf;background:rgba(205,182,126,.14);border:1px solid #cdb67e;border-radius:2px;cursor:pointer;animation:inS 1s 3.1s ease both;transition:background .25s,color .25s,opacity .3s}
+#status #enterBtn:hover:not(:disabled),#status #enterBtn:focus-visible{background:#cdb67e;color:#1d211f}
+#status #enterBtn:disabled{opacity:.45;cursor:default}
+#status .rule{margin-top:30px;padding:16px 18px 14px;border-top:1px solid rgba(236,230,216,.16);border-bottom:1px solid rgba(236,230,216,.16);max-width:min(440px,88vw);text-align:left}
+#status .rule h3{margin:0 0 10px;text-align:center;font:500 clamp(13px,3.4vw,14px)/1.4 var(--display);color:#cdb67e;letter-spacing:.12em}
+#status .rule li{list-style:none;position:relative;padding-left:14px;font:400 clamp(12.5px,3.3vw,14px)/1.85 var(--display);color:#d9d1bf;opacity:0;animation:inS .9s ease both}
+#status .rule li::before{content:'';position:absolute;left:0;top:.82em;width:5px;height:5px;border-radius:50%;background:#a88f5a}
+#status .rule ul{margin:0;padding:0}
+@keyframes inS{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (pointer:coarse){#hint{display:none}#act{bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
 @media (max-width:640px){.top{flex-direction:column;align-items:stretch;gap:6px}#place{max-width:none}.time{align-self:flex-end}button{padding:8px 9px;font-size:12.5px}.bottom{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}}
-@media (prefers-reduced-motion:reduce){#fade{transition:none}}
+@media (prefers-reduced-motion:reduce){#fade,#status{transition:none}#status h2,#status p,#status #enterBtn,#status .rule li{animation:none;opacity:1}}
 </style>
 
 <canvas id="c" tabindex="0" aria-label="산사 3D 공간. 끌어서 둘러보고, 땅을 눌러 걸어갑니다."></canvas>
@@ -70,7 +84,7 @@ button[aria-pressed="true"]{background:var(--noerok);color:#16201b;border-color:
 <aside id="mapPanel" aria-label="경내 지도" hidden><h2>경내 지도</h2><svg id="mapSvg" viewBox="-31 -30 62 57" role="img" aria-label="대웅전이 북쪽에 있는 경내 배치도"></svg></aside>
 <div id="fade"></div>
 <div id="hallLoad" hidden>법당 문을 여는 중입니다</div>
-<div id="status">산문을 여는 중입니다</div>
+<div id="status" role="status" aria-live="polite"><div class="ln"></div><h2>절로사에 입장합니다</h2><p>산문에 들기 전, 잠시 숨을 고르고 마음을 정돈하세요</p><div class="rule"><h3>절에 들 때의 예절</h3><ul><li style="animation-delay:1.1s">단정한 옷차림으로 마음까지 가지런히 합니다</li><li style="animation-delay:1.5s">일주문에 들어서면 법당을 향해 반배로 인사드립니다</li><li style="animation-delay:1.9s">스님을 뵈면 두 손 모아 합장하고 인사합니다</li><li style="animation-delay:2.3s">가장 먼저 법당에 참배합니다</li><li style="animation-delay:2.7s">법당 앞을 지날 때는 걸음을 늦추고 옷깃을 여밉니다</li></ul></div><button id="enterBtn" type="button" disabled>입장하기</button></div>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <script type="module">
@@ -84,6 +98,7 @@ const $=id=>document.getElementById(id), canvas=$('c');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse=matchMedia('(pointer:coarse)').matches;
 let renderer;
+window.__boot=[];window.__bootDone=0;const bootT0=performance.now();
 try{ renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'}); }
 catch(e){ $('status').textContent='이 기기에서는 3D 화면을 열 수 없습니다. 다른 브라우저로 열어 주세요.'; throw e; }
 try{ await Promise.race([document.fonts.load('700 64px "Noto Serif KR"','大雄殿一柱門不二尋劍堂說禪梵鍾閣'),new Promise(r=>setTimeout(r,1500))]); }catch(e){}
@@ -676,7 +691,7 @@ function poseRig(dt,walking,t){walkW=lerp(walkW,walking?1:0,Math.min(1,dt*10));c
   if(B.Hips){B.Hips.o.position.copy(B.Hips.pos);B.Hips.o.position.y+=Math.abs(c)*1.1*w-k*31;B.Hips.o.position.z+=k*3;}
 }
 let loadRoomModels=()=>Promise.resolve(),sweeper=null;const SWEEP={z:-8.25,x:8,speed:.75};
-{const dl=new DRACOLoader();dl.setDecoderPath('draco/');dl.setDecoderConfig({type:'wasm'});const gl=new GLTFLoader();gl.setDRACOLoader(dl);gl.setMeshoptDecoder(MeshoptDecoder);const loadM=n=>new Promise(res=>gl.load('models/'+n+'.glb',res,undefined,()=>res(null)));const wait={};
+{const dl=new DRACOLoader();dl.setDecoderPath('draco/');dl.setDecoderConfig({type:'wasm'});const gl=new GLTFLoader();gl.setDRACOLoader(dl);gl.setMeshoptDecoder(MeshoptDecoder);const loadM=n=>new Promise(res=>gl.load('models/'+n+'.glb',res,undefined,()=>res(null)));const wait={};const loadT=n=>{const p=loadM(n);window.__boot.push(p);p.then(()=>{window.__bootDone++;});return p;};
   // 연꽃 연등: 받은 모델을 한 번만 읽어 모든 자리에 찍는다 (불러오기 전에는 둥근 등으로 보인다)
   
   wait.lotus=()=>loadM('lotus').then(g=>{if(!g)return;g.scene.updateMatrixWorld(true);const list=[];g.scene.traverse(o=>{if(o.isMesh&&o.name!=='PaperDome'&&!/PaperDome/.test(o.parent.name))list.push(o);});
@@ -685,10 +700,10 @@ let loadRoomModels=()=>Promise.resolve(),sweeper=null;const SWEEP={z:-8.25,x:8,s
     const ms=[];const yaw=lampSpots.map(()=>rr(0,6.283));parts.forEach(([ge,ma])=>{ge.translate(0,-.19,0);const im=new THREE.InstancedMesh(ge,ma,N);lampSpots.forEach((p,i)=>{im.setMatrixAt(i,new THREE.Matrix4().compose(new THREE.Vector3(p[0],p[1],p[2]),new THREE.Quaternion().setFromAxisAngle(AY,yaw[i]),new THREE.Vector3(2.7,2.7,2.7)));});im.frustumCulled=false;roomScene.add(im);ms.push(im);});
     if(sphereLamps){sphereLamps.visible=false;}});
   // 황동 촛대 초: 받은 모델 그대로, 불꽃만 일렁이게 따로 찍는다
-  wait.pine=()=>loadM('pine').then(g=>{if(!g)return;g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;if(o.material.map&&o.material.map.anisotropy)o.material.map.anisotropy=4;o.material.side=THREE.DoubleSide;if(o.material.alphaTest)o.material.alphaTest=.45;});
+  wait.pine=()=>loadT('pine').then(g=>{if(!g)return;g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;if(o.material.map&&o.material.map.anisotropy)o.material.map.anisotropy=4;o.material.side=THREE.DoubleSide;if(o.material.alphaTest)o.material.alphaTest=.45;});
     pineSpots.forEach(([x,z,k],i)=>{const gp=new THREE.Group(),m=g.scene.clone(true);gp.add(m);gp.position.set(x,0,z);gp.scale.setScalar(k);gp.rotation.y=i*1.9+.4;world.add(gp);});shadowDirty=true;});
   // 동백나무: 받은 모델을 마당에 크기를 달리해 심는다
-  wait.camellia=()=>loadM('camellia').then(g=>{if(!g)return;g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;o.material.side=THREE.DoubleSide;});const b=new THREE.Box3().setFromObject(g.scene),hh=b.max.y-b.min.y;
+  wait.camellia=()=>loadT('camellia').then(g=>{if(!g)return;g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;o.material.side=THREE.DoubleSide;});const b=new THREE.Box3().setFromObject(g.scene),hh=b.max.y-b.min.y;
     camSpots.forEach(([x,z,h],i)=>{const gp=new THREE.Group(),m=g.scene.clone(true),k=h/hh;m.position.y=-b.min.y;gp.add(m);gp.position.set(x,0,z);gp.scale.setScalar(k);gp.rotation.y=i*2.3+1;world.add(gp);});shadowDirty=true;});
   // 본존불: 받은 3D 스캔을 가운데 한 분만 모신다
   wait.buddha=()=>loadM('buddha').then(g=>{if(!g)return;const b=g.scene;b.traverse(o=>{if(o.isMesh){o.material.side=THREE.DoubleSide;o.material.metalness=0;o.material.roughness=.62;if(o.material.map)o.material.map.anisotropy=8;}});b.scale.setScalar(3.6);b.position.set(0,1.98,-6.95);b.rotation.y=-.3;roomScene.add(b);});
@@ -701,9 +716,9 @@ let loadRoomModels=()=>Promise.resolve(),sweeper=null;const SWEEP={z:-8.25,x:8,s
   // 동자승: 화면에서 차지하는 크기에 비해 큰 2048 그림을 1024로 줄여 메모리를 아낀다 (모양·뼈대는 그대로)
   const shrink=(sc,mx)=>sc.traverse(o=>{if(!o.isMesh)return;[].concat(o.material).forEach(m=>['map','normalMap','roughnessMap','metalnessMap','emissiveMap'].forEach(k=>{const t=m[k];if(!t||!t.image||t.image.width<=mx)return;const im=t.image,f=mx/Math.max(im.width,im.height),c=document.createElement('canvas');c.width=Math.round(im.width*f);c.height=Math.round(im.height*f);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
     const n=new THREE.CanvasTexture(c);['flipY','colorSpace','wrapS','wrapT','channel','anisotropy'].forEach(q=>n[q]=t[q]);m[k]=n;t.dispose();m.needsUpdate=true;}));});
-  loadM('dongja').then(g=>{if(g){shrink(g.scene,1024);setupRig(g);}});
+  loadT('dongja').then(g=>{if(g){shrink(g.scene,1024);setupRig(g);}});
   // 마당 쓰는 동자승: 받은 모델의 빗질 동작을 재생하며 대웅전 앞을 오간다
-  loadM('sweep').then(g=>{if(!g)return;const gp=new THREE.Group();g.scene.scale.multiplyScalar(1.43);g.scene.traverse(o=>{if(o.isMesh)o.frustumCulled=false;});gp.add(g.scene);
+  loadT('sweep').then(g=>{if(!g)return;const gp=new THREE.Group();g.scene.scale.multiplyScalar(1.43);g.scene.traverse(o=>{if(o.isMesh)o.frustumCulled=false;});gp.add(g.scene);
     const blob=new THREE.Mesh(new THREE.CircleGeometry(.4,20),new THREE.MeshBasicMaterial({color:'#000',transparent:true,opacity:.28,depthWrite:false}));blob.rotation.x=-Math.PI/2;blob.position.y=.06;gp.add(blob);world.add(gp);
     const mix=new THREE.AnimationMixer(g.scene);mix.clipAction(g.animations[0]).play();const hit={x:-8,z:SWEEP.z,r:.5};worldC.push(hit);sweeper={gp,mix,x:-8,dir:1,turn:0,rot:Math.PI/2,hit};});
   // 열린 문 안쪽: 실제 법당을 찍은 그림을 안쪽 벽에 두어 문틈으로 안이 보이게 한다
@@ -711,13 +726,13 @@ let loadRoomModels=()=>Promise.resolve(),sweeper=null;const SWEEP={z:-8.25,x:8,s
    pl(3.4,6,-4.7,4.2,(Z+bk)/2,Math.PI/2);pl(3.4,6,4.7,4.2,(Z+bk)/2,Math.PI/2);pl(9.4,3.4,0,1.2,(Z+bk)/2,0,Math.PI/2);pl(9.4,3.4,0,6.8,(Z+bk)/2,0,Math.PI/2);
    const v=new THREE.Mesh(new THREE.PlaneGeometry(9.4,5.875),new THREE.MeshBasicMaterial({color:'#fff',toneMapped:false}));v.position.set(0,3.9,bk);gp.add(v);new THREE.TextureLoader().load('hallview.jpg',t=>{t.colorSpace=THREE.SRGBColorSpace;v.material.map=t;v.material.needsUpdate=true;});world.add(gp);}
   // 삼층석탑: 받은 모델 그대로, 예전 탑 높이(약 6.3m)에 맞춰 세운다
-  loadM('pagoda').then(g=>{if(!g)return;g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material.map)o.material.map.anisotropy=8;}});g.scene.scale.setScalar(6.27/2.292);g.scene.position.set(0,0,5);world.add(g.scene);shadowDirty=true;});
+  loadT('pagoda').then(g=>{if(!g)return;g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material.map)o.material.map.anisotropy=8;}});g.scene.scale.setScalar(6.27/2.292);g.scene.position.set(0,0,5);world.add(g.scene);shadowDirty=true;});
   // 대웅전: 가운데 칸 안으로 열려 떠 보이던 꽃창살 문짝 두 짝을 걷어낸다
-  loadM('daeung').then(g=>{if(!g)return;g.scene.updateMatrixWorld(true);const v=new THREE.Vector3();g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;
+  loadT('daeung').then(g=>{if(!g)return;g.scene.updateMatrixWorld(true);const v=new THREE.Vector3();g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;
     if(/^kkot/.test(o.material.name)){const ge=o.geometry,p=ge.attributes.position,ix=ge.index,keep=[];const f=i=>v.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);
       for(let i=0;i<ix.count;i+=3){let x=0,y=0,z=0;for(let k=0;k<3;k++){f(ix.getX(i+k));x+=v.x/3;y+=v.y/3;z+=v.z/3;}if(Math.abs(x)<2.15&&z>2.9&&z<4.82&&y>2.1&&y<5)continue;keep.push(ix.getX(i),ix.getX(i+1),ix.getX(i+2));}ge.setIndex(keep);}});g.scene.position.set(0,0,-18.56);world.add(g.scene);shadowDirty=true;});
   wait.pine();wait.camellia();
-  ['tree1','tree2','tree3','tree4'].forEach(f=>loadM(f).then(g=>{if(!g)return;g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;const m=o.material;m.side=THREE.DoubleSide;if(m.map)m.map.anisotropy=4;if(m.transparent||m.alphaTest){m.transparent=false;m.depthWrite=true;m.alphaTest=.45;}});
+  ['tree1','tree2','tree3','tree4'].forEach(f=>loadT(f).then(g=>{if(!g)return;g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;const m=o.material;m.side=THREE.DoubleSide;if(m.map)m.map.anisotropy=4;if(m.transparent||m.alphaTest){m.transparent=false;m.depthWrite=true;m.alphaTest=.45;}});
     edgeTrees.forEach(([ff,v,x,z,k,ry])=>{if(ff!==f)return;const src=g.scene.getObjectByName(v);if(!src)return;const m=src.clone(true);m.position.x=src.position.x;m.position.z=src.position.z;m.position.y=src.position.y;const gp=new THREE.Group();gp.add(m);gp.position.set(x,0,z);gp.scale.setScalar(k);gp.rotation.y=ry;world.add(gp);});shadowDirty=true;}));
   // 인등: 앞모습 이미지와 높낮이만 남겨 칸마다 한 장씩 찍는다
   wait.indeung=()=>new Promise(res=>{const d=new Image();d.onload=()=>{const c=document.createElement('canvas');c.width=d.width;c.height=d.height;const gx=c.getContext('2d');gx.drawImage(d,0,0);const px=gx.getImageData(0,0,d.width,d.height).data;
@@ -881,7 +896,9 @@ function frame(now){
   renderer.render(scene,camera);
 }
 renderer.toneMappingExposure=curExp;
-$('status').remove();
+{const st=$('status'),btn=$('enterBtn');let fin=false;const go=()=>{if(fin)return;fin=true;btn.disabled=false;btn.textContent='입장하기';};
+ btn.onclick=()=>{if(btn.disabled)return;st.classList.add('out');setTimeout(()=>st.remove(),950);};
+ Promise.all(window.__boot.map(p=>p.catch(()=>null))).then(()=>setTimeout(go,300));setTimeout(go,20000);}
 renderer.setAnimationLoop(frame);
 window.__sansa={P,mode:()=>mode,enterHall,exitHall,bow:()=>bow,startBow,info:()=>renderer.info.render,go:(x,z,y=Math.PI,p=.2,dd=8)=>{P.x=x;P.z=z;P.y=heightAt(x,z);yaw=y;pitch=p;dist=dd;camSnap=true;},setLight};
 </script>
