@@ -341,7 +341,7 @@ const bellGroup=new THREE.Group(),bellY=heightAt(18,14);
 const striker=new THREE.Group();
 { const g=new THREE.CylinderGeometry(.11,.11,2.2,8);g.rotateZ(Math.PI/2);const s=new THREE.Mesh(g,mats.wood);striker.add(s);striker.position.set(19.95,bellY+1.1,14);scene.add(striker); }
 
-circles.push({x:0,z:5,r:2.5});terraces.push({x0:-2.1,x1:2.1,z0:2.9,z1:7.1,h:.5});
+circles.push({x:0,z:5,r:1.65});
 // 석등
 const lantern=new THREE.Mesh(new THREE.CylinderGeometry(.27,.27,.56,8),lanternGlow);
 const flameT=tex(128,256,(g,w,h)=>{const im=g.createImageData(w,h),d=im.data,mix=(a,b,t)=>a+(b-a)*t;
@@ -374,13 +374,6 @@ const lampFires=[];
     const lt=lantern.clone();lt.scale.set(.95,1,.95);lt.position.set(X,2.05*sc,Z);lt.renderOrder=1;scene.add(lt);
     const fm=new THREE.SpriteMaterial({map:flameT,transparent:true,depthWrite:false,toneMapped:false}),fl=new THREE.Sprite(fm);fl.center.set(.5,.04);fl.scale.set(.24,.5,1);fl.position.set(X,1.8*sc,Z);fl.renderOrder=2;scene.add(fl);
     const gm=new THREE.SpriteMaterial({map:glowT,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}),gl2=new THREE.Sprite(gm);gl2.position.set(X,2.05*sc,Z);gl2.scale.setScalar(2.7);scene.add(gl2);lampFires.push({fl,fm,gl2,gm});circles.push({x:X,z:Z,r:.76});});
-  // 삼층석탑: 형태는 처음 그대로, 돌의 재질과 컬러만 석등과 같게
-  {pH=6.4;pK=.96;pS=.14;pM=.3;const T=new THREE.Matrix4().makeTranslation(0,0,5),b=(w,h,y)=>{const g=new THREE.BoxGeometry(w,h,w);g.translate(0,y,0);put(T,g);};
-   const c=(rt,rb,h,n,y,rot,sm0)=>{const g=new THREE.CylinderGeometry(rt,rb,h,n);if(rot)g.rotateY(rot);g.translate(0,y,0);put(T,g,undefined,sm0);};
-   b(4.2,.5,.25);b(3.2,.9,.95);b(3.6,.22,1.51);
-   let yy=1.62;[[1.5,1.2,2.6],[1.3,.62,2.25],[1.1,.56,1.95]].forEach(([w,h,rw])=>{b(w,h,yy+h/2);yy+=h;c(rw*.42,rw*.74,.34,4,yy+.17,Math.PI/4);yy+=.34;});
-   c(.24,.34,.2,8,yy+.1,0,true);c(.05,.08,1.1,6,yy+.7,0,true);
-   [.45,.68,.88].forEach((d,i)=>c(.17-.03*i,.17-.03*i,.06,10,yy+d,0,true));}
 }
 
 /* 돌담 */
@@ -687,7 +680,12 @@ let loadRoomModels=()=>Promise.resolve(),sweeper=null;const SWEEP={z:-8.25,x:8,s
   {const Z=-13.5,bk=-16.8,hm=new THREE.MeshBasicMaterial({color:'#17100b',side:THREE.DoubleSide}),gp=new THREE.Group();const pl=(w,h,x,y,z,ry,rx)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),hm);m.position.set(x,y,z);m.rotation.set(rx||0,ry||0,0);gp.add(m);};
    pl(3.4,6,-4.7,4.2,(Z+bk)/2,Math.PI/2);pl(3.4,6,4.7,4.2,(Z+bk)/2,Math.PI/2);pl(9.4,3.4,0,1.2,(Z+bk)/2,0,Math.PI/2);pl(9.4,3.4,0,6.8,(Z+bk)/2,0,Math.PI/2);
    const v=new THREE.Mesh(new THREE.PlaneGeometry(9.4,5.875),new THREE.MeshBasicMaterial({color:'#fff',toneMapped:false}));v.position.set(0,3.9,bk);gp.add(v);new THREE.TextureLoader().load('hallview.jpg',t=>{t.colorSpace=THREE.SRGBColorSpace;v.material.map=t;v.material.needsUpdate=true;});world.add(gp);}
-  loadM('daeung').then(g=>{if(!g)return;g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});g.scene.position.set(0,0,-18.56);world.add(g.scene);shadowDirty=true;});
+  // 삼층석탑: 받은 모델 그대로, 예전 탑 높이(약 6.3m)에 맞춰 세운다
+  loadM('pagoda').then(g=>{if(!g)return;g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material.map)o.material.map.anisotropy=8;}});g.scene.scale.setScalar(6.27/2.292);g.scene.position.set(0,0,5);world.add(g.scene);shadowDirty=true;});
+  // 대웅전: 가운데 칸 안으로 열려 떠 보이던 꽃창살 문짝 두 짝을 걷어낸다
+  loadM('daeung').then(g=>{if(!g)return;g.scene.updateMatrixWorld(true);const v=new THREE.Vector3();g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;
+    if(/^kkot/.test(o.material.name)){const ge=o.geometry,p=ge.attributes.position,ix=ge.index,keep=[];const f=i=>v.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);
+      for(let i=0;i<ix.count;i+=3){let x=0,y=0,z=0;for(let k=0;k<3;k++){f(ix.getX(i+k));x+=v.x/3;y+=v.y/3;z+=v.z/3;}if(Math.abs(x)<2.15&&z>2.9&&z<4.82&&y>2.1&&y<5)continue;keep.push(ix.getX(i),ix.getX(i+1),ix.getX(i+2));}ge.setIndex(keep);}});g.scene.position.set(0,0,-18.56);world.add(g.scene);shadowDirty=true;});
   wait.pine();wait.camellia();
   // 인등: 앞모습 이미지와 높낮이만 남겨 칸마다 한 장씩 찍는다
   wait.indeung=()=>new Promise(res=>{const d=new Image();d.onload=()=>{const c=document.createElement('canvas');c.width=d.width;c.height=d.height;const gx=c.getContext('2d');gx.drawImage(d,0,0);const px=gx.getImageData(0,0,d.width,d.height).data;
