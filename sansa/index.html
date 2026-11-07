@@ -564,9 +564,14 @@ mats.lattGlow=new THREE.MeshStandardMaterial({map:lattTex,color:'#a08a68',emissi
   pict(panelT,12.3,1.02,0,.72,-4.485);
   [-6.35,6.35].forEach(x=>boxG('pineD',.3,1.25,.06,x,.72,-4.49));boxG('pineD',13,.06,.05,0,.14,-4.49);boxG('pineD',13,.06,.05,0,1.31,-4.49);
   boxG('pine',11.8,.4,3.2,0,1.65,-7);boxG('pine',12.3,.12,3.4,0,1.91,-6.95);boxG('pineD',12,.05,.05,0,1.5,-5.39);
-  boxG('pine',2.6,.82,1,0,.41,-3.1);boxG('pine',2.8,.08,1.14,0,.86,-3.1);
-  boxG('red',8,.02,1.5,0,AT,-7.1);boxG('vase',1.3,.03,.36,0,.92,-3.05);
-  rects.push({x0:-6.95,x1:6.95,z0:-8.8,z1:-4.3},{x0:-1.45,x1:1.45,z0:-3.7,z1:-2.55});
+  // 불단 앞 작은 상: 무릎 높이로 낮추고 줄여, 불단과 같은 나무·테두리·서랍 무늬로 한 벌처럼 맞춘다. 바닥에 옅은 그림자
+  {const Z=-3.1,F=Z+.4;boxG('pine',1.8,.4,.8,0,.2,Z);boxG('pine',1.92,.05,.9,0,.425,Z);boxG('pineD',1.84,.012,.84,0,.396,Z);
+   [-1,1].forEach(sd=>{const cx=sd*.44;boxG('pineD',.8,.014,.012,cx,.35,F+.006);boxG('pineD',.8,.014,.012,cx,.07,F+.006);boxG('pineD',.014,.28,.012,cx-.393,.21,F+.006);boxG('pineD',.014,.28,.012,cx+.393,.21,F+.006);boxG('pineD',.07,.022,.014,cx,.21,F+.008);});
+   boxG('pineD',.014,.3,.012,0,.21,F+.006);
+   const sh=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.5),new THREE.MeshBasicMaterial({map:tex(128,128,(g,w,h)=>{const q=g.createRadialGradient(w/2,h/2,6,w/2,h/2,w/2);q.addColorStop(0,'rgba(0,0,0,.5)');q.addColorStop(.5,'rgba(0,0,0,.22)');q.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=q;g.fillRect(0,0,w,h);}),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4}));
+   sh.rotation.x=-Math.PI/2;sh.position.set(0,.006,Z);sh.renderOrder=2;scene.add(sh);}
+  boxG('red',8,.02,1.5,0,AT,-7.1);boxG('vase',.95,.02,.28,0,.46,-3.08);
+  rects.push({x0:-6.95,x1:6.95,z0:-8.8,z1:-4.3},{x0:-1.05,x1:1.05,z0:-3.6,z1:-2.6});
   // 닫집
   // 봉은사처럼 붉은 기와 지붕이 층층이 오르고, 처마 밑에 금빛 살창이 도는 닫집
   const redTile=tex(256,256,(g,w,h)=>{const n=5,cw=w/n;for(let i=0;i<n;i++){const q=g.createLinearGradient(i*cw,0,(i+1)*cw,0);q.addColorStop(0,'#2e1410');q.addColorStop(.3,'#5f2a20');q.addColorStop(.5,'#74352a');q.addColorStop(.72,'#59271e');q.addColorStop(1,'#29110d');g.fillStyle=q;g.fillRect(i*cw,0,cw,h);}g.fillStyle='rgba(20,6,4,.4)';for(let y=0;y<h;y+=64)g.fillRect(0,y,w,5);aged(g,w,h,.8);},true);
@@ -606,10 +611,18 @@ mats.lattGlow=new THREE.MeshStandardMaterial({map:lattTex,color:'#a08a68',emissi
   const LC=['#ff3a8a','#ffb02e','#9a4bff','#ff6a2b','#ffd83c','#ff3a8a','#7656ff','#ffd83c'];
   [-1,1].forEach(sd=>{for(let i=0;i<6;i++){const lx=sd*(5.9+i*1.3),c=new THREE.Color(LC[i%8]).multiplyScalar(.92);for(let j=0;j<12;j++){const lz=-7.2+j*1.4,ly=5.95+(i*.05)+(j%2)*.03;const m=new THREE.Matrix4().makeTranslation(lx,ly,lz);m.multiply(new THREE.Matrix4().makeScale(.235,.26,.235));inst.lamp.push(m);lamps.push(c);lampSpots.push([lx,ly,lz]);place(inst.tag,lx,ly-.82,lz,1,1,1);}}});
   // 방석
-  const fabric=tex(128,128,(g,w,h)=>{g.fillStyle='#fff';g.fillRect(0,0,w,h);for(let i=0;i<1700;i++){g.fillStyle=`rgba(${R()<.5?'0,0,0':'255,255,255'},${rr(.02,.07)})`;g.fillRect(rr(0,w),rr(0,h),rr(1,3),1);}});
-  mats.cushion=MK('#8c8d89',.92,{map:fabric,side:THREE.DoubleSide});
+  // 방석 천: 씨실·날실이 보이는 직물 결, 모서리에서 안으로 잡히는 잔주름, 천의 부드러운 윤기 (박음선은 넣지 않는다)
+  const fabric=tex(512,512,(g,w,h)=>{g.fillStyle='#f2f2ef';g.fillRect(0,0,w,h);const n=128,c=w/n;
+    for(let i=0;i<n;i++){const a=rr(.04,.11);g.fillStyle=`rgba(0,0,0,${a})`;g.fillRect(0,i*c+c*.62,w,c*.38);g.fillStyle=`rgba(0,0,0,${a*.8})`;g.fillRect(i*c+c*.62,0,c*.38,h);}
+    for(let y=0;y<n;y++)for(let x=(y%2);x<n;x+=2){g.fillStyle=`rgba(255,255,255,${rr(.05,.13)})`;g.fillRect(x*c,y*c,c*.62,c*.62);}
+    for(let i=0;i<5000;i++){g.fillStyle=`rgba(${R()<.5?'0,0,0':'255,255,255'},${rr(.03,.08)})`;g.fillRect(rr(0,w),rr(0,h),rr(2,6),1);}
+    const fold=(x0,y0,x1,y1,wd)=>{const q=g.createLinearGradient(x0,y0,x1,y1);q.addColorStop(0,'rgba(0,0,0,.16)');q.addColorStop(1,'rgba(0,0,0,0)');g.strokeStyle=q;g.lineWidth=wd;g.lineCap='round';g.beginPath();g.moveTo(x0,y0);g.quadraticCurveTo((x0+x1)/2+rr(-12,12),(y0+y1)/2+rr(-12,12),x1,y1);g.stroke();
+      const q2=g.createLinearGradient(x0,y0,x1,y1);q2.addColorStop(0,'rgba(255,255,255,.18)');q2.addColorStop(1,'rgba(255,255,255,0)');g.strokeStyle=q2;g.lineWidth=wd*.45;g.beginPath();g.moveTo(x0+wd*.5,y0+wd*.5);g.quadraticCurveTo((x0+x1)/2,(y0+y1)/2,x1+wd*.4,y1+wd*.4);g.stroke();};
+    [[0,0],[w,0],[0,h],[w,h]].forEach(([cx,cy])=>{for(let k=0;k<3;k++){const a=Math.atan2(h/2-cy,w/2-cx)+rr(-.45,.45),l=rr(70,130);fold(cx,cy,cx+Math.cos(a)*l,cy+Math.sin(a)*l,rr(6,12));}});
+    for(let k=0;k<10;k++){const sd=k%4,t=rr(.15,.85),x0=sd===0?t*w:sd===1?w:sd===2?t*w:0,y0=sd===0?0:sd===1?t*h:sd===2?h:t*h,l=rr(30,60);fold(x0,y0,x0+(w/2-x0)/(w/2)*-l*-1*.5,y0+(h/2-y0)/(h/2)*l*.5,rr(4,8));}},true);
+  mats.cushion=new THREE.MeshPhysicalMaterial({color:'#8c8d89',map:fabric,bumpMap:fabric,bumpScale:1.2,roughness:.88,sheen:.7,sheenRoughness:.55,sheenColor:new THREE.Color('#d8d8d4'),side:THREE.DoubleSide});
   const mat=(x,z,c='cushion',s=.86)=>{matSpots.push([x,z]);const w=s*.57,d=s*.64,fat=rr(.1,.125),ry=rr(-.07,.07);   // 위아래 두 겹이 가장자리에서 만나 속이 찬 방석
-    [1,-1].forEach(side=>{const g=new THREE.PlaneGeometry(2,2,18,18);g.rotateX(-Math.PI/2);const p=g.attributes.position;
+    [1,-1].forEach(side=>{const g=new THREE.PlaneGeometry(2,2,12,12);g.rotateX(-Math.PI/2);const p=g.attributes.position;
       for(let i=0;i<p.count;i++){const u=p.getX(i),v=p.getZ(i),uu=u*u,vv=v*v,body=Math.pow((1-uu*uu)*(1-vv*vv),.55),dip=1-.1*Math.exp(-(uu+vv)*4),seam=.055+.07*Math.pow(uu*vv,2.2),y=side>0?seam+fat*body*dip:Math.max(.006,seam-.06*Math.pow(body,.4));
         p.setXYZ(i,u*w*(1-.04*(1-vv)),y,v*d*(1-.04*(1-uu)));}
       g.computeVertexNormals();g.rotateY(ry);g.translate(x,0,z);add(c,g);});};
@@ -672,10 +685,10 @@ let loadRoomModels=()=>Promise.resolve(),sweeper=null;const SWEEP={z:-8.25,x:8,s
     const ms=[];const yaw=lampSpots.map(()=>rr(0,6.283));parts.forEach(([ge,ma])=>{ge.translate(0,-.19,0);const im=new THREE.InstancedMesh(ge,ma,N);lampSpots.forEach((p,i)=>{im.setMatrixAt(i,new THREE.Matrix4().compose(new THREE.Vector3(p[0],p[1],p[2]),new THREE.Quaternion().setFromAxisAngle(AY,yaw[i]),new THREE.Vector3(2.7,2.7,2.7)));});im.frustumCulled=false;roomScene.add(im);ms.push(im);});
     if(sphereLamps){sphereLamps.visible=false;}});
   // 황동 촛대 초: 받은 모델 그대로, 불꽃만 일렁이게 따로 찍는다
-  wait.pine=()=>loadM('pine').then(g=>{if(!g)return;g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;if(o.material.map&&o.material.map.anisotropy)o.material.map.anisotropy=4;o.material.side=THREE.DoubleSide;if(o.material.alphaTest)o.material.alphaTest=.45;});
+  wait.pine=()=>loadM('pine').then(g=>{if(!g)return;g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;if(o.material.map&&o.material.map.anisotropy)o.material.map.anisotropy=4;o.material.side=THREE.DoubleSide;if(o.material.alphaTest)o.material.alphaTest=.45;});
     pineSpots.forEach(([x,z,k],i)=>{const gp=new THREE.Group(),m=g.scene.clone(true);gp.add(m);gp.position.set(x,0,z);gp.scale.setScalar(k);gp.rotation.y=i*1.9+.4;world.add(gp);});shadowDirty=true;});
   // 동백나무: 받은 모델을 마당에 크기를 달리해 심는다
-  wait.camellia=()=>loadM('camellia').then(g=>{if(!g)return;g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;o.material.side=THREE.DoubleSide;});const b=new THREE.Box3().setFromObject(g.scene),hh=b.max.y-b.min.y;
+  wait.camellia=()=>loadM('camellia').then(g=>{if(!g)return;g.scene.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;o.material.side=THREE.DoubleSide;});const b=new THREE.Box3().setFromObject(g.scene),hh=b.max.y-b.min.y;
     camSpots.forEach(([x,z,h],i)=>{const gp=new THREE.Group(),m=g.scene.clone(true),k=h/hh;m.position.y=-b.min.y;gp.add(m);gp.position.set(x,0,z);gp.scale.setScalar(k);gp.rotation.y=i*2.3+1;world.add(gp);});shadowDirty=true;});
   // 본존불: 받은 3D 스캔을 가운데 한 분만 모신다
   wait.buddha=()=>loadM('buddha').then(g=>{if(!g)return;const b=g.scene;b.traverse(o=>{if(o.isMesh){o.material.side=THREE.DoubleSide;o.material.metalness=0;o.material.roughness=.62;if(o.material.map)o.material.map.anisotropy=8;}});b.scale.setScalar(3.6);b.position.set(0,1.98,-6.95);b.rotation.y=-.3;roomScene.add(b);});
@@ -685,7 +698,10 @@ let loadRoomModels=()=>Promise.resolve(),sweeper=null;const SWEEP={z:-8.25,x:8,s
   const BS=1.6;wait.candle=()=>loadM('candle').then(g=>{if(!g)return;g.scene.updateMatrixWorld(true);const N=brassSpots.length;g.scene.traverse(o=>{if(!o.isMesh)return;const fl=/Flame/.test(o.name)||/Flame/.test(o.parent.name)||/Flame/.test(o.material.name);if(fl)return;const ge=o.geometry.clone().applyMatrix4(o.matrixWorld);let ma=o.material;
       if(ma.metalness>.05&&roomEnv){ma.envMap=roomEnv;ma.envMapIntensity=1.5;}
       const im=new THREE.InstancedMesh(ge,ma,N);brassSpots.forEach((p,i)=>im.setMatrixAt(i,new THREE.Matrix4().compose(new THREE.Vector3(p[0],p[1],p[2]),new THREE.Quaternion(),new THREE.Vector3(BS,BS,BS))));im.frustumCulled=false;roomScene.add(im);});});
-  loadM('dongja').then(g=>{if(g)setupRig(g);});
+  // 동자승: 화면에서 차지하는 크기에 비해 큰 2048 그림을 1024로 줄여 메모리를 아낀다 (모양·뼈대는 그대로)
+  const shrink=(sc,mx)=>sc.traverse(o=>{if(!o.isMesh)return;[].concat(o.material).forEach(m=>['map','normalMap','roughnessMap','metalnessMap','emissiveMap'].forEach(k=>{const t=m[k];if(!t||!t.image||t.image.width<=mx)return;const im=t.image,f=mx/Math.max(im.width,im.height),c=document.createElement('canvas');c.width=Math.round(im.width*f);c.height=Math.round(im.height*f);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    const n=new THREE.CanvasTexture(c);['flipY','colorSpace','wrapS','wrapT','channel','anisotropy'].forEach(q=>n[q]=t[q]);m[k]=n;t.dispose();m.needsUpdate=true;}));});
+  loadM('dongja').then(g=>{if(g){shrink(g.scene,1024);setupRig(g);}});
   // 마당 쓰는 동자승: 받은 모델의 빗질 동작을 재생하며 대웅전 앞을 오간다
   loadM('sweep').then(g=>{if(!g)return;const gp=new THREE.Group();g.scene.scale.multiplyScalar(1.43);g.scene.traverse(o=>{if(o.isMesh)o.frustumCulled=false;});gp.add(g.scene);
     const blob=new THREE.Mesh(new THREE.CircleGeometry(.4,20),new THREE.MeshBasicMaterial({color:'#000',transparent:true,opacity:.28,depthWrite:false}));blob.rotation.x=-Math.PI/2;blob.position.y=.06;gp.add(blob);world.add(gp);
