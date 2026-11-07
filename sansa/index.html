@@ -45,13 +45,13 @@ button[aria-pressed="true"]{background:var(--noerok);color:#16201b;border-color:
 #status.out{opacity:0;pointer-events:none}
 #status .ln{width:1px;height:46px;background:linear-gradient(transparent,rgba(236,230,216,.5));margin-bottom:26px}
 #status h2{margin:0;font:700 clamp(22px,5.4vw,32px)/1.35 var(--display);color:var(--paper);letter-spacing:.06em;animation:inS 1.4s ease both}
-#status p{margin:14px 0 0;font:400 clamp(14px,3.6vw,16px)/1.7 var(--display);color:#cfc6b2;letter-spacing:.04em;animation:inS 1.4s .5s ease both}
+#status p{margin:14px -12px 0;font:400 16px/1.7 var(--display);white-space:nowrap;color:#cfc6b2;letter-spacing:.02em;animation:inS 1.4s .5s ease both}
 #status #enterBtn{margin-top:28px;min-width:168px;padding:12px 30px;font:500 15px/1 var(--display);letter-spacing:.2em;color:#f1e7cf;background:rgba(205,182,126,.14);border:1px solid #cdb67e;border-radius:2px;cursor:pointer;animation:inS 1s 3.1s ease both;transition:background .25s,color .25s,opacity .3s}
 #status #enterBtn:hover:not(:disabled),#status #enterBtn:focus-visible{background:#cdb67e;color:#1d211f}
 #status #enterBtn:disabled{opacity:.45;cursor:default}
-#status .rule{margin-top:30px;padding:16px 18px 14px;border-top:1px solid rgba(236,230,216,.16);border-bottom:1px solid rgba(236,230,216,.16);max-width:min(440px,88vw);text-align:left}
+#status .rule{margin-top:30px;padding:16px 14px 14px;border-top:1px solid rgba(236,230,216,.16);border-bottom:1px solid rgba(236,230,216,.16);max-width:min(440px,88vw);text-align:left}
 #status .rule h3{margin:0 0 10px;text-align:center;font:500 clamp(13px,3.4vw,14px)/1.4 var(--display);color:#cdb67e;letter-spacing:.12em}
-#status .rule li{list-style:none;position:relative;padding-left:14px;font:400 clamp(12.5px,3.3vw,14px)/1.85 var(--display);color:#d9d1bf;opacity:0;animation:inS .9s ease both}
+#status .rule li{list-style:none;position:relative;padding-left:14px;white-space:nowrap;font:400 clamp(12.5px,3.3vw,14px)/1.85 var(--display);color:#d9d1bf;opacity:0;animation:inS .9s ease both}
 #status .rule li::before{content:'';position:absolute;left:0;top:.82em;width:5px;height:5px;border-radius:50%;background:#a88f5a}
 #status .rule ul{margin:0;padding:0}
 @keyframes inS{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -99,6 +99,7 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse=matchMedia('(pointer:coarse)').matches;
 let renderer;
 window.__boot=[];window.__bootDone=0;const bootT0=performance.now();
+{const fit=()=>{const e=document.querySelector('#status p');if(!e)return;e.style.fontSize='16px';const avail=innerWidth-16,w=e.scrollWidth;if(w>avail)e.style.fontSize=Math.max(9,16*avail/w-.2)+'px';const li=[...document.querySelectorAll('#status .rule li')];li.forEach(x=>x.style.fontSize='');const b0=parseFloat(getComputedStyle(li[0]).fontSize),mw=Math.max(...li.map(x=>x.scrollWidth)),av=Math.min(440,innerWidth*.88)-28;if(mw>av)li.forEach(x=>x.style.fontSize=Math.max(9,b0*av/mw-.2)+'px');};fit();addEventListener('resize',fit);if(document.fonts)document.fonts.ready.then(fit);}
 try{ renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'}); }
 catch(e){ $('status').textContent='이 기기에서는 3D 화면을 열 수 없습니다. 다른 브라우저로 열어 주세요.'; throw e; }
 try{ await Promise.race([document.fonts.load('700 64px "Noto Serif KR"','大雄殿一柱門不二尋劍堂說禪梵鍾閣'),new Promise(r=>setTimeout(r,1500))]); }catch(e){}
@@ -635,7 +636,7 @@ mats.lattGlow=new THREE.MeshStandardMaterial({map:lattTex,color:'#a08a68',emissi
       const q2=g.createLinearGradient(x0,y0,x1,y1);q2.addColorStop(0,'rgba(255,255,255,.18)');q2.addColorStop(1,'rgba(255,255,255,0)');g.strokeStyle=q2;g.lineWidth=wd*.45;g.beginPath();g.moveTo(x0+wd*.5,y0+wd*.5);g.quadraticCurveTo((x0+x1)/2,(y0+y1)/2,x1+wd*.4,y1+wd*.4);g.stroke();};
     [[0,0],[w,0],[0,h],[w,h]].forEach(([cx,cy])=>{for(let k=0;k<3;k++){const a=Math.atan2(h/2-cy,w/2-cx)+rr(-.45,.45),l=rr(70,130);fold(cx,cy,cx+Math.cos(a)*l,cy+Math.sin(a)*l,rr(6,12));}});
     for(let k=0;k<10;k++){const sd=k%4,t=rr(.15,.85),x0=sd===0?t*w:sd===1?w:sd===2?t*w:0,y0=sd===0?0:sd===1?t*h:sd===2?h:t*h,l=rr(30,60);fold(x0,y0,x0+(w/2-x0)/(w/2)*-l*-1*.5,y0+(h/2-y0)/(h/2)*l*.5,rr(4,8));}},true);
-  mats.cushion=new THREE.MeshPhysicalMaterial({color:'#8c8d89',map:fabric,bumpMap:fabric,bumpScale:1.2,roughness:.88,sheen:.7,sheenRoughness:.55,sheenColor:new THREE.Color('#d8d8d4'),side:THREE.DoubleSide});
+  mats.cushion=new THREE.MeshPhysicalMaterial({color:'#80817d',map:fabric,bumpMap:fabric,bumpScale:1.2,roughness:.88,sheen:.4,sheenRoughness:.6,sheenColor:new THREE.Color('#d8d8d4'),side:THREE.DoubleSide});
   const mat=(x,z,c='cushion',s=.86)=>{matSpots.push([x,z]);const w=s*.57,d=s*.64,fat=rr(.1,.125),ry=rr(-.07,.07);   // 위아래 두 겹이 가장자리에서 만나 속이 찬 방석
     [1,-1].forEach(side=>{const g=new THREE.PlaneGeometry(2,2,12,12);g.rotateX(-Math.PI/2);const p=g.attributes.position;
       for(let i=0;i<p.count;i++){const u=p.getX(i),v=p.getZ(i),uu=u*u,vv=v*v,body=Math.pow((1-uu*uu)*(1-vv*vv),.55),dip=1-.1*Math.exp(-(uu+vv)*4),seam=.055+.07*Math.pow(uu*vv,2.2),y=side>0?seam+fat*body*dip:Math.max(.006,seam-.06*Math.pow(body,.4));
@@ -643,6 +644,10 @@ mats.lattGlow=new THREE.MeshStandardMaterial({map:lattTex,color:'#a08a68',emissi
       g.computeVertexNormals();g.rotateY(ry);g.translate(x,0,z);add(c,g);});};
   [-7.2,-5.8,-4.4,-3,3,4.4,5.8,7.2].forEach(x=>[1.2,2.8,4.4,6].forEach(z=>mat(x,z)));
   mats.mat=MK('#c6c6c1',.92,{map:fabric,side:THREE.DoubleSide});mat(0,HALL.bowZ,'mat',.96);mat(-1.2,HALL.bowZ+.2);mat(1.2,HALL.bowZ+.2);
+  // 방석 아래 옅은 그림자: 방석이 마루에 눌려 앉은 것처럼 보이게 한다
+  {const st=tex(128,128,(g,w,h)=>{const q=g.createRadialGradient(w/2,h/2,10,w/2,h/2,w/2);q.addColorStop(0,'rgba(0,0,0,.75)');q.addColorStop(.5,'rgba(0,0,0,.48)');q.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=q;g.fillRect(0,0,w,h);});
+   const sg=new THREE.PlaneGeometry(1.36,1.5);sg.rotateX(-Math.PI/2);const sm=new THREE.InstancedMesh(sg,new THREE.MeshBasicMaterial({map:st,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4}),matSpots.length),mm=new THREE.Matrix4();
+   matSpots.forEach(([x,z],i)=>sm.setMatrixAt(i,mm.makeTranslation(x,.004,z)));sm.renderOrder=2;scene.add(sm);}
 }
 flush();
 {const h=new THREE.HemisphereLight('#ffeed6','#6a3a1c',.5),a=new THREE.PointLight('#ffd9ae',46,34,1.25),c=new THREE.PointLight('#ffd0a0',16,12,1.3),d=new THREE.PointLight('#ffc0d6',22,26,1.3);a.position.set(0,5.3,.6);c.position.set(0,4.6,-3.6);d.position.set(0,5,5.4);roomScene.add(h,a,c,d);}
