@@ -202,10 +202,6 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 
 #goWork{left:50%;transform:translateX(-50%);top:calc(64px + env(safe-area-inset-top,0px));}
 #goWork button{padding:11px 18px;font-size:15px;background:var(--celadon-deep);border:1px solid var(--celadon);border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.35);white-space:nowrap;}
-#chat{right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;padding:6px;}
-#chat input{width:200px;padding:8px 10px;font:14px var(--body);color:var(--ink);background:rgba(241,238,231,.08);border:1px solid var(--line);border-radius:8px;}
-#chat input:focus{outline:2px solid var(--celadon);outline-offset:1px;}
-#chat button{padding:8px 12px;font-size:13px;background:var(--celadon-deep);border:1px solid var(--celadon);border-radius:8px;}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 #clayPick{left:calc(14px + env(safe-area-inset-left,0px));top:calc(70px + env(safe-area-inset-top,0px));padding:12px;display:grid;gap:8px;width:190px;box-sizing:border-box;}
 #clayPick h3{margin:0;font-size:13px;font-weight:400;color:var(--muted);}
@@ -215,7 +211,6 @@ input[type=range]{width:100%;accent-color:var(--celadon);}
 #clayPick i{width:26px;height:26px;border-radius:50%;flex:0 0 26px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);}
 #clayPick small{display:block;font-size:11px;color:var(--muted);}
 body.throwing #brand{display:none;}
-#chat{display:none!important;}
 #deskHud{left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;padding:8px 8px 8px 16px;font-size:13px;white-space:nowrap;}
 #deskHud button{padding:9px 16px;font-size:14px;background:var(--celadon-deep);border:1px solid var(--celadon);border-radius:999px;color:#fff;}
 @media (max-width:640px){
@@ -236,7 +231,6 @@ body.throwing #brand{display:none;}
   #who{margin-top:1px;}
   #myWorkBtn,#musicBtn{padding:4px 10px;font-size:11px;}
   #brand .brandBtns{margin-top:5px;gap:4px;}
-  #chat input{width:120px;}
   #help{display:none;}
   body.throwing #brand{display:none;}
   #tip{top:calc(10px + env(safe-area-inset-top,0px));font-size:13px;padding:8px 12px;width:calc(100vw - 20px);}
@@ -259,13 +253,12 @@ body.throwing #brand{display:none;}
 /* light theme: pale lime panels, dark olive text, orange accent */
 :root{--ink:#38492a;--muted:#6c7f58;--panel:rgba(232,246,214,.94);--panel-solid:#e8f6d6;--line:rgba(56,73,42,.16);--celadon:#ffbe85;--celadon-deep:#f48b34;--warn:#c0452b;color-scheme:light;}
 .panel{box-shadow:0 4px 18px rgba(60,50,30,.12);}
-.primary,#tools button[aria-pressed=true],#prompt button,#myWorkBtn,#goWork button,#chat button{color:#fff;}
+.primary,#tools button[aria-pressed=true],#prompt button,#myWorkBtn,#goWork button{color:#fff;}
 #tools button[aria-pressed=true] small{color:rgba(255,255,255,.9);}
 .meter{background:rgba(56,73,42,.16);}
 #who{color:#e07a22;}
 #joy{background:rgba(232,246,214,.6);}
 #knob{background:rgba(244,139,52,.55);border-color:#f48b34;}
-#chat input{background:rgba(255,255,255,.6);}
 #workPanel .danger{color:#fff;}
 /* the button to press next: it always keeps a thin orange ring, breathes a soft warm glow and lifts a hair,
    and a faint ring ripples outward from it, so it is easy to spot without flashing */
@@ -346,7 +339,6 @@ body.throwing #brand{display:none;}
 <div class="hud" id="goWork" hidden><button id="goWorkBtn" type="button">내 작품 보러 가기 →</button></div>
 <div class="hud panel" id="deskHud" hidden><span>작업대에 앉았어요 · 드래그로 둘러보기</span><button id="deskUp" type="button">일어나기 <kbd>E</kbd></button></div>
 <div class="hud" id="prompt" hidden><button id="sitBtn" type="button">물레에 앉기 <kbd>E</kbd></button></div>
-<form class="hud panel" id="chat" hidden autocomplete="off"><label for="chatIn" class="sr">말하기</label><input id="chatIn" maxlength="40" placeholder="공방에 한마디…"><button type="submit">말하기</button></form>
 <div class="hud" id="joy" hidden><div id="knob"></div></div>
 
 <div id="throwHud" hidden>
@@ -384,7 +376,7 @@ body.throwing #brand{display:none;}
 <script>
 /* phones (and the KakaoTalk browser) keep an old copy of the page: outside claude.ai, ask the server for the
    newest one and, if it is a newer build, load that instead (once per visit, with a cache-busting address) */
-(function(){ const BUILD='20261106-0635';
+(function(){ const BUILD='20261112-2030';
   if(!/github\.io$/.test(location.hostname)) return;
   fetch(location.pathname+'?chk='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     const m=t.match(/const BUILD='([0-9-]+)'/); if(!m||m[1]===BUILD) return;
@@ -2090,18 +2082,10 @@ wheels.forEach(ensureClay);
 /* ---------- avatar (chibi potter) ---------- */
 const AV={
   skin:new THREE.MeshStandardMaterial({color:'#f7d4b6',roughness:.75}),
-  hair:new THREE.MeshStandardMaterial({color:'#6e4a33',roughness:.65}),
-  shirt:new THREE.MeshStandardMaterial({color:'#f3ead8',roughness:.9}),
-  apron:new THREE.MeshStandardMaterial({roughness:.85,side:THREE.DoubleSide,map:(()=>{ const t=canvasTex(128,128,(g,w,h)=>{ g.fillStyle='#e8eee8'; g.fillRect(0,0,w,h); g.fillStyle='rgba(79,127,112,.42)'; g.fillRect(0,0,w/2,h); g.fillRect(0,0,w,h/2);
-    // soften the check edges so it doesn't shimmer at a distance
-    const c2=document.createElement('canvas'); c2.width=w; c2.height=h; const g2=c2.getContext('2d'); g2.drawImage(g.canvas,0,0); g.filter='blur(3px)'; [-w,0,w].forEach(dx=>[-h,0,h].forEach(dy=>g.drawImage(c2,dx,dy))); g.filter='none'; },[4,4]); t.anisotropy=8; return t; })()}),
-  apronDark:new THREE.MeshStandardMaterial({color:'#4f7f70',roughness:.85}),
-  pants:new THREE.MeshStandardMaterial({color:'#59607a',roughness:.9}),
   shoe:new THREE.MeshStandardMaterial({color:'#8d5b3b',roughness:.7}),
   eye:new THREE.MeshStandardMaterial({color:'#2a201b',roughness:.25}),
   white:new THREE.MeshBasicMaterial({color:'#ffffff'}),
   cheek:new THREE.MeshBasicMaterial({color:'#f39d93',transparent:true,opacity:.75,side:THREE.DoubleSide}),
-  scarf:new THREE.MeshStandardMaterial({color:'#e9a98f',roughness:.8}),
   smudge:new THREE.MeshBasicMaterial({color:'#a8866e',transparent:true,opacity:.6,side:THREE.DoubleSide}),
 };
 /* four potters, one picked at random for each visitor (and kept for them), so people are easy to tell apart.
@@ -2255,7 +2239,6 @@ addEventListener('keydown',e=>{
   keys[e.code]=true;
   if(PT.s.open){ if(e.code==='Escape') PT.close(false); return; }
   if(viewer.open){ if(e.code==='Escape') closeViewer(); return; }
-  if(e.code==='Enter' && !$('chat').hidden){ e.preventDefault(); $('chatIn').focus(); return; }
   if(e.code==='KeyE'){ mode==='walk'?trySit():mode==='desk'?leaveDesk():stand(); }
   if(e.code==='Escape' && mode==='throw') stand();
   if(mode==='throw'){
@@ -2476,7 +2459,7 @@ function nearestWheel(){
 function trySit(){
   const w=nearestWheel(); if(!w||mode!=='walk') return;
   if(w.remote){ toast('다른 분이 쓰고 있는 물레예요'); return; }
-  $('chat').hidden=true; $('prompt').hidden=true; $('joy').hidden=true; $('help').style.visibility='hidden';
+  $('prompt').hidden=true; $('joy').hidden=true; $('help').style.visibility='hidden';
   moveTarget=null; autoSit=null; tapRing.visible=false;
   active=w; ensureClay(w);
   // little intro: stand by the stool facing the camera, stretch, turn round and sit
@@ -2518,7 +2501,7 @@ function finishStand(){
   hideHands();
   const S=active.seat; resetPose();
   mode='walk'; avatar.visible=true; avatar.position.set(S.x,0,S.z+.28); avatar.rotation.y=0; yaw=0;
-  $('chat').hidden=true; $('help').style.visibility='';
+  $('help').style.visibility='';
   $('sub').textContent='물레실 · 산책 중'; active=null;
 }
 
@@ -3706,7 +3689,7 @@ $('wpView').addEventListener('click',()=>{ if(selected) openViewer(selected.mesh
 }
 
 /* ---------- together: room presence ---------- */
-let room=null, userCap=null, myId=null, moving=false, presT=0, lastPres='', sayN=0, myBubbleUntil=0;
+let room=null, userCap=null, myId=null, moving=false, presT=0, lastPres='';
 const remotes=new Map();
 const numIn=(v,lo,hi,d)=>(typeof v==='number'&&isFinite(v))?Math.min(hi,Math.max(lo,v)):d;
 function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
@@ -3726,22 +3709,17 @@ function setTag(s,text){
   g.fillStyle=bub?'#24302c':'#f1eee7'; g.textAlign='center'; g.textBaseline='middle';
   g.fillText(text,c.width/2,y+h/2+2,c.width-100); t.needsUpdate=true;
 }
-const myBubble=makeTag('bubble'); myBubble.visible=false; scene.add(myBubble);
-const PALETTE=['#c98a5e','#7a8fc4','#c4a24a','#a27ab8','#6aa38b','#d27a86'];
-function tint(r,color){ r.apronMats.forEach(m=>{ m.color.set(color); m.color.lerp(new THREE.Color('#ffffff'),.3); }); }
 function makeRemote(p){
   const pc=p.presence||{}; let cv=Number.isInteger(pc.cv)&&pc.cv>=0&&pc.cv<CHARS.length?pc.cv:-1;
   if(cv<0){ let hh=0; for(const ch of String(p.by||p.peer)) hh=(hh*31+ch.charCodeAt(0))>>>0; cv=hh%CHARS.length; }
   const root=makeChar(cv).avatar; root.visible=true; root.position.set(0,0,3); scene.add(root);
-  const r={root,apronMats:[],eyes:[],phase:0,t:null,sayN:null,bubbleUntil:0};
+  const r={root,eyes:[],phase:0,t:null};
   root.traverse(o=>{
-    if(o.name==='apron'){ }
-    else if(o.name==='eye') r.eyes.push(o);
+    if(o.name==='eye') r.eyes.push(o);
     else if(o.name) r[o.name]=o;
   });
   r.cv=cv;
   r.tag=makeTag('name'); r.tag.position.y=1.45; r.tag.scale.set(1.3,.2,1); root.add(r.tag); setTag(r.tag,'도예가');
-  r.bubble=makeTag('bubble'); r.bubble.position.y=1.78; r.bubble.visible=false; root.add(r.bubble);
   return r;
 }
 async function resolveName(r,p){
@@ -3763,13 +3741,8 @@ function upsertRemote(p){
   const w=(Number.isInteger(pr.w)&&pr.w>=0&&pr.w<wheels.length)?pr.w:-1;
   const clayKey=w>=0&&pr.clay?JSON.stringify(pr.clay):null;
   r.t={x:numIn(pr.x,-RX,RX,0),z:numIn(pr.z,-RZ,RZ,0),ry:numIn(pr.ry,-10,10,0),mv:!!pr.mv,dn:!!pr.dn,dk:!!pr.dk,w,rpm:numIn(pr.rpm,0,250,0),clayKey,clayObj:(r.t&&r.t.clayKey===clayKey)?r.t.clayObj:decodeClay(pr.clay)};
-  if(pr.say&&typeof pr.say==='object'&&pr.say.n!==r.sayN){
-    const first=r.sayN===null; r.sayN=pr.say.n;
-    const text=String(pr.say.text||'').slice(0,40);
-    if(text&&!first){ setTag(r.bubble,text); r.bubble.visible=true; r.bubbleUntil=clock.elapsedTime+5; }
-  }
 }
-function removeRemote(peer){ const r=remotes.get(peer); if(!r) return; scene.remove(r.root); r.apronMats.forEach(m=>m.dispose()); remotes.delete(peer); }
+function removeRemote(peer){ const r=remotes.get(peer); if(!r) return; scene.remove(r.root); remotes.delete(peer); }
 function updateCount(peers){
   const ids=new Set(peers.filter(p=>p.kind==='viewer').map(p=>p.by||p.peer));
   $('who').textContent=ids.size<=1?'지금은 혼자 있어요':`공방에 ${ids.size}명 있어요`;
@@ -3777,14 +3750,6 @@ function updateCount(peers){
 ['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
 addEventListener('scroll',()=>{ if(scrollX||scrollY) scrollTo(0,0); },{passive:true});
 document.addEventListener('focusout',()=>setTimeout(()=>{ scrollTo(0,0); },50));
-$('chat').addEventListener('submit',e=>{
-  e.preventDefault();
-  const text=$('chatIn').value.replace(/[\u0000-\u001f\u007f-\u009f­​-‏‪-‮⁠-⁯﻿]/g,'').trim().slice(0,40);
-  $('chatIn').value=''; $('chatIn').blur(); canvas.focus();
-  if(!text) return;
-  sayN++; setTag(myBubble,text); myBubble.visible=true; myBubbleUntil=clock.elapsedTime+5;
-  if(room) room.presence({say:{n:sayN,text}}).catch(()=>{});
-});
 /* ---------- together outside claude.ai: Supabase (Realtime presence + broadcast, a shelf table, anonymous sign-in) ----------
    On claude.ai the page uses its built-in room/db/user. Anywhere else (GitHub Pages) it falls back to
    Supabase when SUPABASE_CONFIG is filled in, offering the same small interface. */
@@ -3867,7 +3832,6 @@ async function supabaseCaps(){
   if(sharedDb&&myId) startShelf(); else sharedDb=null;
   try{ room=await use('room'); }catch(e){ room=null; }
   if(!room){ $('who').textContent='혼자 작업 중'; return; }
-  $('chat').hidden=true;
   room.onPeers(ch=>{
     ch.left.forEach(p=>removeRemote(p.peer));
     // one character per person: skip my own other devices, and for anyone on several
@@ -3886,7 +3850,7 @@ async function supabaseCaps(){
     [...remotes.keys()].forEach(k=>{ if(!keep.has(k)) removeRemote(k); });
     best.forEach(p=>upsertRemote(p));
     updateCount(ch.peers);
-  },()=>{ remotes.forEach((r,k)=>removeRemote(k)); room=null; $('chat').hidden=true; $('who').textContent='혼자 작업 중'; });
+  },()=>{ remotes.forEach((r,k)=>removeRemote(k)); room=null; $('who').textContent='혼자 작업 중'; });
 })();
 
 /* ---------- loop ---------- */
@@ -4004,28 +3968,10 @@ camera.position.set(.4,2.2,4.6);
 /* ---------- keeping it smooth ----------
    1) shadows: redrawn every other frame while anything moves, rarely when the room is still
    2) resolution: if frames get slow the drawing resolution steps down a little (and back up when there is room) */
-let lastNearTxt=null, frameN=0, perfAcc=0, perfN=0, perfT=0, pixR=Math.min(devicePixelRatio,2);
-// sharpness first: only a phone that is really struggling (under ~30 frames a second for 4 seconds in a row,
-// after the first 8 seconds of loading) gives up a little resolution, never below 1.5x on a sharp screen,
-// and it climbs straight back once things run smoothly again
-const PIX_MAX=Math.min(devicePixelRatio,2), PIX_MIN=PIX_MAX>=2?1.5:Math.min(1,PIX_MAX);
-let perfSlow=0, perfStart=performance.now();
-renderer.shadowMap.autoUpdate=false; renderer.shadowMap.needsUpdate=true;
-function tunePerf(raw){
-  if(performance.now()-perfStart<8000) return;
-  perfAcc+=raw; perfN++; perfT+=raw;
-  if(perfT<2) return;
-  const avg=perfAcc/perfN; perfAcc=0; perfN=0; perfT=0;
-  let next=pixR;
-  if(avg>1/30){ perfSlow++; if(perfSlow>=2&&pixR>PIX_MIN){ next=Math.max(PIX_MIN,pixR-.25); perfSlow=0; } }
-  else { perfSlow=0; if(avg<1/45&&pixR<PIX_MAX) next=Math.min(PIX_MAX,pixR+.25); }
-  if(next!==pixR){ pixR=next; renderer.setPixelRatio(pixR); resize(); }
-}
-// coming back to the tab or out of the viewer is not "slow": restart the measurement
-document.addEventListener('visibilitychange',()=>{ perfAcc=perfN=perfT=perfSlow=0; perfStart=performance.now()-6000; });
+let lastNearTxt=null, frameN=0;
+renderer.shadowMap.autoUpdate=false; renderer.shadowMap.needsUpdate=true;   // shadows are redrawn only when needed (see frame)
 function frame(){
   const raw=clock.getDelta(), dt=Math.min(.05,raw); frameN++;
-  /* resolution stays at full sharpness (the automatic lowering was turned off: sharpness matters more here) */
   { const busy=mode!=='walk'||moving||danceT>0||remotes.size>0||!!focus;
     if(frameN%(busy?2:30)===0) renderer.shadowMap.needsUpdate=true; }
 
@@ -4143,10 +4089,7 @@ function frame(){
       else { r.dance=0; r.armL.rotation.z=-.55; r.armR.rotation.z=.55; if(r.head) r.head.rotation.z=0; }
     }
     const bl=(clock.elapsedTime+r.phase*0.1)%4.1<.12?.12:1.25; r.eyes.forEach(e=>e.scale.y=bl);
-    if(r.bubbleUntil&&clock.elapsedTime>r.bubbleUntil){ r.bubble.visible=false; r.bubbleUntil=0; }
   });
-  myBubble.position.set(avatar.position.x,1.78,avatar.position.z);
-  if(myBubbleUntil&&clock.elapsedTime>myBubbleUntil){ myBubble.visible=false; myBubbleUntil=0; }
   // share my state
   presT-=dt;
   if(room&&presT<=0){
