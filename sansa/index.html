@@ -56,7 +56,7 @@ button[aria-pressed="true"]{background:var(--noerok);color:#16201b;border-color:
 #status .rule ul{margin:0;padding:0}
 @keyframes inS{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (pointer:coarse){#hint{display:none}#act{bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
-@media (max-width:640px){.top{flex-direction:column;align-items:stretch;gap:6px}#place{max-width:none}.time{align-self:flex-end}button{padding:8px 9px;font-size:12.5px}.bottom{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}}
+@media (max-width:640px){.top{flex-direction:column;align-items:stretch;gap:6px}#place{max-width:none}.time{align-self:flex-end}button{padding:8px 9px;font-size:12.5px}.bottom{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.bottom button{padding:9px 4px;text-align:center}.bottom button[hidden]{display:none}#hint{display:none}#act{bottom:calc(112px + env(safe-area-inset-bottom,0px))}}
 @media (prefers-reduced-motion:reduce){#fade,#status{transition:none}#status h2,#status p,#status #enterBtn,#status .rule li{animation:none;opacity:1}}
 </style>
 
