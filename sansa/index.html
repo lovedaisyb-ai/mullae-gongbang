@@ -351,6 +351,37 @@ hall({x:18,z:14,kan:[3.4],dep:[3.4],colH:3.8,base:.5,margin:.9,fill:'open',over:
   roof(T,{W:4.3,D:2.1,H:1.5,L:.42,S:.26,y0:5.5});
 }
 
+/* ---------- 받을 자리(GARAM-2): 대표 기준판(m · 바닥 가운데 원점 · 정면 +Z)이 들어갈 곳 ----------
+   at: 놓일 바닥(또는 상판) 가운데 [x,y,z] · ry: 정면이 향할 방향(라디안, 0=+Z) · size: [가로,깊이,높이] m(추정)
+   평소엔 안 보이고, 주소에 ?slots 가 있을 때만 반투명 상자와 이름표로 보인다 */
+const SLOTS=[
+ // 범종각(한 칸 3.4m라 사물 4점이 다 들어가지 않음 → 법고·목어·운판은 범종루 결정 전까지 누각 앞마당 임시 자리)
+ {id:'beomjong',name:'범종',scene:'world',at:[18,0,14],ry:-Math.PI/2,size:[1.5,1.5,1.75],note:'지금 범종 자리'},
+ {id:'beopgo',name:'법고(받침 포함)',scene:'world',at:[14.4,0,11.6],ry:-Math.PI/2,size:[1.4,1.0,1.9],note:'임시'},
+ {id:'mogeo',name:'목어(걸이대 포함)',scene:'world',at:[14.4,0,14],ry:-Math.PI/2,size:[2.0,0.6,1.9],note:'임시'},
+ {id:'unpan',name:'운판(걸이대 포함)',scene:'world',at:[14.4,0,16.4],ry:-Math.PI/2,size:[0.9,0.5,1.9],note:'임시'},
+ // 법당: 예불 법구
+ {id:'yoryeong',name:'요령',scene:'room',at:[-.55,.45,-3.1],ry:0,size:[.12,.12,.3]},
+ {id:'jukbi',name:'죽비',scene:'room',at:[.55,.45,-3.1],ry:0,size:[.45,.06,.05]},
+ {id:'mokttak',name:'큰 목탁(받침 포함)',scene:'room',at:[2.4,0,-3.4],ry:0,size:[.6,.5,.6]},
+ {id:'geumgo',name:'금고·반자(틀 포함)',scene:'room',at:[9.0,0,-6.4],ry:0,size:[.9,.5,1.4]},
+ {id:'sojong',name:'소종(종틀 포함)',scene:'room',at:[-9.0,0,-6.4],ry:0,size:[.6,.5,1.1]},
+ // 법당: 불단 장치구
+ {id:'wonpae',name:'원패(불명패)',scene:'room',at:[0,1.97,-5.75],ry:0,size:[.35,.15,.75]},
+ {id:'jeongbyeong',name:'정병',scene:'room',at:[-1.15,1.97,-5.75],ry:0,size:[.15,.15,.38]},
+ {id:'wipae',name:'위패(영단)',scene:'room',at:[-12.4,.925,-.9],ry:Math.PI/2,size:[.25,.12,.5],note:'왼쪽 단을 영단으로 봄(추정)'},
+ // 법당: 영단 뒤 감로도
+ {id:'gamnodo',name:'감로도(하단 탱화)',scene:'room',at:[-12.93,1.55,-.9],ry:Math.PI/2,size:[2.6,.04,2.6],note:'벽에 거는 그림'},
+];
+const SHOW_SLOTS=/[?&#]slots\b/.test(location.href);
+function showSlots(sc,where){if(!SHOW_SLOTS)return;SLOTS.filter(q=>q.scene===where).forEach(q=>{const [w,d,h]=q.size,g=new THREE.Group();
+  const bx=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshBasicMaterial({color:'#4fd1c5',transparent:true,opacity:.22,depthWrite:false}));bx.position.y=h/2;g.add(bx);
+  const ed=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,h,d)),new THREE.LineBasicMaterial({color:'#2fb3a6'}));ed.position.y=h/2;g.add(ed);
+  const ar=new THREE.Mesh(new THREE.ConeGeometry(Math.min(w,d,.3)*.35+.03,Math.min(w,d,.3)*.6+.05,12),new THREE.MeshBasicMaterial({color:'#ff7a59'}));ar.rotation.x=Math.PI/2;ar.position.set(0,h*.5,d/2+.08);g.add(ar);
+  const c=document.createElement('canvas');c.width=512;c.height=96;const x=c.getContext('2d');x.fillStyle='rgba(20,30,28,.82)';x.fillRect(0,0,512,96);x.fillStyle='#e9fffb';x.font='500 44px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(q.name,256,50);
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false,transparent:true}));const k=where==='world'?1.6:Math.max(.55,Math.min(1.1,h*1.6));sp.scale.set(k,k*96/512,1);sp.position.y=h+k*.16+.06;sp.renderOrder=9;g.add(sp);
+  g.position.set(...q.at);g.rotation.y=q.ry;g.userData.slot=q.id;sc.add(g);});}
+
 // 범종
 const bellGroup=new THREE.Group(),bellY=heightAt(18,14);
 { const prof=[[.02,1.72],[.2,1.7],[.34,1.6],[.5,1.5],[.54,1.2],[.56,.7],[.62,.3],[.72,.05],[.76,0],[.66,0]].map(p=>new THREE.Vector2(p[0],p[1]));
@@ -358,6 +389,7 @@ const bellGroup=new THREE.Group(),bellY=heightAt(18,14);
   b.castShadow=true;bellGroup.add(b);bellGroup.position.set(18,bellY+.42,14);scene.add(bellGroup);
   boxG('wood',3.6,.3,.3,18,bellY+3.6,14);boxG('iron',.12,1.3,.12,18,bellY+2.8,14);
 }
+showSlots(scene,'world');
 const striker=new THREE.Group();
 { const g=new THREE.CylinderGeometry(.11,.11,2.2,8);g.rotateZ(Math.PI/2);const s=new THREE.Mesh(g,mats.wood);striker.add(s);striker.position.set(19.95,bellY+1.1,14);scene.add(striker); }
 
@@ -617,6 +649,7 @@ mats.lattGlow=new THREE.MeshStandardMaterial({map:lattTex,color:'#a08a68',emissi
   [-1,1].forEach(sd=>{const zc=-.9;
         boxG('pineD',1.05,.08,8.7,sd*12.4,.04,zc);boxG('pine',.95,.78,8.6,sd*12.4,.47,zc);boxG('pine',1.1,.07,8.8,sd*12.4,.89,zc);pict(panelT,8.1,.62,sd*11.918,.47,zc,-sd*Math.PI/2);[-1,1].forEach(e=>boxG('pineD',.05,.78,.2,sd*11.91,.47,zc+e*4.2));boxG('pineD',.05,.05,8.6,sd*11.91,.12,zc);boxG('pineD',.05,.05,8.6,sd*11.91,.82,zc);rects.push({x0:sd>0?11.85:-12.95,x1:sd>0?12.95:-11.85,z0:zc-4.4,z1:zc+4.4});
     [-3.4,-1.5,1.5,3.4].forEach(dz=>brass(sd*12.4,.93,zc+dz));});
+  showSlots(scene,'room');
   // 연꽃 조명
   const lotusM=new THREE.MeshStandardMaterial({color:'#fff4d8',emissive:'#ffe9bd',emissiveIntensity:.72,roughness:.6,side:THREE.DoubleSide});
   const lotus=(x,y,z,s)=>{const L=[];[[11,1.45,.62,.42],[9,1.1,.9,.38],[7,.68,1.18,.32]].forEach(([n,rad,tilt,sz],k)=>{for(let i=0;i<n;i++){const a=(i+k*.5)/n*6.283,g=new THREE.SphereGeometry(1,10,8);g.scale(sz,.05,.72);g.translate(0,0,rad*.62);g.rotateX(tilt);g.rotateY(a);L.push(g.toNonIndexed());}});
@@ -905,7 +938,7 @@ renderer.toneMappingExposure=curExp;
  btn.onclick=()=>{if(btn.disabled)return;st.classList.add('out');setTimeout(()=>st.remove(),950);};
  Promise.all(window.__boot.map(p=>p.catch(()=>null))).then(()=>setTimeout(go,300));setTimeout(go,20000);}
 renderer.setAnimationLoop(frame);
-window.__sansa={P,mode:()=>mode,enterHall,exitHall,bow:()=>bow,startBow,info:()=>renderer.info.render,go:(x,z,y=Math.PI,p=.2,dd=8)=>{P.x=x;P.z=z;P.y=heightAt(x,z);yaw=y;pitch=p;dist=dd;camSnap=true;},setLight};
+window.__sansa={SLOTS,P,mode:()=>mode,enterHall,exitHall,bow:()=>bow,startBow,info:()=>renderer.info.render,go:(x,z,y=Math.PI,p=.2,dd=8)=>{P.x=x;P.z=z;P.y=heightAt(x,z);yaw=y;pitch=p;dist=dd;camSnap=true;},setLight};
 </script>
 
 </body>
